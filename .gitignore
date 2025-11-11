@@ -1,0 +1,35 @@
+# === Node ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+package-lock.json
+
+# === Build output ===
+dist/
+build/
+.vite/
+.cache/
+
+# === Environment files ===
+.env
+.env.local
+.env.*.local
+
+# === System / IDE files ===
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# === Logs ===
+logs
+*.log
+
+# === Temporary files ===
+*.tmp
+*.swp
+*.bak
+
+# === Coverage / testing ===
+coverage/
