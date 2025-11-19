@@ -1,7 +1,8 @@
-export default {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx}",
+    "./src/**/*.{js,jsx}",
   ],
   theme: {
     extend: {
@@ -10,9 +11,9 @@ export default {
         cormorant: ["Cormorant Garamond", "serif"],
       },
       colors: {
-        primaryClr: "#7A5AF8",
-      }
-    }
+        primaryClr: "#6542f1", 
+      },
+    },
   },
   plugins: [],
 };

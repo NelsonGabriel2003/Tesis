@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 const Form = () => {
   const [formData,setFormData] = useState({
     email:"",
@@ -80,13 +80,13 @@ const Form = () => {
             </div>
 
             {/* submit button */}
-            <button className="rounded-xl bg-primaryClr px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-primaryClr/90">
+            <button className="rounded-xl bg-[#6542f1] px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-primaryClr/90">
               Login
             </button>
             {/* Sign up link */}
             <p className="text-center text-gray-600">
               No tienes cuenta? {" "}
-             <a href="#" className='text-primaryClr hover:underline'>Registrate</a>
+             <a href="#" className="text-[#6542f1] hover:underline">Registrate</a>
             </p>
 
             {/* divider */}
