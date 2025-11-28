@@ -1,9 +1,10 @@
 import Form from './components/Form';
 import './index.css'
 import LoginPage from './views/auth/LoginPage';
+import { AppRouter } from './routes';
 function App() {
   return (
-      <LoginPage />
+      <AppRouter/>
   );
 }
 export default App

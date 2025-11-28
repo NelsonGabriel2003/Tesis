@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { initialAuthState, initialStatusState } from '../../models/auth/authModel'
 import { authService } from '../../services/auth/authServices'
 
@@ -11,6 +12,7 @@ export const useAuthController = () => {
   const [formData, setFormData] = useState(initialAuthState)
   const [showPassword, setShowPassword] = useState(false)
   const [status, setStatus] = useState(initialStatusState)
+  const navigate = useNavigate()
 
   /**
    * Maneja cambios en los inputs del formulario
@@ -64,8 +66,10 @@ export const useAuthController = () => {
         success: true
       })
 
-      // Aquí puedes agregar redirección
+      
       // navigate('/dashboard')
+      navigate('/main')
+
 
       return response
 
