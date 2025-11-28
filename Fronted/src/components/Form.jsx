@@ -29,7 +29,7 @@ const Form = () => {
         <form onSubmit={handleSubmit} action="" className="mx-auto grid w-full max-w-[460px] place-content-center gap-4 p-6 md:p-12">
           {/* success message */}
               {loginSuccess && <p className="mb-4 rounded-md bg-green-100 p-3 text-center text-green-700">
-                Logged in successfully!
+                Logeado exitosamente!
               </p>}
             {/* logo section */}
             <div className="flex items-center gap-[18px]">
