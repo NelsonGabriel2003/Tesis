@@ -14,17 +14,17 @@ build/
 # === Environment files ===
 .env
 .env.local
+.env.development
+.env.production
 .env.*.local
 
 # === System / IDE files ===
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
-
 # === Logs ===
-logs
+logs/
 *.log
+npm-debug.log*
 
 # === Temporary files ===
 *.tmp
@@ -33,3 +33,21 @@ logs
 
 # === Coverage / testing ===
 coverage/
+
+# IDE / Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build / Dist
+dist/
+build/
+
+# Testing
+coverage/
+
+# Temporales
+tmp/
+temp/
+*.tmp
