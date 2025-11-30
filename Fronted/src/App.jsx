@@ -1,11 +1,10 @@
+import Form from './components/Form';
 import './index.css'
+import LoginPage from './views/auth/LoginPage';
+import { AppRouter } from './routes';
 function App() {
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold text-blue-600">
-        Hola Tailwind en React!
-      </h1>
-    </div>
+      <AppRouter/>
   );
 }
 export default App
