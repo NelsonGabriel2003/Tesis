@@ -66,9 +66,7 @@ const MainPage = () => {
 
   // Navegar a módulo
   const handleModuleClick = (route) => {
-    // TODO: Navegar cuando los módulos estén construidos
-    console.log(`Navegar a: ${route}`)
-    // navigate(route)
+    navigate(route)
   }
 
   // Toggle búsqueda
