@@ -8,10 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 export const authService = {
   /**
    * Inicia sesión con email y password
-   * @param {Object} credentials - { email, password }
-   * @returns {Promise<Object>} - { token, user }
    */
-  
   login: async (credentials) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
@@ -30,6 +27,26 @@ export const authService = {
   },
 
   /**
+   * Registra un nuevo usuario
+   */
+  register: async (userData) => {
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Error en el registro')
+    }
+
+    return response.json()
+  },
+
+  /**
    * Cierra la sesión del usuario
    */
   logout: () => {
@@ -39,7 +56,6 @@ export const authService = {
 
   /**
    * Verifica si el usuario está autenticado
-   * @returns {boolean}
    */
   isAuthenticated: () => {
     return !!localStorage.getItem('token')
@@ -47,7 +63,6 @@ export const authService = {
 
   /**
    * Obtiene el token almacenado
-   * @returns {string|null}
    */
   getToken: () => {
     return localStorage.getItem('token')
@@ -55,7 +70,6 @@ export const authService = {
 
   /**
    * Obtiene el usuario almacenado
-   * @returns {Object|null}
    */
   getUser: () => {
     const user = localStorage.getItem('user')
