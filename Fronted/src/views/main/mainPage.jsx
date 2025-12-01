@@ -16,6 +16,7 @@ import {
   Gift,
   ChevronRight,
   Settings,
+  SquareStar,
   Users,
   TrendingUp,
   Package,
@@ -59,7 +60,7 @@ const MainPage = () => {
       id: 'servicios',
       name: 'Servicios',
       description: 'Servicios disponibles',
-      icon: Wrench,
+      icon: SquareStar,
       color: 'bg-blue-500',
       route: '/servicios'
     },
@@ -103,7 +104,7 @@ const MainPage = () => {
       id: 'services',
       name: 'Servicios',
       description: 'Gestionar servicios',
-      icon: Wrench,
+      icon: SquareStar,
       color: 'bg-blue-500',
       route: '/admin?section=services'
     },
@@ -149,7 +150,7 @@ const MainPage = () => {
     <div className="min-h-screen bg-surface-secondary">
       
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-surface-primary shadow-md">
+      <header className="sticky top-0 z-50 bg-amber-100 shadow-md">
         <div className="flex items-center justify-between px-4 py-3">
           
           {/* Logo */}
@@ -403,7 +404,7 @@ const MainPage = () => {
           })}
         </div>
 
-        {/* Card de Puntos (SOLO USUARIOS, no admin) */}
+        {/* Card de Puntos (SOLO USUARIOS) */}
         {!isAdmin && (
           <div className="mt-6 rounded-2xl bg-gradient-to-r from-primaryClr to-purple-600 p-6 text-black shadow-lg">
             <div className="flex items-center justify-between">
@@ -435,7 +436,7 @@ const MainPage = () => {
 
       {/* Footer / Bottom Navigation (SOLO USUARIOS) */}
       {!isAdmin && (
-        <nav className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-surface-primary px-4 py-2 md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 border-t border-blue-100 bg-blue-50 px-4 py-2 md:hidden">
           <div className="flex items-center justify-around">
             {userModules.slice(0, 4).map((module) => {
               const IconComponent = module.icon
@@ -445,7 +446,7 @@ const MainPage = () => {
                   onClick={() => handleModuleClick(module.route)}
                   className="flex flex-col items-center p-2 text-text-muted transition-colors hover:text-primaryClr"
                 >
-                  <IconComponent size={20} />
+                  <IconComponent size={22} />
                   <span className="mt-1 text-xs">{module.name}</span>
                 </button>
               )

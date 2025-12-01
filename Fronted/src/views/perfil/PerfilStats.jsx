@@ -9,7 +9,7 @@ const PerfilStats = ({ stats, formatDate }) => {
   const statItems = [
     {
       id: 'visits',
-      label: 'Visitas totales',
+      label: 'Visitas Al Local',
       value: stats.totalVisits,
       icon: Calendar,
       color: 'bg-blue-100 text-blue-600'
@@ -30,7 +30,7 @@ const PerfilStats = ({ stats, formatDate }) => {
     },
     {
       id: 'lastVisit',
-      label: 'Última visita',
+      label: 'Última compra',
       value: formatDate(stats.lastVisit),
       icon: TrendingUp,
       color: 'bg-purple-100 text-purple-600'
@@ -87,14 +87,7 @@ const PerfilStats = ({ stats, formatDate }) => {
               Nivel Oro
             </p>
           </div>
-
-          <div className="flex flex-col items-center rounded-xl bg-blue-50 p-4 text-center">
-            <span className="text-3xl">🔥</span>
-            <p className="mt-2 text-xs font-medium text-blue-700">
-              Happy Hour
-            </p>
-          </div>
-
+          
           <div className="flex flex-col items-center rounded-xl bg-surface-secondary p-4 text-center opacity-50">
             <span className="text-3xl">🏆</span>
             <p className="mt-2 text-xs font-medium text-text-muted">

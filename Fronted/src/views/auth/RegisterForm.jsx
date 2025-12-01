@@ -73,7 +73,7 @@ const RegisterForm = ({
       {/* Teléfono */}
       <div>
         <Input
-          label="Teléfono (opcional)"
+          label="Teléfono"
           type="tel"
           name="phone"
           placeholder="0999999999"

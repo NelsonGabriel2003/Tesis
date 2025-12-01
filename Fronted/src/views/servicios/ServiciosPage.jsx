@@ -30,7 +30,7 @@ const ServiciosPage = () => {
   return (
     <div className="min-h-screen bg-surface-secondary">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-surface-primary shadow-md">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-400 via-blue-300 to-purple-300 border-b border-blue-200 shadow-md px-4 py-4">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <button

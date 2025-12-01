@@ -12,7 +12,7 @@ const ServiciosList = ({ services, loading, onSelectService, canUseService, user
         {[1, 2, 3, 4].map((n) => (
           <div
             key={n}
-            className="animate-pulse rounded-2xl bg-surface-primary p-4 shadow-md"
+            className="animate-pulse rounded-2xl bg-surface-primary p-4 shadow-md "
           >
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-xl bg-surface-secondary" />

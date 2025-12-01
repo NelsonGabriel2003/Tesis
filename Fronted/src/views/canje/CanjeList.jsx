@@ -53,7 +53,7 @@ const CanjeList = ({ rewards, loading, onSelectReward, canRedeem, userPoints }) 
             }`}
           >
             {/* Imagen placeholder */}
-            <div className="relative h-24 bg-gradient-to-br from-primaryClr/20 to-purple-500/20">
+            <div className="relative h-24 to-purple-500 bg-gradient-to-tr from-blue-400 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center text-4xl">
                 {reward.category === 'bebidas' && '🍹'}
                 {reward.category === 'comida' && '🍕'}

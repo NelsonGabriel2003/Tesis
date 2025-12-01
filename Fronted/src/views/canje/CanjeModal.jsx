@@ -28,11 +28,11 @@ const CanjeModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="w-full max-w-md rounded-t-3xl bg-surface-primary p-6 shadow-xl sm:rounded-3xl">
+      <div className="w-full max-w-md rounded-t-3xl bg-amber-200 p-6 shadow-xl sm:rounded-3xl">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-primaryClr/20 to-purple-500/20 text-4xl">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-10% to-purple-500/20 text-4xl">
               {reward.category === 'bebidas' && '🍹'}
               {reward.category === 'comida' && '🍕'}
               {reward.category === 'descuentos' && '💰'}

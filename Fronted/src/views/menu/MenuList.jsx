@@ -95,7 +95,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                       <>
                         <button
                           onClick={() => onRemoveItem(item.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600 transition-colors hover:bg-red-200"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-orange-600 transition-colors hover:bg-red-200"
                         >
                           <Minus size={16} />
                         </button>
@@ -104,7 +104,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                         </span>
                         <button
                           onClick={() => onAddItem(item)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-primaryClr text-white transition-colors hover:bg-primaryClr/80"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 transition-colors hover:bg-green-200"
                         >
                           <Plus size={16} />
                         </button>
@@ -112,7 +112,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                     ) : (
                       <button
                         onClick={() => onAddItem(item)}
-                        className="flex items-center gap-1 rounded-full bg-primaryClr px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primaryClr/80"
+                        className="flex items-center gap-1 rounded-full bg-primaryClr px-4 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-primaryClr/80"
                       >
                         <Plus size={16} />
                         Agregar
