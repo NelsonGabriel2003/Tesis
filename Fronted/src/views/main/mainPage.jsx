@@ -34,14 +34,44 @@ const MainPage = () => {
 
   // Controlador del dashboard (solo se usa si es admin)
   const { stats, loading: statsLoading, error: statsError, refresh } = useDashboardController()
-
-  // Cargar datos del usuario al montar
-  useEffect(() => {
+  // Cargar datos de usuario al montar  
+useEffect(() => {
+  const loadUserData = async () => {
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
       setUser(JSON.parse(storedUser))
     }
-  }, [])
+
+    try {
+      const token = localStorage.getItem('token')
+      if (token) {
+        const response = await fetch('http://localhost:3000/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        const data = await response.json()
+        
+        if (data.success && data.data) {
+          const updatedUser = {
+            ...JSON.parse(storedUser || '{}'),
+            points: {
+              current: data.data.points?.current || 0,
+              total: data.data.points?.total || 0
+            },
+            membershipLevel: data.data.membership?.level || 'bronce'
+          }
+          setUser(updatedUser)
+          localStorage.setItem('user', JSON.stringify(updatedUser))
+        }
+      }
+    } catch (error) {
+      console.error('Error actualizando perfil:', error)
+    }
+  }
+
+  loadUserData()
+}, [])
 
   // Verificar si es admin
   const isAdmin = user?.role === 'admin'

@@ -8,12 +8,32 @@ import { useNavigate } from 'react-router-dom'
 import { initialMenuState, menuCategories } from '../../models/menu/menuModel'
 import { menuService } from '../../services/menu/menuServices'
 
+const CART_STORAGE_KEY = 'cart'
+
+const getStoredCart = () => {
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY)
+    return stored ? JSON.parse(stored) : { items: [], tableNumber: '', notes: '' }
+  } catch {
+    return { items: [], tableNumber: '', notes: '' }
+  }
+}
+
+const saveCart = (cart) => {
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
+}
+
 export const useMenuController = () => {
   const [menuState, setMenuState] = useState(initialMenuState)
   const [categories] = useState(menuCategories)
-  const [orderItems, setOrderItems] = useState([])
+  const [cart, setCart] = useState(getStoredCart)
   const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
+
+  // Guardar carrito en localStorage cuando cambie
+  useEffect(() => {
+    saveCart(cart)
+  }, [cart])
 
   // Cargar items del menú
   const loadMenuItems = useCallback(async () => {
@@ -84,52 +104,71 @@ export const useMenuController = () => {
 
   // Agregar item al pedido
   const addToOrder = useCallback((item) => {
-    setOrderItems(prev => {
-      const existingItem = prev.find(i => i.id === item.id)
+    setCart(prev => {
+      const existingIndex = prev.items.findIndex(i => i.productId === item.id)
 
-      if (existingItem) {
-        return prev.map(i =>
-          i.id === item.id
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        )
+      if (existingIndex >= 0) {
+        const updatedItems = [...prev.items]
+        updatedItems[existingIndex].quantity += 1
+        return { ...prev, items: updatedItems }
       }
 
-      return [...prev, { ...item, quantity: 1 }]
+      return {
+        ...prev,
+        items: [...prev.items, {
+          productId: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          pointsEarned: item.points || 0,
+          image: item.image_url,
+          quantity: 1
+        }]
+      }
     })
   }, [])
 
   // Remover item del pedido
   const removeFromOrder = useCallback((itemId) => {
-    setOrderItems(prev => {
-      const existingItem = prev.find(i => i.id === itemId)
+    setCart(prev => {
+      const existingItem = prev.items.find(i => i.productId === itemId)
 
       if (existingItem && existingItem.quantity > 1) {
-        return prev.map(i =>
-          i.id === itemId
-            ? { ...i, quantity: i.quantity - 1 }
-            : i
-        )
+        return {
+          ...prev,
+          items: prev.items.map(i =>
+            i.productId === itemId ? { ...i, quantity: i.quantity - 1 } : i
+          )
+        }
       }
 
-      return prev.filter(i => i.id !== itemId)
+      return {
+        ...prev,
+        items: prev.items.filter(i => i.productId !== itemId)
+      }
     })
   }, [])
 
   // Limpiar pedido
   const clearOrder = useCallback(() => {
-    setOrderItems([])
+    setCart({ items: [], tableNumber: '', notes: '' })
+    localStorage.removeItem(CART_STORAGE_KEY)
   }, [])
 
   // Obtener cantidad de un item en el pedido
   const getItemQuantity = useCallback((itemId) => {
-    const item = orderItems.find(i => i.id === itemId)
+    const item = cart.items.find(i => i.productId === itemId)
     return item ? item.quantity : 0
-  }, [orderItems])
+  }, [cart.items])
+
+  // Convertir items del carrito al formato esperado
+  const orderItems = cart.items.map(item => ({
+    id: item.productId,
+    ...item
+  }))
 
   // Calcular totales
-  const orderTotal = menuService.calculateOrderTotal(orderItems)
-  const orderPoints = menuService.calculateOrderPoints(orderItems)
+  const orderTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const orderPoints = orderItems.reduce((sum, item) => sum + ((item.pointsEarned || 0) * item.quantity), 0)
 
   // Volver al main
   const goBack = useCallback(() => {
@@ -142,7 +181,6 @@ export const useMenuController = () => {
   }, [loadMenuItems])
 
   return {
-    // Estado
     menuItems: menuState.items,
     loading: menuState.loading,
     error: menuState.error,
@@ -153,7 +191,6 @@ export const useMenuController = () => {
     orderTotal,
     orderPoints,
 
-    // Acciones
     filterByCategory,
     handleSearch,
     addToOrder,

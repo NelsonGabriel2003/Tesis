@@ -18,40 +18,51 @@ export const perfilService = {
    * Obtener datos del usuario desde el backend
    */
   getUserProfile: async () => {
-    const response = await fetch(`${API_URL}/profile`, {
-      method: 'GET',
-      headers: getHeaders()
-    })
+    try {
+      const response = await fetch(`${API_URL}/profile`, {
+        method: 'GET',
+        headers: getHeaders()
+      })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Error al obtener perfil')
-    }
-
-    const result = await response.json()
-    const data = result.data  // ← Backend devuelve { success, data }
-    
-    // Transformar respuesta del backend al formato esperado por el frontend
-    return {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      phone: data.phone || '',
-      avatar: null,
-      memberSince: data.memberSince,
-      membershipLevel: data.membership?.level?.toLowerCase() || 'bronce',
-      points: {
-        current: data.points?.current || 0,
-        total: data.points?.total || 0,
-        nextLevel: perfilService.getNextLevelPoints(data.points?.total || 0),
-        history: []
-      },
-      stats: {
-        totalVisits: 0,
-        totalSpent: 0,
-        favoriteItem: '-',
-        lastVisit: data.memberSince
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Error al obtener perfil')
       }
+
+      const result = await response.json()
+      const data = result.data
+
+      // Transformar respuesta del backend al formato esperado
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || '',
+        avatar: null,
+        memberSince: data.memberSince,
+        membershipLevel: data.membership?.level?.toLowerCase() || 'bronce',
+        membership: {
+          level: data.membership?.level?.toLowerCase() || 'bronce',
+          progress: data.membership?.progress || 0,
+          pointsToNextLevel: data.membership?.pointsToNextLevel || 500,
+          nextLevel: data.membership?.nextLevel || 'plata'
+        },
+        points: {
+          current: data.points?.current || 0,
+          total: data.points?.total || 0,
+          nextLevel: perfilService.getNextLevelPoints(data.points?.total || 0),
+          history: []
+        },
+        stats: {
+          totalVisits: 0,
+          totalSpent: 0,
+          favoriteItem: '-',
+          lastVisit: data.memberSince
+        }
+      }
+    } catch (error) {
+      console.error('Error en getUserProfile:', error)
+      throw error
     }
   },
 
@@ -69,48 +80,42 @@ export const perfilService = {
    * Actualizar datos del usuario
    */
   updateUserProfile: async (userData) => {
-    const response = await fetch(`${API_URL}/auth/me`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify({
-        name: userData.name,
-        phone: userData.phone
+    try {
+      const response = await fetch(`${API_URL}/profile`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          name: userData.name,
+          phone: userData.phone
+        })
       })
-    })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Error al actualizar perfil')
-    }
-
-    const data = await response.json()
-    
-    // Actualizar localStorage con nuevos datos
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
-    const updatedUser = { ...storedUser, name: data.user.name, phone: data.user.phone }
-    localStorage.setItem('user', JSON.stringify(updatedUser))
-
-    // Retornar en el formato esperado
-    return {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      phone: data.user.phone || '',
-      avatar: null,
-      memberSince: storedUser.createdAt || new Date().toISOString(),
-      membershipLevel: data.user.membershipLevel?.toLowerCase() || 'bronce',
-      points: {
-        current: data.user.points?.current || 0,
-        total: data.user.points?.total || 0,
-        nextLevel: perfilService.getNextLevelPoints(data.user.points?.total || 0),
-        history: []
-      },
-      stats: {
-        totalVisits: 0,
-        totalSpent: 0,
-        favoriteItem: '-',
-        lastVisit: new Date().toISOString()
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Error al actualizar perfil')
       }
+
+      const result = await response.json()
+      const data = result.data || result.user
+
+      // Actualizar localStorage
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+      const updatedUser = {
+        ...storedUser,
+        name: data.name,
+        phone: data.phone
+      }
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || ''
+      }
+    } catch (error) {
+      console.error('Error en updateUserProfile:', error)
+      throw error
     }
   },
 
@@ -118,18 +123,61 @@ export const perfilService = {
    * Obtener historial de transacciones
    */
   getPointsHistory: async () => {
-    const response = await fetch(`${API_URL}/profile/transactions`, {
+    try {
+      const response = await fetch(`${API_URL}/profile/transactions`, {
+        method: 'GET',
+        headers: getHeaders()
+      })
+
+      if (!response.ok) {
+        return []
+      }
+
+      const result = await response.json()
+      
+      // Mapear transacciones al formato esperado
+      const transactions = result.data || result.transactions || []
+      
+      return transactions.map(t => ({
+        id: t.id,
+        type: t.type, // 'earned' | 'redeemed'
+        points: t.points,
+        description: t.description,
+        date: t.created_at,
+        referenceType: t.reference_type,
+        referenceId: t.reference_id
+      }))
+    } catch (error) {
+      console.error('Error en getPointsHistory:', error)
+      return []
+    }
+  },
+
+  getStats: async () => {
+  try {
+    const response = await fetch(`${API_URL}/profile/stats`, {
       method: 'GET',
       headers: getHeaders()
     })
 
     if (!response.ok) {
-      return []
+      return null
     }
 
-    const data = await response.json()
-    return data.transactions || []
-  },
+    const result = await response.json()
+    const data = result.data
+
+    return {
+      totalVisits: data.orders?.totalVisits || 0,
+      totalSpent: data.orders?.totalSpent || 0,
+      favoriteItem: data.orders?.favoriteItem || '-',
+      lastVisit: data.orders?.lastVisit || null
+    }
+  } catch (error) {
+    console.error('Error en getStats:', error)
+    return null
+  }
+},
 
   /**
    * Obtener nivel de membresía
@@ -171,7 +219,7 @@ export const perfilService = {
     return {
       percentage,
       pointsNeeded: nextLevel.min - currentPoints,
-      nextLevelName: membershipLevels[nextLevel.level].name
+      nextLevelName: membershipLevels[nextLevel.level]?.name || nextLevel.level
     }
   },
 
@@ -180,11 +228,15 @@ export const perfilService = {
    */
   formatDate: (dateString) => {
     if (!dateString) return '-'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      })
+    } catch {
+      return '-'
+    }
   }
 }

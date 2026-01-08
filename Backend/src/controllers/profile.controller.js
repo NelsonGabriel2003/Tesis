@@ -122,12 +122,38 @@ const getTransactionsSummary = asyncHandler(async (req, res) => {
  */
 const getStats = asyncHandler(async (req, res) => {
   const userId = req.user.id
+  const { query } = require('../config/database')
 
   // Obtener resumen de transacciones
   const transactionSummary = await TransactionModel.getSummary(userId)
   
   // Obtener estadísticas de canjes
   const redemptionStats = await RedemptionModel.getStats(userId)
+
+  // Obtener estadísticas de pedidos
+  const ordersStatsResult = await query(`
+    SELECT 
+      COUNT(*) FILTER (WHERE status IN ('completed', 'delivered')) as total_visits,
+      COALESCE(SUM(total) FILTER (WHERE status IN ('completed', 'delivered')), 0) as total_spent,
+      MAX(created_at) FILTER (WHERE status IN ('completed', 'delivered')) as last_visit
+    FROM orders 
+    WHERE user_id = $1
+  `, [userId])
+
+  // Obtener producto favorito (más pedido)
+  const favoriteResult = await query(`
+    SELECT p.name, SUM(oi.quantity) as total_quantity
+    FROM order_items oi
+    JOIN orders o ON o.id = oi.order_id
+    JOIN products p ON p.id = oi.product_id
+    WHERE o.user_id = $1 AND o.status IN ('completed', 'delivered')
+    GROUP BY p.id, p.name
+    ORDER BY total_quantity DESC
+    LIMIT 1
+  `, [userId])
+
+  const ordersStats = ordersStatsResult.rows[0] || {}
+  const favorite = favoriteResult.rows[0]
 
   res.json({
     success: true,
@@ -140,6 +166,12 @@ const getStats = asyncHandler(async (req, res) => {
         total: parseInt(redemptionStats.total_redemptions) || 0,
         used: parseInt(redemptionStats.used_count) || 0,
         pending: parseInt(redemptionStats.pending_count) || 0
+      },
+      orders: {
+        totalVisits: parseInt(ordersStats.total_visits) || 0,
+        totalSpent: parseFloat(ordersStats.total_spent) || 0,
+        favoriteItem: favorite?.name || '-',
+        lastVisit: ordersStats.last_visit || null
       }
     }
   })

@@ -17,29 +17,52 @@ export const usePerfilController = () => {
   const navigate = useNavigate()
 
   // Cargar perfil del usuario
-  const loadUserProfile = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }))
+ // Cargar perfil del usuario
+const loadUserProfile = useCallback(async () => {
+  setState(prev => ({ ...prev, loading: true, error: null }))
 
-    try {
-      const user = await perfilService.getUserProfile()
-      setState(prev => ({
-        ...prev,
-        user,
-        loading: false
-      }))
-      setEditData({
-        name: user.name,
-        email: user.email,
-        phone: user.phone
-      })
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: error.message
-      }))
+  try {
+    const userData = await perfilService.getUserProfile()
+    const statsData = await perfilService.getStats()
+    
+    const user = {
+      ...userData,
+      stats: statsData || {
+        totalVisits: 0,
+        totalSpent: 0,
+        favoriteItem: '-',
+        lastVisit: null
+      }
     }
-  }, [])
+
+    setState(prev => ({
+      ...prev,
+      user,
+      loading: false
+    }))
+    
+    setEditData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone
+    })
+
+    // Actualizar localStorage
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+    localStorage.setItem('user', JSON.stringify({
+      ...storedUser,
+      points: user.points,
+      membershipLevel: user.membership?.level || user.membershipLevel
+    }))
+
+  } catch (error) {
+    setState(prev => ({
+      ...prev,
+      loading: false,
+      error: error.message
+    }))
+  }
+}, [])
 
   // Actualizar perfil
   const updateProfile = useCallback(async () => {

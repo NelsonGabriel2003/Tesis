@@ -1,18 +1,18 @@
-/**
- * MenuOrderSummary Component
- * Resumen del pedido flotante
- */
-
+import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Star, Trash2 } from 'lucide-react'
 
 const MenuOrderSummary = ({ orderItems, orderTotal, orderPoints, onClearOrder }) => {
+  const navigate = useNavigate()
   const totalItems = orderItems.reduce((sum, item) => sum + item.quantity, 0)
+
+  const handleCheckout = () => {
+    navigate('/order')
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-surface-primary p-4 shadow-lg bg-amber-300">
       <div className="mx-auto max-w-2xl">
         <div className="flex items-center justify-between">
-          {/* Info del pedido */}
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primaryClr text-white">
@@ -31,7 +31,6 @@ const MenuOrderSummary = ({ orderItems, orderTotal, orderPoints, onClearOrder })
             </div>
           </div>
 
-          {/* Puntos a ganar */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-bold text-yellow-700">
               <Star size={16} fill="currentColor" />
@@ -48,9 +47,11 @@ const MenuOrderSummary = ({ orderItems, orderTotal, orderPoints, onClearOrder })
           </div>
         </div>
 
-        {/* Botón de confirmar */}
-        <button className="mt-3 w-full rounded-full bg-primaryClr py-3 font-semibold text-white transition-colors hover:bg-primaryClr/90">
-          Confirmar Pedido
+        <button 
+          onClick={handleCheckout}
+          className="mt-3 w-full rounded-full bg-primaryClr py-3 font-semibold text-white transition-colors hover:bg-primaryClr/90"
+        >
+          Ver Pedido →
         </button>
       </div>
     </div>

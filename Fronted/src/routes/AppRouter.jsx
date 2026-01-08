@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage, RegisterPage } from '../views/auth'
 import { MainPage } from '../views/main'
 import { MenuPage } from '../views/menu'
+import { OrderPage } from '../views/order'
 import { ServiciosPage } from '../views/servicios'
 import { PerfilPage } from '../views/perfil'
 import { CanjePage } from '../views/canje'
@@ -95,6 +96,22 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <MenuPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order"
+          element={
+            <ProtectedRoute>
+              <OrderPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order/:id"
+          element={
+            <ProtectedRoute>
+              <OrderPage />
             </ProtectedRoute>
           }
         />

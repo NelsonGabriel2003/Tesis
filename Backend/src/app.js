@@ -10,7 +10,7 @@ const cors = require('cors')
 
 const routes = require('./routes')
 const { notFound, errorHandler } = require('./middlewares')
-
+const telegramService = require('./services/telegram.service')
 // Crear aplicación Express
 const app = express()
 
@@ -72,6 +72,7 @@ app.use(errorHandler)
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, () => {
+  telegramService.initialize()
   console.log(`
   ╔═══════════════════════════════════════════╗
   ║                                           ║
