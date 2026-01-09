@@ -38,6 +38,29 @@ export const initialUserState = {
   selectedUser: null
 }
 
+// Estado inicial para staff
+export const initialStaffState = {
+  staff: [],
+  loading: false,
+  error: null,
+  selectedStaff: null
+}
+
+// Estado inicial del formulario de staff
+export const initialStaffForm = {
+  name: '',
+  phone: '',
+  email: '',
+  role: 'waiter'
+}
+
+// Roles del personal
+export const staffRoles = [
+  { id: 'waiter', name: 'Mesero' },
+  { id: 'bartender', name: 'Bartender' },
+  { id: 'manager', name: 'Gerente' }
+]
+
 // Estado inicial del formulario de producto
 export const initialProductForm = {
   name: '',
@@ -96,27 +119,35 @@ export const serviceCategories = [
 // Mensajes del sistema
 export const adminMessages = {
   // Productos
-  PRODUCT_CREATED: '✅ Producto creado exitosamente',
-  PRODUCT_UPDATED: '✅ Producto actualizado exitosamente',
-  PRODUCT_DELETED: '✅ Producto eliminado exitosamente',
-  PRODUCT_ERROR: '❌ Error al procesar el producto',
-  
+  PRODUCT_CREATED: 'Producto creado exitosamente',
+  PRODUCT_UPDATED: 'Producto actualizado exitosamente',
+  PRODUCT_DELETED: 'Producto eliminado exitosamente',
+  PRODUCT_ERROR: 'Error al procesar el producto',
+
   // Recompensas
-  REWARD_CREATED: '✅ Recompensa creada exitosamente',
-  REWARD_UPDATED: '✅ Recompensa actualizada exitosamente',
-  REWARD_DELETED: '✅ Recompensa eliminada exitosamente',
-  REWARD_ERROR: '❌ Error al procesar la recompensa',
-  
+  REWARD_CREATED: 'Recompensa creada exitosamente',
+  REWARD_UPDATED: 'Recompensa actualizada exitosamente',
+  REWARD_DELETED: 'Recompensa eliminada exitosamente',
+  REWARD_ERROR: 'Error al procesar la recompensa',
+
   // Servicios
-  SERVICE_CREATED: '✅ Servicio creado exitosamente',
-  SERVICE_UPDATED: '✅ Servicio actualizado exitosamente',
-  SERVICE_DELETED: '✅ Servicio eliminado exitosamente',
-  SERVICE_ERROR: '❌ Error al procesar el servicio',
-  
+  SERVICE_CREATED: 'Servicio creado exitosamente',
+  SERVICE_UPDATED: 'Servicio actualizado exitosamente',
+  SERVICE_DELETED: 'Servicio eliminado exitosamente',
+  SERVICE_ERROR: 'Error al procesar el servicio',
+
+  // Staff
+  STAFF_CREATED: 'Personal creado exitosamente',
+  STAFF_UPDATED: 'Personal actualizado exitosamente',
+  STAFF_DELETED: 'Personal eliminado exitosamente',
+  STAFF_ERROR: 'Error al procesar el personal',
+  STAFF_CODE_GENERATED: 'Codigo de vinculacion generado',
+  STAFF_UNLINKED: 'Telegram desvinculado correctamente',
+
   // General
   LOADING: 'Cargando...',
   SAVING: 'Guardando...',
   DELETING: 'Eliminando...',
-  CONFIRM_DELETE: '¿Estás seguro de eliminar este elemento?',
+  CONFIRM_DELETE: '¿Estas seguro de eliminar este elemento?',
   REQUIRED_FIELDS: 'Por favor completa todos los campos requeridos'
 }

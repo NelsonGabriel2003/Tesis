@@ -96,6 +96,7 @@ class TelegramService {
     if (!this.bot) return
 
     this.bot.onText(/\/start/, (msg) => this.handleStart(msg))
+    this.bot.onText(/\/vincular$/, (msg) => this.handleLinkNoCode(msg))
     this.bot.onText(/\/vincular (.+)/, (msg, match) => this.handleLink(msg, match[1]))
     this.bot.onText(/\/turno/, (msg) => this.handleShiftOn(msg))
     this.bot.onText(/\/descanso/, (msg) => this.handleShiftOff(msg))
@@ -132,24 +133,56 @@ Para vincular tu cuenta usa:
     `, { parse_mode: 'Markdown' })
   }
 
+  async handleLinkNoCode(msg) {
+    const chatId = msg.chat.id
+    await this.sendMessage(chatId, `
+❌ *Código requerido*
+
+Para vincular tu cuenta necesitas un código.
+Pídelo al administrador del bar.
+
+Uso: \`/vincular CODIGO\`
+    `, { parse_mode: 'Markdown' })
+  }
+
   async handleLink(msg, code) {
     const chatId = msg.chat.id
-    const staff = await StaffModel.findAll(true)
-    const staffToLink = staff.find(s => !s.telegram_chat_id)
 
-    if (!staffToLink) {
-      await this.sendMessage(chatId, '❌ No hay cuentas disponibles para vincular.')
+    // Verificar si ya está vinculado
+    const existingStaff = await StaffModel.findByTelegramChatId(chatId.toString())
+    if (existingStaff) {
+      await this.sendMessage(chatId, `
+⚠️ Ya estás vinculado como *${existingStaff.name}*
+
+Usa /estado para ver tu información.
+      `, { parse_mode: 'Markdown' })
       return
     }
 
-    await StaffModel.linkTelegram(staffToLink.id, chatId.toString(), msg.from.username)
-    await TelegramSessionModel.linkToStaff(chatId.toString(), staffToLink.id)
+    // Buscar staff por código
+    const staff = await StaffModel.findByLinkCode(code.trim())
+
+    if (!staff) {
+      await this.sendMessage(chatId, `
+❌ *Código inválido o expirado*
+
+Verifica el código e intenta de nuevo.
+Si el problema persiste, pide un nuevo código al administrador.
+      `, { parse_mode: 'Markdown' })
+      return
+    }
+
+    // Vincular
+    await StaffModel.linkTelegram(staff.id, chatId.toString(), msg.from.username)
+    await TelegramSessionModel.linkToStaff(chatId.toString(), staff.id)
 
     await this.sendMessage(chatId, `
 ✅ *¡Vinculación exitosa!*
 
-Bienvenido/a ${staffToLink.name}
-Usa /turno para comenzar.
+Bienvenido/a *${staff.name}*
+Tu cuenta ha sido vinculada correctamente.
+
+Usa /turno para iniciar tu turno y recibir pedidos.
     `, { parse_mode: 'Markdown' })
   }
 
