@@ -3,19 +3,19 @@
  * Rutas para recompensas y canjes
  */
 
-const { Router } = require('express')
-const { 
-  getRewards, 
-  getRewardById, 
+import { Router } from 'express'
+import {
+  getRewards,
+  getRewardById,
   redeemReward,
   getMyRedemptions,
   validateRedemptionCode,
   useRedemptionCode,
   getCategories,
-  createReward, 
-  updateReward 
-} = require('../controllers/reward.controller')
-const { verifyToken, requireRole } = require('../middlewares')
+  createReward,
+  updateReward
+} from '../controllers/reward.controller.js'
+import { verifyToken, requireRole } from '../middlewares/index.js'
 
 const router = Router()
 
@@ -36,4 +36,4 @@ router.post('/use/:code', verifyToken, useRedemptionCode)
 router.post('/', verifyToken, requireRole('admin'), createReward)
 router.put('/:id', verifyToken, requireRole('admin'), updateReward)
 
-module.exports = router
+export default router

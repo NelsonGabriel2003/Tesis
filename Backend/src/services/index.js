@@ -1,9 +1,5 @@
-const codeGenerator = require('./codeGenerator.service')
-const qrService = require('./qr.service')
-const telegramService = require('./telegram.service')
+import * as codeGenerator from './codeGenerator.service.js'
+import * as qrService from './qr.service.js'
+import telegramService from './telegram.service.js'
 
-module.exports = {
-  codeGenerator,
-  qrService,
-  telegramService
-}
+export { codeGenerator, qrService, telegramService }

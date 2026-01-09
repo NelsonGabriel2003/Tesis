@@ -3,17 +3,18 @@
  * Configura todas las rutas de la API
  */
 
-const { Router } = require('express')
+import { Router } from 'express'
 
-const authRoutes = require('./auth.routes')
-const productRoutes = require('./product.routes')
-const rewardRoutes = require('./reward.routes')
-const serviceRoutes = require('./service.routes')
-const profileRoutes = require('./profile.routes')
-const statsRoutes = require('./stats.routes')
-const orderRoutes = require('./order.routes')
-const orderAdminRoutes = require('./orderAdmin.routes')
-const staffRoutes = require('./staff.routes')
+import authRoutes from './auth.routes.js'
+import productRoutes from './product.routes.js'
+import rewardRoutes from './reward.routes.js'
+import serviceRoutes from './service.routes.js'
+import profileRoutes from './profile.routes.js'
+import statsRoutes from './stats.routes.js'
+import orderRoutes from './order.routes.js'
+import orderAdminRoutes from './orderAdmin.routes.js'
+import staffRoutes from './staff.routes.js'
+import telegramRoutes from './telegram.routes.js'
 
 const router = Router()
 
@@ -39,4 +40,7 @@ router.use('/orders', orderRoutes)
 router.use('/admin/orders', orderAdminRoutes)
 router.use('/staff', staffRoutes)
 
-module.exports = router
+// Rutas de Telegram Bot (webhook)
+router.use('/telegram', telegramRoutes)
+
+export default router

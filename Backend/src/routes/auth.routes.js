@@ -3,9 +3,9 @@
  * Rutas para autenticación
  */
 
-const { Router } = require('express')
-const { login, register, getMe, updateMe } = require('../controllers/auth.controller')
-const { verifyToken } = require('../middlewares')
+import { Router } from 'express'
+import { login, register, getMe, updateMe } from '../controllers/auth.controller.js'
+import { verifyToken } from '../middlewares/index.js'
 
 const router = Router()
 
@@ -17,4 +17,4 @@ router.post('/register', register)
 router.get('/me', verifyToken, getMe)
 router.put('/me', verifyToken, updateMe)
 
-module.exports = router
+export default router

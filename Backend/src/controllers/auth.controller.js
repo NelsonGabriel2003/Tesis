@@ -3,11 +3,11 @@
  * Maneja login, registro y autenticación
  */
 
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
-const UserModel = require('../models/user.model')
-const jwtConfig = require('../config/jwt')
-const { asyncHandler } = require('../middlewares')
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import UserModel from '../models/user.model.js'
+import jwtConfig from '../config/jwt.js'
+import { asyncHandler } from '../middlewares/index.js'
 
 /**
  * Login de usuario
@@ -222,9 +222,4 @@ const updateMe = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = {
-  login,
-  register,
-  getMe,
-  updateMe
-}
+export { login, register, getMe, updateMe }

@@ -3,7 +3,7 @@
  * Consultas a la base de datos para recompensas canjeables
  */
 
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const RewardModel = {
   /**
@@ -117,4 +117,4 @@ const RewardModel = {
   }
 }
 
-module.exports = RewardModel
+export default RewardModel

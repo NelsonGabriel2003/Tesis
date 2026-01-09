@@ -1,6 +1,6 @@
-const QRCode = require('qrcode')
+import QRCode from 'qrcode'
 
-const generateOrderQR = async (orderCode, orderId) => {
+export const generateOrderQR = async (orderCode, orderId) => {
   const qrData = JSON.stringify({
     type: 'order',
     code: orderCode,
@@ -19,8 +19,4 @@ const generateOrderQR = async (orderCode, orderId) => {
     console.error('Error generando QR:', error)
     throw new Error('No se pudo generar el código QR')
   }
-}
-
-module.exports = {
-  generateOrderQR
 }

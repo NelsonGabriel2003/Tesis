@@ -3,9 +3,11 @@
  * Configuración de conexión a PostgreSQL
  */
 
-const { Pool } = require('pg')
+import pg from 'pg'
 
-const pool = new Pool({
+const { Pool } = pg
+
+export const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'fidelizacion_db',
@@ -26,7 +28,4 @@ pool.on('error', (err) => {
   process.exit(-1)
 })
 
-module.exports = {
-  pool,
-  query: (text, params) => pool.query(text, params),
-}
+export const query = (text, params) => pool.query(text, params)

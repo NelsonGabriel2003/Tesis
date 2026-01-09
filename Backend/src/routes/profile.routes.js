@@ -3,15 +3,15 @@
  * Rutas para perfil de usuario
  */
 
-const { Router } = require('express')
-const { 
-  getProfile, 
-  getTransactions, 
+import { Router } from 'express'
+import {
+  getProfile,
+  getTransactions,
   getTransactionsSummary,
   getStats,
   getMembershipLevels
-} = require('../controllers/profile.controller')
-const { verifyToken } = require('../middlewares')
+} from '../controllers/profile.controller.js'
+import { verifyToken } from '../middlewares/index.js'
 
 const router = Router()
 
@@ -25,4 +25,4 @@ router.get('/transactions/summary', getTransactionsSummary)
 router.get('/stats', getStats)
 router.get('/levels', getMembershipLevels)
 
-module.exports = router
+export default router

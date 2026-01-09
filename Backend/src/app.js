@@ -3,14 +3,15 @@
  * Sistema de Fidelización - Backend API
  */
 
-require('dotenv').config()
+import 'dotenv/config'
 
-const express = require('express')
-const cors = require('cors')
+import express from 'express'
+import cors from 'cors'
 
-const routes = require('./routes')
-const { notFound, errorHandler } = require('./middlewares')
-const telegramService = require('./services/telegram.service')
+import routes from './routes/index.js'
+import { notFound, errorHandler } from './middlewares/index.js'
+import telegramService from './services/telegram.service.js'
+
 // Crear aplicación Express
 const app = express()
 
@@ -94,4 +95,4 @@ app.listen(PORT, () => {
   `)
 })
 
-module.exports = app
+export default app

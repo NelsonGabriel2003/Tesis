@@ -1,5 +1,5 @@
-const { OrderModel, OrderItemModel, ProductModel, UserModel, TransactionModel } = require('../models')
-const { codeGenerator, qrService, telegramService } = require('../services')
+import { OrderModel, OrderItemModel, ProductModel, UserModel, TransactionModel } from '../models/index.js'
+import { codeGenerator, qrService, telegramService } from '../services/index.js'
 
 const OrderController = {
   create: async (req, res) => {
@@ -248,4 +248,4 @@ const OrderController = {
   }
 }
 
-module.exports = OrderController
+export const orderController = OrderController

@@ -1,4 +1,4 @@
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const StaffModel = {
   findById: async (id) => {
@@ -77,4 +77,4 @@ const StaffModel = {
   }
 }
 
-module.exports = StaffModel
+export default StaffModel

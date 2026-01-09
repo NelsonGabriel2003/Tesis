@@ -3,11 +3,11 @@
  * Maneja operaciones de recompensas y canjes
  */
 
-const RewardModel = require('../models/reward.model')
-const RedemptionModel = require('../models/redemption.model')
-const UserModel = require('../models/user.model')
-const TransactionModel = require('../models/transaction.model')
-const { asyncHandler } = require('../middlewares')
+import RewardModel from '../models/reward.model.js'
+import RedemptionModel from '../models/redemption.model.js'
+import UserModel from '../models/user.model.js'
+import TransactionModel from '../models/transaction.model.js'
+import { asyncHandler } from '../middlewares/index.js'
 
 /**
  * Genera un código único de canje
@@ -297,7 +297,7 @@ const updateReward = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = {
+export {
   getRewards,
   getRewardById,
   redeemReward,

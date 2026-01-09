@@ -3,7 +3,7 @@
  * Consultas a la base de datos para historial de transacciones de puntos
  */
 
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const TransactionModel = {
   /**
@@ -74,4 +74,4 @@ const TransactionModel = {
   }
 }
 
-module.exports = TransactionModel
+export default TransactionModel

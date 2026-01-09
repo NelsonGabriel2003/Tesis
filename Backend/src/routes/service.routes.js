@@ -3,16 +3,16 @@
  * Rutas para servicios del bar
  */
 
-const { Router } = require('express')
-const { 
-  getServices, 
-  getServiceById, 
+import { Router } from 'express'
+import {
+  getServices,
+  getServiceById,
   bookService,
   getCategories,
-  createService, 
-  updateService 
-} = require('../controllers/service.controller')
-const { verifyToken, requireRole } = require('../middlewares')
+  createService,
+  updateService
+} from '../controllers/service.controller.js'
+import { verifyToken, requireRole } from '../middlewares/index.js'
 
 const router = Router()
 
@@ -28,4 +28,4 @@ router.post('/:id/book', verifyToken, bookService)
 router.post('/', verifyToken, requireRole('admin'), createService)
 router.put('/:id', verifyToken, requireRole('admin'), updateService)
 
-module.exports = router
+export default router

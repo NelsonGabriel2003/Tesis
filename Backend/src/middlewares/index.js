@@ -2,10 +2,10 @@
  * Middlewares Index
  */
 
-const { verifyToken, optionalAuth, requireRole } = require('./auth.middleware')
-const { notFound, errorHandler, asyncHandler } = require('./error.middleware')
+import { verifyToken, optionalAuth, requireRole } from './auth.middleware.js'
+import { notFound, errorHandler, asyncHandler } from './error.middleware.js'
 
-module.exports = {
+export {
   verifyToken,
   optionalAuth,
   requireRole,

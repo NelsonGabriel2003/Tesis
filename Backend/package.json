@@ -1,6 +1,7 @@
 {
   "name": "backend-fidelizacion",
   "version": "1.0.0",
+  "type": "module",
   "description": "API Backend para Sistema de Fidelización de Bar",
   "main": "src/app.js",
   "scripts": {

@@ -1,4 +1,4 @@
-const { StaffModel } = require('../models')
+import { StaffModel } from '../models/index.js'
 
 const StaffController = {
   getAll: async (req, res) => {
@@ -55,4 +55,4 @@ const StaffController = {
   }
 }
 
-module.exports = StaffController
+export const staffController = StaffController

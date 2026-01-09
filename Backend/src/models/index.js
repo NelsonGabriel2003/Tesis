@@ -3,18 +3,20 @@
  * Exporta todos los modelos
  */
 
-const UserModel = require('./user.model')
-const ProductModel = require('./product.model')
-const RewardModel = require('./reward.model')
-const ServiceModel = require('./service.model')
-const TransactionModel = require('./transaction.model')
-const RedemptionModel = require('./redemption.model')
-const OrderModel = require('./order.model')
-const OrderItemModel = require('./orderItem.model')
-const StaffModel = require('./staff.model')
-const TelegramSessionModel = require('./telegramSession.model')
+import UserModel from './user.model.js'
+import ProductModel from './product.model.js'
+import RewardModel from './reward.model.js'
+import ServiceModel from './service.model.js'
+import TransactionModel from './transaction.model.js'
+import RedemptionModel from './redemption.model.js'
+import OrderModel from './order.model.js'
+import OrderItemModel from './orderItem.model.js'
+import StaffModel from './staff.model.js'
+import TelegramSessionModel from './telegramSession.model.js'
+import StatsModel from './stats.model.js'
+import NotificationModel from './notification.model.js'
 
-module.exports = {
+export {
   UserModel,
   ProductModel,
   RewardModel,
@@ -24,5 +26,7 @@ module.exports = {
   OrderModel,
   OrderItemModel,
   StaffModel,
-  TelegramSessionModel
+  TelegramSessionModel,
+  StatsModel,
+  NotificationModel
 }

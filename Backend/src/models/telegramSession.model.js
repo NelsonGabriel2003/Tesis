@@ -1,4 +1,4 @@
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const TelegramSessionModel = {
   findByChatId: async (chatId) => {
@@ -46,4 +46,4 @@ const TelegramSessionModel = {
   }
 }
 
-module.exports = TelegramSessionModel
+export default TelegramSessionModel

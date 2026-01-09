@@ -1,7 +1,8 @@
-const express = require('express')
-const router = express.Router()
-const { orderController } = require('../controllers')
-const { verifyToken } = require('../middlewares')
+import { Router } from 'express'
+import { orderController } from '../controllers/index.js'
+import { verifyToken } from '../middlewares/index.js'
+
+const router = Router()
 
 router.post('/', verifyToken, orderController.create)
 router.get('/', verifyToken, orderController.getMyOrders)
@@ -9,4 +10,4 @@ router.get('/active', verifyToken, orderController.getActiveOrders)
 router.get('/:id', verifyToken, orderController.getById)
 router.put('/:id/cancel', verifyToken, orderController.cancel)
 
-module.exports = router
+export default router

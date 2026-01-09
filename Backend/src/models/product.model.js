@@ -3,7 +3,7 @@
  * Consultas a la base de datos para productos del menú
  */
 
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const ProductModel = {
   /**
@@ -113,4 +113,4 @@ const ProductModel = {
   }
 }
 
-module.exports = ProductModel
+export default ProductModel

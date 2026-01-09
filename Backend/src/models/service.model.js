@@ -3,7 +3,7 @@
  * Consultas a la base de datos para servicios del bar
  */
 
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const ServiceModel = {
   /**
@@ -87,4 +87,4 @@ const ServiceModel = {
   }
 }
 
-module.exports = ServiceModel
+export default ServiceModel

@@ -3,7 +3,7 @@
  * Consultas a la base de datos para canjes realizados
  */
 
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const RedemptionModel = {
   /**
@@ -126,4 +126,4 @@ const RedemptionModel = {
   }
 }
 
-module.exports = RedemptionModel
+export default RedemptionModel

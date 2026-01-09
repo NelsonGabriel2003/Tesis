@@ -3,10 +3,10 @@
  * Maneja operaciones del perfil de usuario y transacciones
  */
 
-const UserModel = require('../models/user.model')
-const TransactionModel = require('../models/transaction.model')
-const RedemptionModel = require('../models/redemption.model')
-const { asyncHandler } = require('../middlewares')
+import UserModel from '../models/user.model.js'
+import TransactionModel from '../models/transaction.model.js'
+import RedemptionModel from '../models/redemption.model.js'
+import { asyncHandler } from '../middlewares/index.js'
 
 /**
  * Obtener perfil completo del usuario
@@ -122,7 +122,7 @@ const getTransactionsSummary = asyncHandler(async (req, res) => {
  */
 const getStats = asyncHandler(async (req, res) => {
   const userId = req.user.id
-  const { query } = require('../config/database')
+  const { query } = await import('../config/database.js')
 
   // Obtener resumen de transacciones
   const transactionSummary = await TransactionModel.getSummary(userId)
@@ -233,7 +233,7 @@ const getMembershipLevels = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = {
+export {
   getProfile,
   getTransactions,
   getTransactionsSummary,

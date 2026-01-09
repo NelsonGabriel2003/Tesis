@@ -3,8 +3,8 @@
  * Maneja operaciones del menú de productos
  */
 
-const ProductModel = require('../models/product.model')
-const { asyncHandler } = require('../middlewares')
+import ProductModel from '../models/product.model.js'
+import { asyncHandler } from '../middlewares/index.js'
 
 /**
  * Obtener todos los productos
@@ -182,7 +182,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = {
+export {
   getProducts,
   getProductById,
   searchProducts,

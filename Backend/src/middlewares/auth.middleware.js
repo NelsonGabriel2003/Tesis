@@ -3,8 +3,8 @@
  * Verifica tokens JWT y protege rutas
  */
 
-const jwt = require('jsonwebtoken')
-const jwtConfig = require('../config/jwt')
+import jwt from 'jsonwebtoken'
+import jwtConfig from '../config/jwt.js'
 
 /**
  * Middleware para verificar token JWT
@@ -96,8 +96,4 @@ const requireRole = (...roles) => {
   }
 }
 
-module.exports = {
-  verifyToken,
-  optionalAuth,
-  requireRole
-}
+export { verifyToken, optionalAuth, requireRole }

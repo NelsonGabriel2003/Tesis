@@ -3,10 +3,10 @@
  * Maneja operaciones de servicios del bar
  */
 
-const ServiceModel = require('../models/service.model')
-const UserModel = require('../models/user.model')
-const TransactionModel = require('../models/transaction.model')
-const { asyncHandler } = require('../middlewares')
+import ServiceModel from '../models/service.model.js'
+import UserModel from '../models/user.model.js'
+import TransactionModel from '../models/transaction.model.js'
+import { asyncHandler } from '../middlewares/index.js'
 
 /**
  * Obtener todos los servicios
@@ -207,7 +207,7 @@ const updateService = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = {
+export {
   getServices,
   getServiceById,
   bookService,

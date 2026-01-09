@@ -3,7 +3,7 @@
  * Consultas a la base de datos para estadísticas del dashboard
  */
 
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const StatsModel = {
   /**
@@ -197,4 +197,4 @@ const StatsModel = {
   }
 }
 
-module.exports = StatsModel
+export default StatsModel

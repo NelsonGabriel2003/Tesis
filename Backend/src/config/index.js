@@ -3,11 +3,8 @@
  * Exporta todas las configuraciones
  */
 
-const database = require('./database')
-const jwt = require('./jwt')
-const telegram = require('./telegram')
-module.exports = {
-  database,
-  jwt,
-  telegram
-}
+import * as database from './database.js'
+import jwt from './jwt.js'
+import telegram from './telegram.js'
+
+export { database, jwt, telegram }

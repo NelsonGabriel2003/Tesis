@@ -3,7 +3,7 @@
  * Consultas a la base de datos para usuarios
  */
 
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const UserModel = {
   /**
@@ -135,4 +135,4 @@ const UserModel = {
   }
 }
 
-module.exports = UserModel
+export default UserModel

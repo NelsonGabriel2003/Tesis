@@ -1,23 +1,95 @@
-const TelegramBot = require('node-telegram-bot-api')
-const { telegram: config } = require('../config')
-const { StaffModel, TelegramSessionModel } = require('../models')
+import TelegramBot from 'node-telegram-bot-api'
+import { telegram as config } from '../config/index.js'
+import { StaffModel, TelegramSessionModel, OrderModel, UserModel, TransactionModel } from '../models/index.js'
 
 class TelegramService {
   constructor() {
     this.bot = null
     this.isInitialized = false
+    this.useWebhook = process.env.TELEGRAM_USE_WEBHOOK === 'true'
   }
 
+  /**
+   * Inicializa el bot de Telegram
+   * - En producción (Railway): usa Webhook
+   * - En desarrollo (local): usa Polling
+   */
   initialize() {
     if (!config.botToken) {
       console.log('⚠️ TELEGRAM_BOT_TOKEN no configurado. Bot deshabilitado.')
       return
     }
 
-    this.bot = new TelegramBot(config.botToken, { polling: true })
-    this.isInitialized = true
-    this.setupHandlers()
-    console.log('✅ Telegram Bot inicializado')
+    if (this.useWebhook) {
+      // Modo Webhook para producción
+      this.bot = new TelegramBot(config.botToken, { webHook: false })
+      this.isInitialized = true
+      this.setupHandlers() // Configurar handlers para procesar mensajes
+      this.setupWebhook()
+      console.log('✅ Telegram Bot inicializado en modo WEBHOOK')
+    } else {
+      // Modo Polling para desarrollo local
+      this.bot = new TelegramBot(config.botToken, { polling: true })
+      this.isInitialized = true
+      this.setupHandlers()
+      console.log('✅ Telegram Bot inicializado en modo POLLING')
+    }
+  }
+
+  /**
+   * Configura el webhook con Telegram
+   */
+  async setupWebhook() {
+    const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL
+
+    if (!webhookUrl) {
+      console.error('❌ TELEGRAM_WEBHOOK_URL no configurado')
+      return
+    }
+
+    try {
+      // Registrar el webhook con Telegram
+      await this.bot.setWebHook(webhookUrl)
+      console.log(`✅ Webhook registrado: ${webhookUrl}`)
+
+      // Verificar el estado del webhook
+      const info = await this.bot.getWebHookInfo()
+      console.log('📡 Webhook Info:', {
+        url: info.url,
+        pending_update_count: info.pending_update_count,
+        last_error_message: info.last_error_message || 'Sin errores'
+      })
+    } catch (error) {
+      console.error('❌ Error configurando webhook:', error.message)
+    }
+  }
+
+  /**
+   * Procesa updates recibidos via webhook
+   * @param {Object} update - Update de Telegram
+   */
+  processUpdate(update) {
+    if (!this.bot || !this.isInitialized) {
+      console.log('⚠️ Bot no inicializado, ignorando update')
+      return
+    }
+
+    // Procesar el update manualmente
+    this.bot.processUpdate(update)
+  }
+
+  /**
+   * Elimina el webhook (útil para cambiar a polling)
+   */
+  async removeWebhook() {
+    if (!this.bot) return
+
+    try {
+      await this.bot.deleteWebHook()
+      console.log('✅ Webhook eliminado')
+    } catch (error) {
+      console.error('❌ Error eliminando webhook:', error.message)
+    }
   }
 
   setupHandlers() {
@@ -122,7 +194,6 @@ Usa /turno para comenzar.
 
   async handleListOrders(msg) {
     const chatId = msg.chat.id
-    const { OrderModel } = require('../models')
     const pendingOrders = await OrderModel.findPending()
 
     if (pendingOrders.length === 0) {
@@ -150,7 +221,6 @@ Usa /turno para comenzar.
     }
 
     const [action, orderId] = data.split('_')
-    const { OrderModel, UserModel, TransactionModel } = require('../models')
     const order = await OrderModel.findById(parseInt(orderId))
 
     if (!order) {
@@ -299,4 +369,4 @@ ${order.notes ? `\n📝 ${order.notes}` : ''}
 }
 
 const telegramService = new TelegramService()
-module.exports = telegramService
+export default telegramService

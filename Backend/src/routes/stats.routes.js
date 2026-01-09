@@ -3,16 +3,16 @@
  * Rutas para estadísticas del dashboard (solo admin)
  */
 
-const { Router } = require('express')
-const { 
+import { Router } from 'express'
+import {
   getDashboardStats,
   getSummary,
   getUserStats,
   getPointsStats,
   getRedemptionStats,
   getRecentTransactions
-} = require('../controllers/stats.controller')
-const { verifyToken, requireRole } = require('../middlewares')
+} from '../controllers/stats.controller.js'
+import { verifyToken, requireRole } from '../middlewares/index.js'
 
 const router = Router()
 
@@ -28,4 +28,4 @@ router.get('/points', getPointsStats)
 router.get('/redemptions', getRedemptionStats)
 router.get('/transactions', getRecentTransactions)
 
-module.exports = router
+export default router

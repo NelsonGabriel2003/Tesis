@@ -1,4 +1,4 @@
-const { query } = require('../config/database')
+import { query } from '../config/database.js'
 
 const OrderModel = {
   create: async (orderData) => {
@@ -126,4 +126,4 @@ const OrderModel = {
   }
 }
 
-module.exports = OrderModel
+export default OrderModel

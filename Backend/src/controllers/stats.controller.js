@@ -3,8 +3,8 @@
  * Maneja estadísticas del dashboard para administradores
  */
 
-const StatsModel = require('../models/stats.model')
-const { asyncHandler } = require('../middlewares')
+import StatsModel from '../models/stats.model.js'
+import { asyncHandler } from '../middlewares/index.js'
 
 /**
  * Obtener resumen completo del dashboard
@@ -119,7 +119,7 @@ const getRecentTransactions = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = {
+export {
   getDashboardStats,
   getSummary,
   getUserStats,

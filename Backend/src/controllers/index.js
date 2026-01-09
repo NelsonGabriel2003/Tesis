@@ -3,15 +3,15 @@
  * Exporta todos los controladores
  */
 
-const authController = require('./auth.controller')
-const productController = require('./product.controller')
-const rewardController = require('./reward.controller')
-const serviceController = require('./service.controller')
-const profileController = require('./profile.controller')
-const orderController = require('./order.controller')
-const staffController = require('./staff.controller')
+import * as authController from './auth.controller.js'
+import * as productController from './product.controller.js'
+import * as rewardController from './reward.controller.js'
+import * as serviceController from './service.controller.js'
+import * as profileController from './profile.controller.js'
+import * as orderController from './order.controller.js'
+import * as staffController from './staff.controller.js'
 
-module.exports = {
+export {
   authController,
   productController,
   rewardController,

@@ -3,17 +3,17 @@
  * Rutas para el menú de productos
  */
 
-const { Router } = require('express')
-const { 
-  getProducts, 
-  getProductById, 
+import { Router } from 'express'
+import {
+  getProducts,
+  getProductById,
   searchProducts,
   getCategories,
-  createProduct, 
-  updateProduct, 
-  deleteProduct 
-} = require('../controllers/product.controller')
-const { verifyToken, requireRole } = require('../middlewares')
+  createProduct,
+  updateProduct,
+  deleteProduct
+} from '../controllers/product.controller.js'
+import { verifyToken, requireRole } from '../middlewares/index.js'
 
 const router = Router()
 
@@ -28,4 +28,4 @@ router.post('/', verifyToken, requireRole('admin'), createProduct)
 router.put('/:id', verifyToken, requireRole('admin'), updateProduct)
 router.delete('/:id', verifyToken, requireRole('admin'), deleteProduct)
 
-module.exports = router
+export default router
