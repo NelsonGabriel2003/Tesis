@@ -2,10 +2,9 @@
  * Seed: Datos iniciales
  * Ejecutar con: node database/seeds/001_initial_data.js
  */
-require('dotenv').config()
-
-const bcrypt = require('bcryptjs')
-const { pool } = require('../../src/config/database')
+import 'dotenv/config'
+import bcrypt from 'bcryptjs'
+import { pool } from '../../src/config/database.js'
 
 const seedData = async () => {
   const client = await pool.connect()
@@ -20,10 +19,10 @@ const seedData = async () => {
     // ===================
     console.log('👤 Creando usuario de prueba...')
     const hashedPassword = await bcrypt.hash('123456', 10)
-    
+
     await client.query(`
       INSERT INTO users (email, password, name, phone, role, membership_level, current_points, total_points)
-      VALUES 
+      VALUES
         ('admin@bar.com', $1, 'Administrador', '0999999999', 'admin', 'platino', 5000, 10000),
         ('juan@email.com', $1, 'Juan Pérez', '0998765432', 'user', 'oro', 1250, 3500),
         ('maria@email.com', $1, 'María García', '0991234567', 'user', 'plata', 350, 750)
@@ -36,7 +35,7 @@ const seedData = async () => {
     console.log('🍺 Insertando productos...')
     await client.query(`
       INSERT INTO products (name, description, price, points_earned, category, image_url)
-      VALUES 
+      VALUES
         ('Cerveza Nacional', 'Cerveza fría de 330ml', 3.50, 10, 'Bebidas', '/images/cerveza.jpg'),
         ('Cerveza Importada', 'Cerveza premium importada', 5.50, 15, 'Bebidas', '/images/cerveza-imp.jpg'),
         ('Mojito Clásico', 'Ron, menta, limón y soda', 7.00, 20, 'Cócteles', '/images/mojito.jpg'),
@@ -58,7 +57,7 @@ const seedData = async () => {
     console.log('🎁 Insertando recompensas...')
     await client.query(`
       INSERT INTO rewards (name, description, points_cost, category, stock, is_popular, image_url)
-      VALUES 
+      VALUES
         ('Cerveza Gratis', 'Una cerveza nacional de cortesía', 100, 'Bebidas', 50, true, '/images/reward-cerveza.jpg'),
         ('Cóctel Premium', 'Un cóctel de la casa gratis', 200, 'Bebidas', 30, true, '/images/reward-coctel.jpg'),
         ('Nachos con Todo', 'Porción de nachos completos', 150, 'Comida', 40, false, '/images/reward-nachos.jpg'),
@@ -78,7 +77,7 @@ const seedData = async () => {
     console.log('🛎️ Insertando servicios...')
     await client.query(`
       INSERT INTO services (name, description, points_required, points_earned, category, image_url)
-      VALUES 
+      VALUES
         ('Reserva de Mesa', 'Reserva tu mesa con anticipación', 0, 50, 'Reservas', '/images/serv-mesa.jpg'),
         ('Cumpleaños VIP', 'Paquete especial para cumpleaños', 500, 100, 'Eventos', '/images/serv-cumple.jpg'),
         ('Karaoke Privado', 'Sala privada de karaoke por 2 horas', 300, 75, 'Entretenimiento', '/images/serv-karaoke.jpg'),
@@ -96,7 +95,7 @@ const seedData = async () => {
     console.log('📊 Insertando transacciones de ejemplo...')
     await client.query(`
       INSERT INTO transactions (user_id, type, points, description, reference_type)
-      VALUES 
+      VALUES
         (2, 'earned', 150, 'Compra en el bar', 'order'),
         (2, 'earned', 200, 'Compra en el bar', 'order'),
         (2, 'earned', 100, 'Bonus de bienvenida', 'promotion'),
@@ -125,11 +124,8 @@ const seedData = async () => {
   }
 }
 
-// Ejecutar si se llama directamente
-if (require.main === module) {
-  seedData()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1))
-}
+seedData()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1))
 
-module.exports = seedData
+export default seedData

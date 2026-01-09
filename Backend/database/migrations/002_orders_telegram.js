@@ -1,6 +1,5 @@
-require('dotenv').config()
-
-const { pool } = require('../../src/config/database')
+import 'dotenv/config'
+import { pool } from '../../src/config/database.js'
 
 const createOrderTables = async () => {
   const client = await pool.connect()
@@ -135,10 +134,8 @@ const createOrderTables = async () => {
   }
 }
 
-if (require.main === module) {
-  createOrderTables()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1))
-}
+createOrderTables()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1))
 
-module.exports = createOrderTables
+export default createOrderTables

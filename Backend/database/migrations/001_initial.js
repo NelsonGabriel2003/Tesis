@@ -2,9 +2,8 @@
  * Migration: Crear todas las tablas
  * Ejecutar con: node database/migrations/001_initial.js
  */
-require('dotenv').config()
-
-const { pool } = require('../../src/config/database')
+import 'dotenv/config'
+import { pool } from '../../src/config/database.js'
 
 const createTables = async () => {
   const client = await pool.connect()
@@ -130,7 +129,7 @@ const createTables = async () => {
     // ÍNDICES
     // ===================
     console.log('📦 Creando índices...')
-    
+
     await client.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)`)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_rewards_category ON rewards(category)`)
@@ -154,11 +153,8 @@ const createTables = async () => {
   }
 }
 
-// Ejecutar si se llama directamente
-if (require.main === module) {
-  createTables()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1))
-}
+createTables()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1))
 
-module.exports = createTables
+export default createTables

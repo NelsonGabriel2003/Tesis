@@ -1,5 +1,5 @@
-require('dotenv').config()
-const { pool } = require('../../src/config/database')
+import 'dotenv/config'
+import { pool } from '../../src/config/database.js'
 
 const seedOrdersData = async () => {
   const client = await pool.connect()
@@ -9,14 +9,14 @@ const seedOrdersData = async () => {
 
     // Verificar si ya hay datos
     const existing = await client.query('SELECT COUNT(*) FROM staff')
-    
+
     if (parseInt(existing.rows[0].count) > 0) {
       console.log('⚠️ Ya existen datos en staff. Omitiendo...')
     } else {
       // Insertar staff de ejemplo
       await client.query(`
         INSERT INTO staff (name, email, phone, role, can_approve_orders, can_complete_orders)
-        VALUES 
+        VALUES
           ('María García', 'maria@bar.com', '0991234567', 'waiter', true, true),
           ('Carlos López', 'carlos@bar.com', '0997654321', 'waiter', true, true)
       `)
@@ -39,3 +39,7 @@ const seedOrdersData = async () => {
 }
 
 seedOrdersData()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1))
+
+export default seedOrdersData
