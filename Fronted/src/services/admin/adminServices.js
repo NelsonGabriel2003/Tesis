@@ -170,6 +170,65 @@ export const userService = {
 }
 
 /**
+ * Servicio para gestión del Personal (Staff)
+ */
+export const staffService = {
+  // Obtener todo el personal
+  getAll: async () => {
+    const response = await api.get('/staff')
+    return response.data
+  },
+
+  // Obtener personal por ID
+  getById: async (id) => {
+    const response = await api.get(`/staff/${id}`)
+    return response.data
+  },
+
+  // Crear nuevo personal
+  create: async (staffData) => {
+    const response = await api.post('/staff', staffData)
+    return response.data
+  },
+
+  // Actualizar personal
+  update: async (id, staffData) => {
+    const response = await api.put(`/staff/${id}`, staffData)
+    return response.data
+  },
+
+  // Eliminar personal
+  delete: async (id) => {
+    const response = await api.delete(`/staff/${id}`)
+    return response
+  },
+
+  // Generar código de vinculación Telegram
+  generateLinkCode: async (id) => {
+    const response = await api.post(`/staff/${id}/generate-code`)
+    return response.data
+  },
+
+  // Desvincular Telegram
+  unlinkTelegram: async (id) => {
+    const response = await api.delete(`/staff/${id}/telegram`)
+    return response
+  },
+
+  // Obtener personal en turno
+  getOnShift: async () => {
+    const response = await api.get('/staff/on-shift')
+    return response.data
+  },
+
+  // Cambiar estado de turno
+  toggleShift: async (id, isOnShift) => {
+    const response = await api.put(`/staff/${id}/shift`, { isOnShift })
+    return response.data
+  }
+}
+
+/**
  * Servicio para estadísticas del Dashboard (Admin)
  */
 export const statsService = {
@@ -215,5 +274,6 @@ export default {
   rewardService,
   serviceService,
   userService,
+  staffService,
   statsService
 }

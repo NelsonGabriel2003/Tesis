@@ -5,12 +5,13 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { 
-  LayoutDashboard, 
-  UtensilsCrossed, 
-  Gift, 
-  Wrench, 
+import {
+  LayoutDashboard,
+  UtensilsCrossed,
+  Gift,
+  Wrench,
   Users,
+  UserCog,
   LogOut,
   Menu,
   X,
@@ -22,6 +23,7 @@ import ProductsAdmin from './ProductsAdmin'
 import RewardsAdmin from './RewardsAdmin'
 import ServicesAdmin from './ServicesAdmin'
 import UsersAdmin from './UsersAdmin'
+import StaffAdmin from './StaffAdmin'
 
 const AdminPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -42,6 +44,7 @@ const AdminPage = () => {
     { id: 'rewards', name: 'Recompensas', icon: Gift },
     { id: 'services', name: 'Servicios', icon: Wrench },
     { id: 'users', name: 'Usuarios', icon: Users },
+    { id: 'staff', name: 'Personal', icon: UserCog },
   ]
 
   // Cerrar sesión
@@ -67,6 +70,8 @@ const AdminPage = () => {
         return <ServicesAdmin />
       case 'users':
         return <UsersAdmin />
+      case 'staff':
+        return <StaffAdmin />
       default:
         return <ProductsAdmin />
     }
