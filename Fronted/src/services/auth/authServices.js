@@ -2,48 +2,21 @@
  * Auth Service
  * Maneja todas las llamadas al API relacionadas con autenticación
  */
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+import api from '../api.js'
 
 export const authService = {
   /**
    * Inicia sesión con email y password
    */
   login: async (credentials) => {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(credentials)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Error en el inicio de sesión')
-    }
-
-    return response.json()
+    return api.post('/auth/login', credentials)
   },
 
   /**
    * Registra un nuevo usuario
    */
   register: async (userData) => {
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(userData)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Error en el registro')
-    }
-
-    return response.json()
+    return api.post('/auth/register', userData)
   },
 
   /**

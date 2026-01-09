@@ -4,70 +4,47 @@
  */
 
 import { membershipLevels } from '../../models/perfil/perfilModel'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-
-// Helper para obtener headers con token
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('token')}`
-})
+import api from '../api.js'
 
 export const perfilService = {
   /**
    * Obtener datos del usuario desde el backend
    */
   getUserProfile: async () => {
-    try {
-      const response = await fetch(`${API_URL}/profile`, {
-        method: 'GET',
-        headers: getHeaders()
-      })
+    const result = await api.get('/profile')
+    const data = result.data
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Error al obtener perfil')
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || '',
+      avatar: null,
+      memberSince: data.memberSince,
+      membershipLevel: data.membership?.level?.toLowerCase() || 'bronce',
+      membership: {
+        level: data.membership?.level?.toLowerCase() || 'bronce',
+        progress: data.membership?.progress || 0,
+        pointsToNextLevel: data.membership?.pointsToNextLevel || 500,
+        nextLevel: data.membership?.nextLevel || 'plata'
+      },
+      points: {
+        current: data.points?.current || 0,
+        total: data.points?.total || 0,
+        nextLevel: perfilService.getNextLevelPoints(data.points?.total || 0),
+        history: []
+      },
+      stats: {
+        totalVisits: 0,
+        totalSpent: 0,
+        favoriteItem: '-',
+        lastVisit: data.memberSince
       }
-
-      const result = await response.json()
-      const data = result.data
-
-      // Transformar respuesta del backend al formato esperado
-      return {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone || '',
-        avatar: null,
-        memberSince: data.memberSince,
-        membershipLevel: data.membership?.level?.toLowerCase() || 'bronce',
-        membership: {
-          level: data.membership?.level?.toLowerCase() || 'bronce',
-          progress: data.membership?.progress || 0,
-          pointsToNextLevel: data.membership?.pointsToNextLevel || 500,
-          nextLevel: data.membership?.nextLevel || 'plata'
-        },
-        points: {
-          current: data.points?.current || 0,
-          total: data.points?.total || 0,
-          nextLevel: perfilService.getNextLevelPoints(data.points?.total || 0),
-          history: []
-        },
-        stats: {
-          totalVisits: 0,
-          totalSpent: 0,
-          favoriteItem: '-',
-          lastVisit: data.memberSince
-        }
-      }
-    } catch (error) {
-      console.error('Error en getUserProfile:', error)
-      throw error
     }
   },
 
   /**
-   * Obtener puntos para el siguiente nivel
+   * Obtener puntos para el siguiente nivel (lógica local)
    */
   getNextLevelPoints: (currentPoints) => {
     if (currentPoints < 500) return 500
@@ -80,42 +57,27 @@ export const perfilService = {
    * Actualizar datos del usuario
    */
   updateUserProfile: async (userData) => {
-    try {
-      const response = await fetch(`${API_URL}/profile`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({
-          name: userData.name,
-          phone: userData.phone
-        })
-      })
+    const result = await api.put('/profile', {
+      name: userData.name,
+      phone: userData.phone
+    })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Error al actualizar perfil')
-      }
+    const data = result.data || result.user
 
-      const result = await response.json()
-      const data = result.data || result.user
+    // Actualizar localStorage (lógica de negocio, NO va en api.js)
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const updatedUser = {
+      ...storedUser,
+      name: data.name,
+      phone: data.phone
+    }
+    localStorage.setItem('user', JSON.stringify(updatedUser))
 
-      // Actualizar localStorage
-      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
-      const updatedUser = {
-        ...storedUser,
-        name: data.name,
-        phone: data.phone
-      }
-      localStorage.setItem('user', JSON.stringify(updatedUser))
-
-      return {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone || ''
-      }
-    } catch (error) {
-      console.error('Error en updateUserProfile:', error)
-      throw error
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || ''
     }
   },
 
@@ -124,63 +86,44 @@ export const perfilService = {
    */
   getPointsHistory: async () => {
     try {
-      const response = await fetch(`${API_URL}/profile/transactions`, {
-        method: 'GET',
-        headers: getHeaders()
-      })
-
-      if (!response.ok) {
-        return []
-      }
-
-      const result = await response.json()
-      
-      // Mapear transacciones al formato esperado
+      const result = await api.get('/profile/transactions')
       const transactions = result.data || result.transactions || []
-      
+
       return transactions.map(t => ({
         id: t.id,
-        type: t.type, // 'earned' | 'redeemed'
+        type: t.type,
         points: t.points,
         description: t.description,
         date: t.created_at,
         referenceType: t.reference_type,
         referenceId: t.reference_id
       }))
-    } catch (error) {
-      console.error('Error en getPointsHistory:', error)
+    } catch {
       return []
     }
   },
 
+  /**
+   * Obtener estadísticas
+   */
   getStats: async () => {
-  try {
-    const response = await fetch(`${API_URL}/profile/stats`, {
-      method: 'GET',
-      headers: getHeaders()
-    })
+    try {
+      const result = await api.get('/profile/stats')
+      const data = result.data
 
-    if (!response.ok) {
+      return {
+        totalVisits: data.orders?.totalVisits || 0,
+        totalSpent: data.orders?.totalSpent || 0,
+        favoriteItem: data.orders?.favoriteItem || '-',
+        lastVisit: data.orders?.lastVisit || null
+      }
+    } catch {
       return null
     }
-
-    const result = await response.json()
-    const data = result.data
-
-    return {
-      totalVisits: data.orders?.totalVisits || 0,
-      totalSpent: data.orders?.totalSpent || 0,
-      favoriteItem: data.orders?.favoriteItem || '-',
-      lastVisit: data.orders?.lastVisit || null
-    }
-  } catch (error) {
-    console.error('Error en getStats:', error)
-    return null
-  }
-},
+  },
 
   /**
-   * Obtener nivel de membresía
+   * Obtener nivel de membresía (lógica local)
    */
   getMembershipLevel: (points) => {
     if (points >= 5000) return membershipLevels.platinum
@@ -190,7 +133,7 @@ export const perfilService = {
   },
 
   /**
-   * Calcular progreso al siguiente nivel
+   * Calcular progreso al siguiente nivel (lógica local)
    */
   getProgressToNextLevel: (currentPoints) => {
     const levels = [
@@ -224,7 +167,7 @@ export const perfilService = {
   },
 
   /**
-   * Formatear fecha
+   * Formatear fecha (lógica local)
    */
   formatDate: (dateString) => {
     if (!dateString) return '-'
