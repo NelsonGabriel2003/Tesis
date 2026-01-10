@@ -10,7 +10,14 @@ export const initialCanjeState = {
   error: null,
   selectedCategory: 'todos'
 }
-
+// Categorías de canje
+export const canjeCategories = [
+  { id: 'todos', name: 'Todos', icon: '🎁' },
+  { id: 'bebidas', name: 'Bebidas', icon: '🍺' },
+  { id: 'comida', name: 'Comida', icon: '🍔' },
+  { id: 'descuentos', name: 'Descuentos', icon: '💰' },
+  { id: 'experiencias', name: 'Experiencias', icon: '⭐' }
+]
 // Mensajes
 export const canjeMessages = {
   LOADING: 'Cargando recompensas...',
