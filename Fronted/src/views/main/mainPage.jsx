@@ -45,7 +45,8 @@ useEffect(() => {
     try {
       const token = localStorage.getItem('token')
       if (token) {
-        const response = await fetch('http://localhost:3000/api/profile', {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+        const response = await fetch(`${API_URL}/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -145,6 +146,14 @@ useEffect(() => {
       icon: Users,
       color: 'bg-green-500',
       route: '/admin?section=users'
+    },
+    {
+      id: 'staff',
+      name: 'Personal',
+      description: 'Staff y Telegram',
+      icon: User,
+      color: 'bg-indigo-500',
+      route: '/admin?section=staff'
     }
   ]
 
