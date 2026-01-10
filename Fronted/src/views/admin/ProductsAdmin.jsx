@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Plus, Search, Edit, Trash2, X, Loader } from 'lucide-react'
 import { useProductController } from '../../controllers/admin'
 import { productCategories } from '../../models/admin'
+import ImageUpload from '../../components/ui/ImageUpload'
 
 const ProductsAdmin = () => {
   const {
@@ -279,19 +280,23 @@ const ProductsAdmin = () => {
                 </select>
               </div>
 
-              {/* URL de imagen */}
+              {/* Imagen */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL de imagen
+                  Imagen del producto
                 </label>
-                <input
-                  type="text"
-                  name="image_url"
+                <ImageUpload
                   value={formData.image_url}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="/images/producto.jpg"
+                  onChange={(url) => handleInputChange({ 
+                    target: { name: 'image_url', value: url } 
+                  })}
+                  onError={(error) => {
+                    // Mostrar error usando la notificación existente
+                    const event = new CustomEvent('showNotification', { 
+                      detail: { message: error, type: 'error' } 
+                    })
+                    window.dispatchEvent(event)
+                  }}
                 />
               </div>
 

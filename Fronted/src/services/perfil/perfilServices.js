@@ -3,10 +3,42 @@
  * Servicios para el módulo de perfil - Conectado al Backend
  */
 
-import { membershipLevels } from '../../models/perfil/perfilModel'
 import api from '../api.js'
 
+// Cache para configuración de membresías (evita llamadas repetidas)
+let membershipConfigCache = null
+
 export const perfilService = {
+  /**
+   * Obtener configuración de membresías desde la API
+   */
+  getMembershipConfig: async () => {
+    if (membershipConfigCache) {
+      return membershipConfigCache
+    }
+
+    try {
+      const result = await api.get('/config/membership')
+      membershipConfigCache = result.data.levels
+      return membershipConfigCache
+    } catch {
+      // Fallback si la API falla
+      return {
+        bronce: { name: 'Bronce', icon: '🥉', color: 'bg-amber-600', minPoints: 0, multiplier: 1 },
+        plata: { name: 'Plata', icon: '🥈', color: 'bg-gray-400', minPoints: 500, multiplier: 1.5 },
+        oro: { name: 'Oro', icon: '🥇', color: 'bg-yellow-500', minPoints: 1500, multiplier: 2 },
+        platino: { name: 'Platino', icon: '💎', color: 'bg-purple-500', minPoints: 5000, multiplier: 3 }
+      }
+    }
+  },
+
+  /**
+   * Limpiar cache de configuración (útil si el admin actualiza config)
+   */
+  clearConfigCache: () => {
+    membershipConfigCache = null
+  },
+
   /**
    * Obtener datos del usuario desde el backend
    */
@@ -31,7 +63,6 @@ export const perfilService = {
       points: {
         current: data.points?.current || 0,
         total: data.points?.total || 0,
-        nextLevel: perfilService.getNextLevelPoints(data.points?.total || 0),
         history: []
       },
       stats: {
@@ -41,16 +72,6 @@ export const perfilService = {
         lastVisit: data.memberSince
       }
     }
-  },
-
-  /**
-   * Obtener puntos para el siguiente nivel (lógica local)
-   */
-  getNextLevelPoints: (currentPoints) => {
-    if (currentPoints < 500) return 500
-    if (currentPoints < 1500) return 1500
-    if (currentPoints < 5000) return 5000
-    return 5000
   },
 
   /**
@@ -64,7 +85,7 @@ export const perfilService = {
 
     const data = result.data || result.user
 
-    // Actualizar localStorage (lógica de negocio, NO va en api.js)
+    // Actualizar localStorage
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
     const updatedUser = {
       ...storedUser,
@@ -123,51 +144,55 @@ export const perfilService = {
   },
 
   /**
-   * Obtener nivel de membresía (lógica local)
+   * Obtener nivel de membresía según puntos
    */
-  getMembershipLevel: (points) => {
-    if (points >= 5000) return membershipLevels.platinum
-    if (points >= 1500) return membershipLevels.gold
-    if (points >= 500) return membershipLevels.silver
-    return membershipLevels.bronze
+  getMembershipLevel: async (points) => {
+    const levels = await perfilService.getMembershipConfig()
+    
+    if (points >= levels.platino.minPoints) return levels.platino
+    if (points >= levels.oro.minPoints) return levels.oro
+    if (points >= levels.plata.minPoints) return levels.plata
+    return levels.bronce
   },
 
   /**
-   * Calcular progreso al siguiente nivel (lógica local)
+   * Calcular progreso al siguiente nivel
    */
-  getProgressToNextLevel: (currentPoints) => {
-    const levels = [
-      { level: 'bronze', min: 0 },
-      { level: 'silver', min: 500 },
-      { level: 'gold', min: 1500 },
-      { level: 'platinum', min: 5000 }
+  getProgressToNextLevel: async (currentPoints) => {
+    const levels = await perfilService.getMembershipConfig()
+    
+    const levelOrder = [
+      { key: 'bronce', ...levels.bronce },
+      { key: 'plata', ...levels.plata },
+      { key: 'oro', ...levels.oro },
+      { key: 'platino', ...levels.platino }
     ]
 
-    const currentLevelIndex = levels.findIndex((l, i) => {
-      const nextLevel = levels[i + 1]
-      return !nextLevel || currentPoints < nextLevel.min
+    const currentLevelIndex = levelOrder.findIndex((l, i) => {
+      const nextLevel = levelOrder[i + 1]
+      return !nextLevel || currentPoints < nextLevel.minPoints
     })
 
-    const nextLevel = levels[currentLevelIndex + 1]
+    const nextLevel = levelOrder[currentLevelIndex + 1]
 
     if (!nextLevel) {
       return { percentage: 100, pointsNeeded: 0, nextLevelName: 'Máximo' }
     }
 
-    const currentLevelMin = levels[currentLevelIndex].min
+    const currentLevelMin = levelOrder[currentLevelIndex].minPoints
     const pointsInLevel = currentPoints - currentLevelMin
-    const pointsForNextLevel = nextLevel.min - currentLevelMin
+    const pointsForNextLevel = nextLevel.minPoints - currentLevelMin
     const percentage = Math.min((pointsInLevel / pointsForNextLevel) * 100, 100)
 
     return {
       percentage,
-      pointsNeeded: nextLevel.min - currentPoints,
-      nextLevelName: membershipLevels[nextLevel.level]?.name || nextLevel.level
+      pointsNeeded: nextLevel.minPoints - currentPoints,
+      nextLevelName: nextLevel.name
     }
   },
 
   /**
-   * Formatear fecha (lógica local)
+   * Formatear fecha
    */
   formatDate: (dateString) => {
     if (!dateString) return '-'

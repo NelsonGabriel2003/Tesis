@@ -15,7 +15,8 @@ import {
   LogOut,
   Menu,
   X,
-  ArrowLeft
+  ArrowLeft,
+  Settings
 } from 'lucide-react'
 
 // Importar componentes de administración
@@ -24,6 +25,7 @@ import RewardsAdmin from './RewardsAdmin'
 import ServicesAdmin from './ServicesAdmin'
 import UsersAdmin from './UsersAdmin'
 import StaffAdmin from './StaffAdmin'
+import ConfigAdmin from './ConfigAdmin'
 
 const AdminPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -45,6 +47,7 @@ const AdminPage = () => {
     { id: 'services', name: 'Servicios', icon: Wrench },
     { id: 'users', name: 'Usuarios', icon: Users },
     { id: 'staff', name: 'Personal', icon: UserCog },
+    { id: 'config', name: 'Configuración', icon: Settings },
   ]
 
   // Cerrar sesión
@@ -72,6 +75,8 @@ const AdminPage = () => {
         return <UsersAdmin />
       case 'staff':
         return <StaffAdmin />
+      case 'config':
+        return <ConfigAdmin />
       default:
         return <ProductsAdmin />
     }
