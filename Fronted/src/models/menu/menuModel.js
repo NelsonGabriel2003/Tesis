@@ -5,6 +5,13 @@ export const initialMenuState = {
   selectedCategory: 'todos'
 }
 
+export const menuCategories = [
+  { id: 'todos', name: 'Todos', icon: '🍽️' },
+  { id: 'bebidas', name: 'Bebidas', icon: '🍺' },
+  { id: 'cocteles', name: 'Cócteles', icon: '🍹' },
+  { id: 'snacks', name: 'Snacks', icon: '🍕' },
+  { id: 'promociones', name: 'Promos', icon: '🔥' }
+]
 export const menuMessages = {
   LOADING: 'Cargando menú...',
   ERROR: 'Error al cargar el menú',
