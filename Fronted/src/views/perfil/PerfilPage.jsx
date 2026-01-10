@@ -136,6 +136,7 @@ const PerfilPage = () => {
           <PerfilStats
             stats={user.stats}
             formatDate={formatDate}
+            userPoints={user.points?.current || 0}
           />
         )}
       </div>
