@@ -19,7 +19,7 @@ const ProductModel = {
     const params = []
 
     if (category) {
-      sql += ' AND category = $1'
+      sql += ' AND LOWER(category) = LOWER($1)'
       params.push(category)
     }
 
@@ -28,7 +28,6 @@ const ProductModel = {
     const result = await query(sql, params)
     return result.rows
   },
-
   /**
    * Buscar producto por ID
    */
