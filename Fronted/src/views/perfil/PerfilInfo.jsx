@@ -90,31 +90,6 @@ const PerfilInfo = ({
           )
         })}
       </div>
-
-      {/* Beneficios del nivel actual */}
-      <div className="mt-6 rounded-xl bg-gradient-to-br from-primaryClr/5 to-purple-500/5 p-4">
-        <h4 className="mb-3 font-semibold text-text-primary">
-          Beneficios de tu nivel
-        </h4>
-        <ul className="space-y-2">
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            2 puntos por cada $1 gastado
-          </li>
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            Descuento 10% en cumpleaños
-          </li>
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            Reserva prioritaria
-          </li>
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            Bebida de cortesía mensual
-          </li>
-        </ul>
-      </div>
     </div>
   )
 }
