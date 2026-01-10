@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { Calendar, DollarSign, Heart, TrendingUp, Gift, Loader } from 'lucide-react'
-import { canjeService } from '../../services/admin/adminServices'
+import { rewardService } from '../../services/admin/adminServices'
 
 const PerfilStats = ({ stats, formatDate, userPoints = 0 }) => {
   const [nearRewards, setNearRewards] = useState([])
@@ -15,8 +15,7 @@ const PerfilStats = ({ stats, formatDate, userPoints = 0 }) => {
   useEffect(() => {
     const loadNearRewards = async () => {
       try {
-        const allRewards = await canjeService.getAll()
-        
+        const allRewards = await rewardService.getAll()
         // Filtrar y ordenar por cercanía a los puntos del usuario
         const sorted = allRewards
           .filter(r => r.isAvailable)
