@@ -19,11 +19,12 @@ const ServiceModel = {
     const params = []
 
     if (category) {
-      sql += ' AND category = $1'
+      sql += ' AND LOWER(category) = LOWER($1)'
       params.push(category)
     }
 
     sql += ' ORDER BY category, name'
+    
 
     const result = await query(sql, params)
     return result.rows
