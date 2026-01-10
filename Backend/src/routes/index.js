@@ -15,6 +15,8 @@ import orderRoutes from './order.routes.js'
 import orderAdminRoutes from './orderAdmin.routes.js'
 import staffRoutes from './staff.routes.js'
 import telegramRoutes from './telegram.routes.js'
+import configRoutes from './config.routes.js'
+import uploadRoutes from './upload.routes.js'
 
 const router = Router()
 
@@ -42,5 +44,11 @@ router.use('/staff', staffRoutes)
 
 // Rutas de Telegram Bot (webhook)
 router.use('/telegram', telegramRoutes)
+
+// Rutas de configuración del negocio
+router.use('/config', configRoutes)
+
+// Rutas de subida de imágenes
+router.use('/upload', uploadRoutes)
 
 export default router

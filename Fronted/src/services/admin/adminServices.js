@@ -229,6 +229,83 @@ export const staffService = {
 }
 
 /**
+ * Servicio para gestión de Configuración del Negocio
+ */
+export const configService = {
+  // Obtener todas las configuraciones
+  getAll: async () => {
+    const response = await api.get('/config')
+    return response.data
+  },
+
+  // Obtener configuraciones por categoría
+  getByCategory: async (category) => {
+    const response = await api.get(`/config?category=${category}`)
+    return response.data
+  },
+
+  // Obtener configuración de puntos (pública)
+  getPointsConfig: async () => {
+    const response = await api.get('/config/points')
+    return response.data
+  },
+
+  // Obtener configuración de membresías (pública)
+  getMembershipConfig: async () => {
+    const response = await api.get('/config/membership')
+    return response.data
+  },
+
+  // Actualizar una configuración
+  update: async (key, value) => {
+    const response = await api.put(`/config/${key}`, { value })
+    return response.data
+  },
+
+  // Actualizar múltiples configuraciones
+  updateMany: async (configs) => {
+    const response = await api.put('/config', { configs })
+    return response.data
+  }
+}
+
+/**
+ * Servicio para subida de imágenes
+ */
+export const uploadService = {
+  // Subir imagen
+  uploadImage: async (file) => {
+    const formData = new FormData()
+    formData.append('image', file)
+
+    const token = localStorage.getItem('token')
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
+    const response = await fetch(`${API_URL}/upload/image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Error al subir imagen')
+    }
+
+    return data
+  },
+
+  // Eliminar imagen
+  deleteImage: async (publicId) => {
+    const response = await api.delete(`/upload/image/${encodeURIComponent(publicId)}`)
+    return response
+  }
+}
+
+/**
  * Servicio para estadísticas del Dashboard (Admin)
  */
 export const statsService = {
