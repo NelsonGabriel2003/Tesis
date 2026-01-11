@@ -5,6 +5,23 @@
 
 import { Plus, Minus, Star } from 'lucide-react'
 
+// Iconos por categoría (fallback si no hay imagen)
+const CATEGORY_ICONS = {
+  'bebidas': '🍺',
+  'cocteles': '🍹',
+  'cócteles': '🍹',
+  'snacks': '🍕',
+  'comida': '🍔',
+  'promociones': '🔥',
+  'promos': '🔥',
+  'default': '🍽️'
+}
+
+const getIconByCategory = (category) => {
+  const key = category?.toLowerCase() || 'default'
+  return CATEGORY_ICONS[key] || CATEGORY_ICONS['default']
+}
+
 const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) => {
   if (loading) {
     return (
@@ -50,14 +67,19 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
               !item.available ? 'opacity-60' : ''
             }`}
           >
-            {/* Imagen placeholder */}
-            <div className="relative h-32 bg-gradient-to-br from-primaryClr/20 to-purple-500/20">
-              <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                {item.category === 'bebidas' && '🍺'}
-                {item.category === 'cocteles' && '🍹'}
-                {item.category === 'snacks' && '🍕'}
-                {item.category === 'promociones' && '🔥'}
-              </div>
+            {/* Imagen o placeholder */}
+            <div className="relative h-32 bg-gradient-to-br from-primaryClr/20 to-purple-500/20 overflow-hidden">
+              {item.imageUrl ? (
+                <img 
+                  src={item.imageUrl} 
+                  alt={item.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-4xl">
+                  {getIconByCategory(item.category)}
+                </div>
+              )}
 
               {/* Badge de puntos */}
               <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-1 text-xs font-bold text-yellow-900">
