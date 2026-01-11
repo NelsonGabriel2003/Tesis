@@ -19,7 +19,7 @@ const RewardModel = {
     const params = []
 
     if (category) {
-      sql += ' AND category = $1'
+      sql += ' AND LOWER(category) = LOWER($1)'
       params.push(category)
     }
 
