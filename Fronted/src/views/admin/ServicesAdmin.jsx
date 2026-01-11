@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Plus, Search, Edit, Trash2, X, Loader } from 'lucide-react'
 import { useServiceController } from '../../controllers/admin'
 import { serviceCategories } from '../../models/admin'
+import ImageUpload from '../../components/ui/ImageUpload'
 
 const ServicesAdmin = () => {
   const {
@@ -32,6 +33,13 @@ const ServicesAdmin = () => {
     service.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.description?.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  // Handler para imagen
+  const handleImageChange = (imageUrl) => {
+    handleInputChange({
+      target: { name: 'image_url', value: imageUrl }
+    })
+  }
 
   return (
     <div className="space-y-6">
@@ -119,11 +127,24 @@ const ServicesAdmin = () => {
                 {filteredServices.map((service) => (
                   <tr key={service.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-800">{service.name}</p>
-                        <p className="text-sm text-gray-500 line-clamp-1">
-                          {service.description}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        {service.imageUrl ? (
+                          <img 
+                            src={service.imageUrl} 
+                            alt={service.name}
+                            className="w-10 h-10 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-xl">
+                            🛎️
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-gray-800">{service.name}</p>
+                          <p className="text-sm text-gray-500 line-clamp-1">
+                            {service.description}
+                          </p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -194,6 +215,17 @@ const ServicesAdmin = () => {
 
             {/* Modal Body */}
             <form onSubmit={saveService} className="p-6 space-y-4">
+              {/* Imagen */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Imagen del servicio
+                </label>
+                <ImageUpload
+                  value={formData.image_url}
+                  onChange={handleImageChange}
+                />
+              </div>
+
               {/* Nombre */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -281,22 +313,6 @@ const ServicesAdmin = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {/* URL de imagen */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL de imagen
-                </label>
-                <input
-                  type="text"
-                  name="image_url"
-                  value={formData.image_url}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="/images/servicio.jpg"
-                />
               </div>
 
               {/* Buttons */}
