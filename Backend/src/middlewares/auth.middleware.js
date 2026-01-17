@@ -11,7 +11,6 @@ import jwtConfig from '../config/jwt.js'
  */
 const verifyToken = (req, res, next) => {
   try {
-    // Obtener token del header
     const authHeader = req.headers.authorization
     
     if (!authHeader) {
@@ -21,7 +20,6 @@ const verifyToken = (req, res, next) => {
       })
     }
 
-    // Formato: "Bearer <token>"
     const token = authHeader.split(' ')[1]
     
     if (!token) {
@@ -31,10 +29,7 @@ const verifyToken = (req, res, next) => {
       })
     }
 
-    // Verificar token
     const decoded = jwt.verify(token, jwtConfig.secret)
-    
-    // Agregar usuario al request
     req.user = decoded
     
     next()
@@ -68,7 +63,6 @@ const optionalAuth = (req, res, next) => {
     
     next()
   } catch (error) {
-    // Si el token es inválido, simplemente continuamos sin usuario
     next()
   }
 }
@@ -96,4 +90,8 @@ const requireRole = (...roles) => {
   }
 }
 
-export { verifyToken, optionalAuth, requireRole }
+/**
+ * Middleware específico para admin
+ */
+const isAdmin = requireRole('admin')
+export { verifyToken, optionalAuth, requireRole,isAdmin }
