@@ -16,6 +16,7 @@ import TelegramSessionModel from './telegramSession.model.js'
 import StatsModel from './stats.model.js'
 import NotificationModel from './notification.model.js'
 import ConfigModel from './config.model.js'
+import AdminConfigModel from './adminConfig.model.js'
 
 export {
   UserModel,
@@ -30,5 +31,6 @@ export {
   TelegramSessionModel,
   StatsModel,
   NotificationModel,
-  ConfigModel
+  ConfigModel,
+  AdminConfigModel
 }
