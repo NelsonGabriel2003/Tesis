@@ -53,7 +53,7 @@ const MainPage = () => {
   // Redirigir admin al panel de administracion!
   useEffect(() => {
     if (!cargando && esAdministrador) {
-      navegarHacia('/admin')
+      navegarHacia('/admin', { replace: true })
     }
   }, [cargando, esAdministrador, navegarHacia])
 
@@ -124,6 +124,11 @@ const MainPage = () => {
         </div>
       </div>
     )
+  }
+
+  // Si es administrador, no renderizar nada (ya se redirige)
+  if (esAdministrador) {
+    return null
   }
 
   return (
