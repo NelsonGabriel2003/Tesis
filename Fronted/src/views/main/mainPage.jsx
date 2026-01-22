@@ -1,308 +1,324 @@
 /**
  * MainPage Component
- * Página principal después del login - Mobile First
+ * Pagina principal despues del login - Mobile First
  * Muestra contenido diferente para Admin vs Usuario
+ *
+ * Utiliza el contexto de autenticacion (useAuth) para obtener
+ * los datos del usuario y evitar duplicacion de logica.
  */
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Search, 
-  X, 
-  LogOut, 
-  UtensilsCrossed, 
-  Wrench, 
-  User, 
+import {
+  Search,
+  X,
+  LogOut,
   Gift,
   ChevronRight,
   Settings,
-  SquareStar,
   Users,
   TrendingUp,
   Package,
   Award,
   Loader,
-  RefreshCw
+  RefreshCw,
+  Menu,
+  HelpCircle,
+  Bell,
+  User
 } from 'lucide-react'
 import { useDashboardController } from '../../controllers/admin/useDashboardController'
+import { adminModules, userModules } from '../../config/modulesConfig'
+import { useAuth } from '../../hooks/useAuth'
+import { photoService } from '../../services/admin/adminServices'
 
 const MainPage = () => {
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [user, setUser] = useState(null)
-  const navigate = useNavigate()
+  // Estados locales del componente
+  const [textoBusqueda, setTextoBusqueda] = useState('')
+  const [resultadosBusqueda, setResultadosBusqueda] = useState([])
+  const [mostrarResultados, setMostrarResultados] = useState(false)
+  const [menuLateralAbierto, setMenuLateralAbierto] = useState(false)
+  const [fotos, setFotos] = useState([])
+  const [cargandoFotos, setCargandoFotos] = useState(true)
+
+  // Alternar menu lateral
+  const alternarMenuLateral = () => {
+    setMenuLateralAbierto(!menuLateralAbierto)
+  }
+
+  // Hook de navegacion
+  const navegarHacia = useNavigate()
+
+  // Obtener datos del usuario desde el contexto de autenticacion
+  // Ya no necesitamos useEffect ni fetch manual, el contexto lo maneja
+  const {
+    usuarioActual,
+    cargando,
+    esAdministrador,
+    cerrarSesion
+  } = useAuth()
 
   // Controlador del dashboard (solo se usa si es admin)
-  const { stats, loading: statsLoading, error: statsError, refresh } = useDashboardController()
-  // Cargar datos de usuario al montar  
-useEffect(() => {
-  const loadUserData = async () => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
-    }
+  const {
+    stats: estadisticas,
+    loading: cargandoEstadisticas,
+    error: errorEstadisticas,
+    refresh: refrescarEstadisticas
+  } = useDashboardController()
 
-    try {
-      const token = localStorage.getItem('token')
-      if (token) {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-        const response = await fetch(`${API_URL}/profile`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        const data = await response.json()
-        
-        if (data.success && data.data) {
-          const updatedUser = {
-            ...JSON.parse(storedUser || '{}'),
-            points: {
-              current: data.data.points?.current || 0,
-              total: data.data.points?.total || 0
-            },
-            membershipLevel: data.data.membership?.level || 'bronce'
-          }
-          setUser(updatedUser)
-          localStorage.setItem('user', JSON.stringify(updatedUser))
-        }
+  // Cargar fotos del carrusel
+  useEffect(() => {
+    const cargarFotos = async () => {
+      try {
+        setCargandoFotos(true)
+        const fotosData = await photoService.getAll()
+        setFotos(fotosData)
+      } catch (error) {
+        console.error('Error cargando fotos:', error)
+        setFotos([])
+      } finally {
+        setCargandoFotos(false)
       }
-    } catch (error) {
-      console.error('Error actualizando perfil:', error)
+    }
+    cargarFotos()
+  }, [])
+
+  // Seleccionar modulos segun el rol del usuario
+  const modulosDisponibles = esAdministrador ? adminModules : userModules
+
+  // Navegar a un modulo especifico
+  const navegarAModulo = (ruta) => {
+    navegarHacia(ruta)
+  }
+
+  // Manejar cambio en el input de busqueda
+  const manejarCambioBusqueda = (evento) => {
+    const valor = evento.target.value
+    setTextoBusqueda(valor)
+
+    // Mostrar resultados si hay texto
+    if (valor.length >= 2) {
+      setMostrarResultados(true)
+      // TODO: Aqui se llamara a la API para buscar
+      // Por ahora usamos datos de ejemplo
+      setResultadosBusqueda([
+        { id: 1, nombre: 'Pizza Margherita', tipo: 'producto', ruta: '/menu' },
+        { id: 2, nombre: 'Cerveza Artesanal', tipo: 'producto', ruta: '/menu' },
+        { id: 3, nombre: 'Reserva VIP', tipo: 'servicio', ruta: '/servicios' }
+      ].filter(item =>
+        item.nombre.toLowerCase().includes(valor.toLowerCase())
+      ))
+    } else {
+      setMostrarResultados(false)
+      setResultadosBusqueda([])
     }
   }
 
-  loadUserData()
-}, [])
-
-  // Verificar si es admin
-  const isAdmin = user?.role === 'admin'
-
-  // Módulos para USUARIOS
-  const userModules = [
-    {
-      id: 'menu',
-      name: 'Menú',
-      description: 'Ver productos disponibles',
-      icon: UtensilsCrossed,
-      color: 'bg-orange-500',
-      route: '/menu'
-    },
-    {
-      id: 'servicios',
-      name: 'Servicios',
-      description: 'Servicios disponibles',
-      icon: SquareStar,
-      color: 'bg-blue-500',
-      route: '/servicios'
-    },
-    {
-      id: 'perfil',
-      name: 'Perfil',
-      description: 'Mi información',
-      icon: User,
-      color: 'bg-green-500',
-      route: '/perfil'
-    },
-    {
-      id: 'canje',
-      name: 'Canje',
-      description: 'Canjear mis puntos',
-      icon: Gift,
-      color: 'bg-purple-500',
-      route: '/canje'
-    }
-  ]
-
-  // Módulos para ADMIN
-  const adminModules = [
-    {
-      id: 'products',
-      name: 'Productos',
-      description: 'Gestionar menú',
-      icon: Package,
-      color: 'bg-orange-500',
-      route: '/admin?section=products'
-    },
-    {
-      id: 'rewards',
-      name: 'Recompensas',
-      description: 'Gestionar canjes',
-      icon: Gift,
-      color: 'bg-purple-500',
-      route: '/admin?section=rewards'
-    },
-    {
-      id: 'services',
-      name: 'Servicios',
-      description: 'Gestionar servicios',
-      icon: SquareStar,
-      color: 'bg-blue-500',
-      route: '/admin?section=services'
-    },
-    {
-      id: 'users',
-      name: 'Usuarios',
-      description: 'Ver clientes',
-      icon: Users,
-      color: 'bg-green-500',
-      route: '/admin?section=users'
-    },
-    {
-      id: 'staff',
-      name: 'Personal',
-      description: 'Staff y Telegram',
-      icon: User,
-      color: 'bg-indigo-500',
-      route: '/admin?section=staff'
-    }
-  ]
-
-  const modules = isAdmin ? adminModules : userModules
-
-  // Cerrar sesión
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    navigate('/login')
+  // Seleccionar un resultado de busqueda
+  const seleccionarResultado = (resultado) => {
+    setTextoBusqueda('')
+    setMostrarResultados(false)
+    navegarHacia(resultado.ruta)
   }
 
-  // Navegar a módulo
-  const handleModuleClick = (route) => {
-    navigate(route)
+  // Cerrar resultados al hacer clic fuera
+  const cerrarResultados = () => {
+    setMostrarResultados(false)
   }
 
-  // Toggle búsqueda
-  const toggleSearch = () => {
-    setSearchOpen(!searchOpen)
-    if (searchOpen) {
-      setSearchQuery('')
-    }
-  }
-
-  // Buscar
-  const handleSearch = (e) => {
-    e.preventDefault()
-    console.log('Buscando:', searchQuery)
+  // Mostrar pantalla de carga mientras se obtienen datos
+  if (cargando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-text-secondary">Cargando...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-surface-secondary">
-      
-      {/* Header */}
+
+      {/* ============ HEADER ============ */}
       <header className="sticky top-0 z-50 bg-amber-100 shadow-md">
         <div className="flex items-center justify-between px-4 py-3">
-          
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <img 
-              src="/images/Logo.svg" 
-              alt="Logo" 
+
+          {/* Boton menu hamburguesa */}
+          <button
+            onClick={alternarMenuLateral}
+            className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary"
+            aria-label="Abrir menu"
+          >
+            <Menu size={24} />
+          </button>
+
+          {/* Logo a la derecha */}
+          <div className="flex items-center gap-2">
+            {/* Boton Refrescar (solo admin) */}
+            {esAdministrador && (
+              <button
+                onClick={refrescarEstadisticas}
+                disabled={cargandoEstadisticas}
+                className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary disabled:opacity-50"
+                aria-label="Refrescar estadisticas"
+              >
+                <RefreshCw size={24} className={cargandoEstadisticas ? 'animate-spin' : ''} />
+              </button>
+            )}
+            <img
+              src="/images/Logo.svg"
+              alt="Logo"
               className="h-10 w-10"
             />
-            <span className="text-lg font-bold text-text-primary">
-              {isAdmin ? 'Admin' : 'Sistema'}
-            </span>
           </div>
+        </div>
+      </header>
 
-          {/* Acciones */}
-          <div className="flex items-center gap-2">
-            {/* Botón Refrescar (solo admin) */}
-            {isAdmin && (
-              <button
-                onClick={refresh}
-                disabled={statsLoading}
-                className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primaryClr disabled:opacity-50"
-                aria-label="Refrescar"
-              >
-                <RefreshCw size={24} className={statsLoading ? 'animate-spin' : ''} />
-              </button>
-            )}
+      {/* ============ MENU LATERAL ============ */}
+      {/* Overlay oscuro */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${
+          menuLateralAbierto ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={alternarMenuLateral}
+      />
 
-            {/* Botón Búsqueda (solo usuarios) */}
-            {!isAdmin && (
-              <button
-                onClick={toggleSearch}
-                className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primaryClr"
-                aria-label="Buscar"
-              >
-                {searchOpen ? <X size={24} /> : <Search size={24} />}
-              </button>
-            )}
-
-            {/* Botón Logout */}
+      {/* Panel lateral */}
+      <div
+        className={`fixed top-0 left-0 h-full w-72 bg-white shadow-xl z-50 transform transition-transform duration-300 ${
+          menuLateralAbierto ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Cabecera del menu */}
+        <div className="bg-primary p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">Menu</h2>
             <button
-              onClick={handleLogout}
-              className="rounded-full p-2 text-text-secondary transition-colors hover:bg-red-50 hover:text-red-500"
-              aria-label="Cerrar sesión"
+              onClick={alternarMenuLateral}
+              className="p-1 rounded-full hover:bg-white/20 text-white transition-colors"
             >
-              <LogOut size={24} />
+              <X size={24} />
             </button>
+          </div>
+          {/* Info del usuario */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+              <User size={24} className="text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-white">{usuarioActual?.name || 'Usuario'}</p>
+              <p className="text-sm text-white/70">{usuarioActual?.email || ''}</p>
+            </div>
           </div>
         </div>
 
-        {/* Barra de búsqueda desplegable (solo usuarios) */}
-        {!isAdmin && (
-          <div
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              searchOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
-            }`}
-          >
-            <form onSubmit={handleSearch} className="px-4 pb-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-full border border-input-border bg-surface-secondary py-2 pl-10 pr-4 text-text-primary placeholder-text-muted focus:border-primaryClr focus:outline-none focus:ring-2 focus:ring-primaryClr/20"
-                />
-                <Search 
-                  size={20} 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" 
-                />
-              </div>
-            </form>
-          </div>
-        )}
-      </header>
+        {/* Opciones del menu */}
+        <nav className="p-4">
+          <ul className="space-y-2">
+            <li>
+              <button
+                onClick={() => {
+                  navegarHacia('/perfil')
+                  alternarMenuLateral()
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
+              >
+                <User size={20} className="text-primary" />
+                <span>Mi Perfil</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  alternarMenuLateral()
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Bell size={20} className="text-primary" />
+                <span>Notificaciones</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  alternarMenuLateral()
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Settings size={20} className="text-primary" />
+                <span>Configuracion</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  alternarMenuLateral()
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
+              >
+                <HelpCircle size={20} className="text-primary" />
+                <span>Ayuda</span>
+              </button>
+            </li>
+          </ul>
 
-      {/* Contenido Principal */}
+          {/* Separador */}
+          <div className="my-4 border-t border-gray-200" />
+
+          {/* Cerrar sesion */}
+          <button
+            onClick={() => {
+              cerrarSesion()
+              alternarMenuLateral()
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <LogOut size={20} />
+            <span>Cerrar Sesion</span>
+          </button>
+        </nav>
+      </div>
+
+      {/* ============ CONTENIDO PRINCIPAL ============ */}
       <main className="px-4 py-6">
-        
+
         {/* ==================== VISTA ADMIN ==================== */}
-        {isAdmin ? (
+        {esAdministrador ? (
           <>
             {/* Saludo Admin */}
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-text-primary">
-                Panel de Control 🛡️
+                Panel de Control
               </h1>
               <p className="text-text-secondary">
-                Bienvenido, {user?.name || 'Administrador'}
+                Bienvenido, {usuarioActual?.name || 'Administrador'}
               </p>
             </div>
 
-            {/* Error de estadísticas */}
-            {statsError && (
+            {/* Error de estadisticas */}
+            {errorEstadisticas && (
               <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                {statsError}
+                {errorEstadisticas}
               </div>
             )}
 
-            {/* Dashboard Stats */}
+            {/* Dashboard con estadisticas */}
             <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Tarjeta: Total Usuarios */}
               <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <Users size={20} className="text-blue-600" />
                   </div>
                   <div>
-                    {statsLoading ? (
+                    {cargandoEstadisticas ? (
                       <Loader size={20} className="animate-spin text-gray-400" />
                     ) : (
                       <>
                         <p className="text-2xl font-bold text-gray-800">
-                          {stats?.totalUsers ?? 0}
+                          {estadisticas?.totalUsers ?? 0}
                         </p>
                         <p className="text-xs text-gray-500">Usuarios</p>
                       </>
@@ -311,18 +327,19 @@ useEffect(() => {
                 </div>
               </div>
 
+              {/* Tarjeta: Total Productos */}
               <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-orange-100 rounded-lg">
                     <Package size={20} className="text-orange-600" />
                   </div>
                   <div>
-                    {statsLoading ? (
+                    {cargandoEstadisticas ? (
                       <Loader size={20} className="animate-spin text-gray-400" />
                     ) : (
                       <>
                         <p className="text-2xl font-bold text-gray-800">
-                          {stats?.totalProducts ?? 0}
+                          {estadisticas?.totalProducts ?? 0}
                         </p>
                         <p className="text-xs text-gray-500">Productos</p>
                       </>
@@ -331,18 +348,19 @@ useEffect(() => {
                 </div>
               </div>
 
+              {/* Tarjeta: Total Canjes */}
               <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-100 rounded-lg">
                     <Award size={20} className="text-purple-600" />
                   </div>
                   <div>
-                    {statsLoading ? (
+                    {cargandoEstadisticas ? (
                       <Loader size={20} className="animate-spin text-gray-400" />
                     ) : (
                       <>
                         <p className="text-2xl font-bold text-gray-800">
-                          {stats?.totalRedemptions ?? 0}
+                          {estadisticas?.totalRedemptions ?? 0}
                         </p>
                         <p className="text-xs text-gray-500">Canjes</p>
                       </>
@@ -351,18 +369,19 @@ useEffect(() => {
                 </div>
               </div>
 
+              {/* Tarjeta: Puntos Emitidos */}
               <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-100 rounded-lg">
                     <TrendingUp size={20} className="text-green-600" />
                   </div>
                   <div>
-                    {statsLoading ? (
+                    {cargandoEstadisticas ? (
                       <Loader size={20} className="animate-spin text-gray-400" />
                     ) : (
                       <>
                         <p className="text-2xl font-bold text-gray-800">
-                          {stats?.pointsIssued?.toLocaleString() ?? 0}
+                          {estadisticas?.pointsIssued?.toLocaleString() ?? 0}
                         </p>
                         <p className="text-xs text-gray-500">Puntos emitidos</p>
                       </>
@@ -372,9 +391,9 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Banner ir a Admin */}
+            {/* Banner para ir al panel de admin */}
             <button
-              onClick={() => navigate('/admin')}
+              onClick={() => navegarHacia('/admin')}
               className="w-full mb-6 p-4 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-lg
                 flex items-center justify-between text-white hover:shadow-xl transition-all hover:-translate-y-1"
             >
@@ -390,112 +409,170 @@ useEffect(() => {
               <ChevronRight size={24} />
             </button>
 
-            {/* Accesos rápidos Admin */}
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Accesos Rápidos</h2>
+            {/* Titulo de accesos rapidos */}
+            <h2 className="text-lg font-bold text-gray-800 mb-4">Accesos Rapidos</h2>
           </>
         ) : (
           <>
             {/* ==================== VISTA USUARIO ==================== */}
-            {/* Saludo Usuario */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-text-primary">
-                ¡Hola{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋
-              </h1>
-              <p className="text-text-secondary">
-                ¿Qué deseas hacer hoy?
-              </p>
+            {/* Saludo y Puntos en linea horizontal */}
+            <div className="mb-8 flex items-center gap-6">
+              <div>
+                <h1 className="text-2xl font-bold text-text-primary">
+                  Hola{usuarioActual?.name ? `, ${usuarioActual.name.split(' ')[0]}` : ''}!
+                </h1>
+                <p className="text-text-secondary">
+                  Estas listo para la fiesta?
+                </p>
+              </div>
+              <div className="rounded-xl bg-primary px-4 py-2 text-white shadow-md">
+                <p className="text-xs opacity-80">Puntos</p>
+                <p className="text-xl font-bold">
+                  {usuarioActual?.points?.current?.toLocaleString() || '0'}
+                </p>
+              </div>
+            </div>
+
+            {/* Barra de busqueda con resultados desplegables */}
+            <div className="relative mb-8">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Buscar productos, servicios..."
+                  value={textoBusqueda}
+                  onChange={manejarCambioBusqueda}
+                  onFocus={() => textoBusqueda.length >= 2 && setMostrarResultados(true)}
+                  onBlur={() => setTimeout(cerrarResultados, 200)}
+                  className="w-full rounded-full border border-white/30 bg-white/10 backdrop-blur-sm py-3 pl-12 pr-4 text-text-primary placeholder-text-muted focus:border-primary focus:bg-white/20 focus:outline-none transition-all"
+                />
+                <Search
+                  size={20}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+              </div>
+
+              {/* Resultados de busqueda desplegables */}
+              {mostrarResultados && resultadosBusqueda.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-white/95 backdrop-blur-md shadow-lg border border-white/20 max-h-60 overflow-y-auto z-50">
+                  {resultadosBusqueda.map((resultado) => (
+                    <button
+                      key={resultado.id}
+                      onClick={() => seleccionarResultado(resultado)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors text-left border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Search size={16} className="text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-text-primary">{resultado.nombre}</p>
+                        <p className="text-xs text-text-muted capitalize">{resultado.tipo}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Mensaje sin resultados */}
+              {mostrarResultados && textoBusqueda.length >= 2 && resultadosBusqueda.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-white/95 backdrop-blur-md shadow-lg border border-white/20 p-4 z-50">
+                  <p className="text-center text-text-muted">No se encontraron resultados</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modulos en linea horizontal */}
+            <div className="flex justify-center gap-4 overflow-x-auto pb-4 mt-2">
+              {userModules.map((modulo) => {
+                const IconoDelModulo = modulo.icon
+                return (
+                  <button
+                    key={modulo.id}
+                    onClick={() => navegarAModulo(modulo.route)}
+                    className={`flex flex-col items-center gap-2 min-w-[70px] p-3 rounded-xl ${modulo.color} shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 active:scale-95`}
+                  >
+                    <div className="rounded-xl bg-white/20 p-2 text-white">
+                      <IconoDelModulo size={20} />
+                    </div>
+                    <span className="text-xs font-medium text-white whitespace-nowrap">
+                      {modulo.name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* ============ SECCION LO ULTIMO ============ */}
+            <div className="mt-10">
+              <h2 className="font-formal text-2xl text-text-primary mb-4">
+                Lo ultimo que ha pasado?
+              </h2>
+
+              {/* Carrusel de fotos */}
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                {cargandoFotos ? (
+                  <div className="flex items-center justify-center w-full py-8">
+                    <Loader className="animate-spin text-primary" size={32} />
+                  </div>
+                ) : fotos.length > 0 ? (
+                  fotos.map((foto) => (
+                    <div
+                      key={foto.id}
+                      className="flex-shrink-0 w-64 snap-start"
+                    >
+                      <div className="relative h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-purple-500/20 shadow-md">
+                        <img
+                          src={foto.imageUrl}
+                          alt={foto.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none'
+                          }}
+                        />
+                        {/* Overlay con titulo */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <p className="absolute bottom-3 left-3 right-3 text-white font-grueso text-sm">
+                          {foto.title}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center w-full py-8">
+                    <p className="text-text-muted">No hay fotos disponibles</p>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
 
-        {/* Grid de Módulos (ambos roles) */}
-        <div className="grid grid-cols-2 gap-4">
-          {modules.map((module) => {
-            const IconComponent = module.icon
-            return (
-              <button
-                key={module.id}
-                onClick={() => handleModuleClick(module.route)}
-                className="group flex flex-col items-center rounded-2xl bg-surface-primary p-6 shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 active:scale-95"
-              >
-                {/* Icono */}
-                <div className={`mb-3 rounded-full ${module.color} p-4 text-white transition-transform group-hover:scale-110`}>
-                  <IconComponent size={28} />
-                </div>
-
-                {/* Nombre */}
-                <h3 className="mb-1 font-semibold text-text-primary">
-                  {module.name}
-                </h3>
-
-                {/* Descripción */}
-                <p className="text-center text-xs text-text-muted">
-                  {module.description}
-                </p>
-
-                {/* Flecha */}
-                <ChevronRight 
-                  size={16} 
-                  className="mt-2 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" 
-                />
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Card de Puntos (SOLO USUARIOS) */}
-        {!isAdmin && (
-          <div className="mt-6 rounded-2xl bg-gradient-to-r from-primaryClr to-purple-600 p-6 text-black shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-80">Tus puntos</p>
-                <p className="text-3xl font-bold">
-                  {user?.points?.current?.toLocaleString() || '0'}
-                </p>
-              </div>
-              <Gift size={40} className="opacity-80" />
-            </div>
-            <div className="mt-4">
-              <div className="h-2 overflow-hidden rounded-full bg-white/20">
-                <div 
-                  className="h-full rounded-full bg-white" 
-                  style={{ 
-                    width: `${Math.min(100, ((user?.points?.total || 0) / 5000) * 100)}%` 
-                  }}
-                />
-              </div>
-              <p className="mt-2 text-xs opacity-80">
-                Nivel: {user?.membershipLevel || 'Bronce'} • {user?.points?.total?.toLocaleString() || 0} puntos totales
-              </p>
-            </div>
-          </div>
-        )}
-
-      </main>
-
-      {/* Footer / Bottom Navigation (SOLO USUARIOS) */}
-      {!isAdmin && (
-        <nav className="fixed bottom-0 left-0 right-0 border-t border-blue-100 bg-blue-50 px-4 py-2 md:hidden">
-          <div className="flex items-center justify-around">
-            {userModules.slice(0, 4).map((module) => {
-              const IconComponent = module.icon
+        {/* ============ GRID DE MODULOS (solo admin) ============ */}
+        {esAdministrador && (
+          <div className="grid grid-cols-2 gap-4">
+            {adminModules.map((modulo) => {
+              const IconoDelModulo = modulo.icon
               return (
                 <button
-                  key={module.id}
-                  onClick={() => handleModuleClick(module.route)}
-                  className="flex flex-col items-center p-2 text-text-muted transition-colors hover:text-primaryClr"
+                  key={modulo.id}
+                  onClick={() => navegarAModulo(modulo.route)}
+                  className="group flex flex-col items-center rounded-2xl bg-surface-primary p-6 shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 active:scale-95"
                 >
-                  <IconComponent size={22} />
-                  <span className="mt-1 text-xs">{module.name}</span>
+                  <div className={`mb-3 rounded-full ${modulo.color} p-4 text-white transition-transform group-hover:scale-110`}>
+                    <IconoDelModulo size={28} />
+                  </div>
+                  <h3 className="mb-1 font-semibold text-text-primary">
+                    {modulo.name}
+                  </h3>
+                  <p className="text-center text-xs text-text-muted">
+                    {modulo.description}
+                  </p>
                 </button>
               )
             })}
           </div>
-        </nav>
-      )}
+        )}
 
-      {/* Espaciado para el bottom nav en mobile (SOLO USUARIOS) */}
-      {!isAdmin && <div className="h-20 md:hidden" />}
+      </main>
 
     </div>
   )

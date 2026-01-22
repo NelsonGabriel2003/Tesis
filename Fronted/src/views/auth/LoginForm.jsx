@@ -70,7 +70,7 @@ const LoginForm = ({
         <button
           type="button"
           onClick={() => navigate('/register')}
-          className="text-primaryClr hover:underline font-medium"
+          className="text-primary hover:underline font-medium"
         >
           Registrate
         </button>

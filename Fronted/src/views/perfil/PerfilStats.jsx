@@ -95,7 +95,7 @@ const PerfilStats = ({ stats, formatDate, userPoints = 0 }) => {
       {/* Próximas Recompensas */}
       <div className="rounded-2xl bg-surface-primary p-6 shadow-md">
         <div className="mb-4 flex items-center gap-2">
-          <Gift className="text-primaryClr" size={24} />
+          <Gift className="text-primary" size={24} />
           <h3 className="text-lg font-semibold text-text-primary">
             Próximas Recompensas
           </h3>
@@ -103,7 +103,7 @@ const PerfilStats = ({ stats, formatDate, userPoints = 0 }) => {
 
         {loadingRewards ? (
           <div className="flex justify-center py-8">
-            <Loader className="animate-spin text-primaryClr" size={32} />
+            <Loader className="animate-spin text-primary" size={32} />
           </div>
         ) : nearRewards.length === 0 ? (
           <p className="text-center text-text-muted py-4">

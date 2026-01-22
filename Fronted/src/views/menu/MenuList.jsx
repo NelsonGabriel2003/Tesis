@@ -68,7 +68,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
             }`}
           >
             {/* Imagen o placeholder */}
-            <div className="relative h-32 bg-gradient-to-br from-primaryClr/20 to-purple-500/20 overflow-hidden">
+            <div className="relative h-32 bg-gradient-to-br from-primary/20 to-purple-500/20 overflow-hidden">
               {item.imageUrl ? (
                 <img 
                   src={item.imageUrl} 
@@ -107,7 +107,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
               </p>
 
               <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-primaryClr">
+                <span className="text-lg font-bold text-primary">
                   ${item.price.toFixed(2)}
                 </span>
 
@@ -134,7 +134,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                     ) : (
                       <button
                         onClick={() => onAddItem(item)}
-                        className="flex items-center gap-1 rounded-full bg-primaryClr px-4 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-primaryClr/80"
+                        className="flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-primary/80"
                       >
                         <Plus size={16} />
                         Agregar

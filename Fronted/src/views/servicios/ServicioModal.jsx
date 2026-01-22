@@ -21,7 +21,7 @@ const ServicioModal = ({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primaryClr/10 text-4xl">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10 text-4xl">
               {service.icon}
             </div>
             <div>
@@ -129,7 +129,7 @@ const ServicioModal = ({
               disabled={!service.available || !canUse || reservationStatus?.loading}
               className={`flex flex-1 items-center justify-center gap-2 rounded-full py-3 font-semibold text-white transition-colors ${
                 service.available && canUse
-                  ? 'bg-primaryClr hover:bg-primaryClr/90'
+                  ? 'bg-primary hover:bg-primary/90'
                   : 'cursor-not-allowed bg-gray-300'
               }`}
             >

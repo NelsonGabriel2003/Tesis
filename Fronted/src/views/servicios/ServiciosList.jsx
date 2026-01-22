@@ -75,7 +75,7 @@ const ServiciosList = ({ services, loading, onSelectService, canUseService, user
             <div className="flex items-center gap-4">
               {/* Imagen o Icono */}
               <div className={`flex h-16 w-16 items-center justify-center rounded-xl overflow-hidden ${
-                canUse ? 'bg-primaryClr/10' : 'bg-gray-100'
+                canUse ? 'bg-primary/10' : 'bg-gray-100'
               }`}>
                 {service.imageUrl ? (
                   <img 

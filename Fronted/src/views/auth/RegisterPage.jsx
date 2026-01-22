@@ -25,7 +25,7 @@ const RegisterPage = () => {
       <div className="container max-h-[1000px] w-full max-w-[1200px] rounded-[20px] bg-surface-primary md:grid md:grid-cols-2">
         
         {/* Banner (lado izquierdo en registro) */}
-        <div className="relative hidden bg-primaryClr md:block">
+        <div className="relative hidden bg-primary md:block">
           <img
             src="/images/form-banner.png"
             alt="form banner"

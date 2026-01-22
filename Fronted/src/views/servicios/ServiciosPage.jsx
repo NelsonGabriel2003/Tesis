@@ -35,7 +35,7 @@ const ServiciosPage = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={goBack}
-              className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primaryClr"
+              className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary"
             >
               <ArrowLeft size={24} />
             </button>
@@ -57,7 +57,7 @@ const ServiciosPage = () => {
               onClick={() => filterByCategory(category.id)}
               className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 selectedCategory === category.id
-                  ? 'bg-primaryClr text-white shadow-md'
+                  ? 'bg-primary text-white shadow-md'
                   : 'bg-surface-primary text-text-secondary hover:bg-surface-secondary'
               }`}
             >

@@ -63,12 +63,12 @@ const CanjeModal = ({
         {!redeemStatus?.success && (
           <div className="mt-6 space-y-3">
             {/* Costo */}
-            <div className="flex items-center justify-between rounded-xl bg-primaryClr/10 p-4">
+            <div className="flex items-center justify-between rounded-xl bg-primary/10 p-4">
               <div className="flex items-center gap-2">
-                <Star size={20} className="text-primaryClr" fill="currentColor" />
-                <span className="text-primaryClr">Costo del canje</span>
+                <Star size={20} className="text-primary" fill="currentColor" />
+                <span className="text-primary">Costo del canje</span>
               </div>
-              <span className="text-xl font-bold text-primaryClr">
+              <span className="text-xl font-bold text-primary">
                 {reward.pointsCost.toLocaleString()} pts
               </span>
             </div>
@@ -128,17 +128,17 @@ const CanjeModal = ({
             </div>
 
             {/* Código de canje */}
-            <div className="rounded-xl border-2 border-dashed border-primaryClr bg-primaryClr/5 p-4">
+            <div className="rounded-xl border-2 border-dashed border-primary bg-primary/5 p-4">
               <p className="mb-2 text-center text-sm text-text-muted">
                 Tu código de canje
               </p>
               <div className="flex items-center justify-center gap-2">
-                <code className="text-xl font-bold tracking-wider text-primaryClr">
+                <code className="text-xl font-bold tracking-wider text-primary">
                   {redeemStatus.data.redeemCode}
                 </code>
                 <button
                   onClick={copyCode}
-                  className="rounded-lg bg-primaryClr/10 p-2 text-primaryClr transition-colors hover:bg-primaryClr/20"
+                  className="rounded-lg bg-primary/10 p-2 text-primary transition-colors hover:bg-primary/20"
                 >
                   {copied ? <CheckCircle size={18} /> : <Copy size={18} />}
                 </button>
@@ -151,7 +151,7 @@ const CanjeModal = ({
             {/* Nuevo saldo */}
             <div className="flex items-center justify-between rounded-xl bg-surface-secondary p-4">
               <span className="text-text-secondary">Tu nuevo saldo</span>
-              <div className="flex items-center gap-1 font-bold text-primaryClr">
+              <div className="flex items-center gap-1 font-bold text-primary">
                 <Star size={16} fill="currentColor" />
                 {redeemStatus.data.newBalance.toLocaleString()} pts
               </div>
@@ -182,7 +182,7 @@ const CanjeModal = ({
               disabled={!canRedeem || reward.stock === 0 || redeemStatus?.loading}
               className={`flex flex-1 items-center justify-center gap-2 rounded-full py-3 font-semibold text-white transition-colors ${
                 canRedeem && reward.stock > 0
-                  ? 'bg-primaryClr hover:bg-primaryClr/90'
+                  ? 'bg-primary hover:bg-primary/90'
                   : 'cursor-not-allowed bg-gray-300'
               }`}
             >

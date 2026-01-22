@@ -11,7 +11,7 @@ const PerfilHeader = ({ user, membershipInfo, progress, formatDate }) => {
       <div className="flex items-center gap-4">
         {/* Avatar */}
         <div className="relative">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primaryClr to-purple-600 text-3xl font-bold text-white">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-3xl font-bold text-white">
             {user.name.charAt(0).toUpperCase()}
           </div>
           {/* Badge de nivel */}
@@ -56,7 +56,7 @@ const PerfilHeader = ({ user, membershipInfo, progress, formatDate }) => {
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-secondary">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primaryClr to-purple-500 transition-all"
+                className="h-full rounded-full bg-gradient-to-r from-primary to-purple-500 transition-all"
                 style={{ width: `${progress.percentage}%` }}
               />
             </div>

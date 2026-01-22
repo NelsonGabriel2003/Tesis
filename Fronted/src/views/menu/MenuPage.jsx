@@ -67,7 +67,7 @@ const MenuPage = () => {
               placeholder="Buscar en el menú..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full rounded-full border border-input-border bg-surface-secondary py-2 pl-10 pr-4 text-text-primary placeholder-text-muted focus:border-primaryClr focus:outline-none focus:ring-2 focus:ring-primaryClr/20"
+              className="w-full rounded-full border border-input-border bg-surface-secondary py-2 pl-10 pr-4 text-text-primary placeholder-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
           </div>

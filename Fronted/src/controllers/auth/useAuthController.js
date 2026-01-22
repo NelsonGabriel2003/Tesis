@@ -3,6 +3,8 @@
  * Maneja toda la lógica de negocio para autenticación
  */
 
+
+
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { initialAuthState, initialStatusState } from '../../models/auth/authModel'
@@ -85,12 +87,11 @@ export const useAuthController = () => {
   }, [formData])
 
   return {
-    // Estado
+
     formData,
     showPassword,
     status,
     
-    // Acciones
     handleInputChange,
     togglePassword,
     handleSubmit,

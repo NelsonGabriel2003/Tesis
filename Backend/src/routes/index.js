@@ -17,6 +17,7 @@ import staffRoutes from './staff.routes.js'
 import telegramRoutes from './telegram.routes.js'
 import configRoutes from './config.routes.js'
 import uploadRoutes from './upload.routes.js'
+import photoRoutes from './photo.routes.js'
 
 const router = Router()
 
@@ -50,5 +51,8 @@ router.use('/config', configRoutes)
 
 // Rutas de subida de imágenes
 router.use('/upload', uploadRoutes)
+
+// Rutas de fotos/eventos
+router.use('/photos', photoRoutes)
 
 export default router

@@ -47,7 +47,7 @@ const Form = () => {
               <input 
                 type="email"
                 name='email'
-                className="rounded-md border px-4 py-3 focus:ring-2 focus:ring-primaryClr" 
+                className="rounded-md border px-4 py-3 focus:ring-2 focus:ring-primary" 
                 placeholder='your@email.com'
                 value={formData.email}
                 onChange={handleInputChanges}
@@ -60,7 +60,7 @@ const Form = () => {
               <div className="relative">
                 <input 
                   type={showPassword ? "text" :"password"}
-                  className="rounded-md border px-4  py-3 focus:ring-2 focus:ring-primaryClr" 
+                  className="rounded-md border px-4  py-3 focus:ring-2 focus:ring-primary" 
                   placeholder='******'
                   name='password'
                   value={formData.password}
@@ -80,13 +80,13 @@ const Form = () => {
             </div>
 
             {/* submit button */}
-            <button className="rounded-xl bg-primaryClr px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-primaryClr/90">
+            <button className="rounded-xl bg-primary px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-primary/90">
               Login
             </button>
             {/* Sign up link */}
             <p className="text-center text-gray-600">
               No tienes cuenta? {" "}
-             <a href="#" className='text-primaryClr hover:underline'>Registrate</a>
+             <a href="#" className='text-primary hover:underline'>Registrate</a>
             </p>
 
             {/* divider */}
@@ -111,7 +111,7 @@ const Form = () => {
 
         </form>
         {/* form banner */}
-        <div className="relative hidden bg-primaryClr md:block">
+        <div className="relative hidden bg-primary md:block">
           <img 
             src="/images/form-banner.png" 
             alt="form banner"

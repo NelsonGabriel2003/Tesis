@@ -46,6 +46,22 @@ export const initialStaffState = {
   selectedStaff: null
 }
 
+// Estado inicial para fotos
+export const initialPhotoState = {
+  photos: [],
+  loading: false,
+  error: null,
+  selectedPhoto: null
+}
+
+// Estado inicial del formulario de foto
+export const initialPhotoForm = {
+  title: '',
+  description: '',
+  image_url: '',
+  cloudinary_public_id: ''
+}
+
 // Estado inicial del formulario de staff
 export const initialStaffForm = {
   name: '',
@@ -143,6 +159,12 @@ export const adminMessages = {
   STAFF_ERROR: 'Error al procesar el personal',
   STAFF_CODE_GENERATED: 'Codigo de vinculacion generado',
   STAFF_UNLINKED: 'Telegram desvinculado correctamente',
+
+  // Fotos
+  PHOTO_CREATED: 'Foto creada exitosamente',
+  PHOTO_UPDATED: 'Foto actualizada exitosamente',
+  PHOTO_DELETED: 'Foto eliminada exitosamente',
+  PHOTO_ERROR: 'Error al procesar la foto',
 
   // General
   LOADING: 'Cargando...',

@@ -1,6 +1,9 @@
 /**
  * App Router
- * Configuración de rutas de la aplicación
+ * Configuracion de rutas de la aplicacion
+ *
+ * Este archivo define todas las rutas de la aplicacion y sus protecciones.
+ * Utiliza el AuthProvider para manejar el estado de autenticacion global.
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -12,14 +15,16 @@ import { ServiciosPage } from '../views/servicios'
 import { PerfilPage } from '../views/perfil'
 import { CanjePage } from '../views/canje'
 import { AdminPage } from '../views/admin'
+import { AuthProvider } from '../contexts/AuthContext'
 
 /**
- * ProtectedRoute - Verifica que el usuario esté logueado
+ * RutaProtegida - Verifica que el usuario este logueado
+ * Si no hay token, redirige al login
  */
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token')
+const RutaProtegida = ({ children }) => {
+  const tokenGuardado = localStorage.getItem('token')
 
-  if (!token) {
+  if (!tokenGuardado) {
     return <Navigate to="/login" replace />
   }
 
@@ -27,17 +32,18 @@ const ProtectedRoute = ({ children }) => {
 }
 
 /**
- * AdminRoute - Verifica que el usuario sea administrador
+ * RutaAdmin - Verifica que el usuario sea administrador
+ * Requiere: token valido + rol de admin
  */
-const AdminRoute = ({ children }) => {
-  const token = localStorage.getItem('token')
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+const RutaAdmin = ({ children }) => {
+  const tokenGuardado = localStorage.getItem('token')
+  const usuarioGuardado = JSON.parse(localStorage.getItem('user') || '{}')
 
-  if (!token) {
+  if (!tokenGuardado) {
     return <Navigate to="/login" replace />
   }
 
-  if (user.role !== 'admin') {
+  if (usuarioGuardado.role !== 'admin') {
     return <Navigate to="/main" replace />
   }
 
@@ -45,120 +51,143 @@ const AdminRoute = ({ children }) => {
 }
 
 /**
- * PublicRoute - Redirige a main si ya está logueado
+ * RutaPublica - Solo accesible si NO esta logueado
+ * Si ya hay sesion activa, redirige a main
  */
-const PublicRoute = ({ children }) => {
-  const token = localStorage.getItem('token')
+const RutaPublica = ({ children }) => {
+  const tokenGuardado = localStorage.getItem('token')
 
-  if (token) {
+  if (tokenGuardado) {
     return <Navigate to="/main" replace />
   }
 
   return children
 }
 
+/**
+ * AppRouter - Componente principal de rutas
+ * Estructura: BrowserRouter > AuthProvider > Routes
+ */
 const AppRouter = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Ruta pública - Login */}
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <LoginPage />
-            </PublicRoute>
-          }
-        />
+      <AuthProvider>
+        <Routes>
+          {/* ============ RUTAS PUBLICAS ============ */}
 
-        {/* Ruta pública - Registro */}
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <RegisterPage />
-            </PublicRoute>
-          }
-        />
+          {/* Login - Inicio de sesion */}
+          <Route
+            path="/login"
+            element={
+              <RutaPublica>
+                <LoginPage />
+              </RutaPublica>
+            }
+          />
 
-        {/* Rutas protegidas - Requieren login */}
-        <Route
-          path="/main"
-          element={
-            <ProtectedRoute>
-              <MainPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Registro - Crear cuenta nueva */}
+          <Route
+            path="/register"
+            element={
+              <RutaPublica>
+                <RegisterPage />
+              </RutaPublica>
+            }
+          />
 
-        <Route
-          path="/menu"
-          element={
-            <ProtectedRoute>
-              <MenuPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/order"
-          element={
-            <ProtectedRoute>
-              <OrderPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/order/:id"
-          element={
-            <ProtectedRoute>
-              <OrderPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* ============ RUTAS PROTEGIDAS (requieren login) ============ */}
 
-        <Route
-          path="/servicios"
-          element={
-            <ProtectedRoute>
-              <ServiciosPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Pagina principal */}
+          <Route
+            path="/main"
+            element={
+              <RutaProtegida>
+                <MainPage />
+              </RutaProtegida>
+            }
+          />
 
-        <Route
-          path="/perfil"
-          element={
-            <ProtectedRoute>
-              <PerfilPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Menu de productos */}
+          <Route
+            path="/menu"
+            element={
+              <RutaProtegida>
+                <MenuPage />
+              </RutaProtegida>
+            }
+          />
 
-        <Route
-          path="/canje"
-          element={
-            <ProtectedRoute>
-              <CanjePage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Ordenes */}
+          <Route
+            path="/order"
+            element={
+              <RutaProtegida>
+                <OrderPage />
+              </RutaProtegida>
+            }
+          />
 
-        {/* Ruta Admin - Requiere login + rol admin */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminPage />
-            </AdminRoute>
-          }
-        />
+          {/* Detalle de orden por ID */}
+          <Route
+            path="/order/:id"
+            element={
+              <RutaProtegida>
+                <OrderPage />
+              </RutaProtegida>
+            }
+          />
 
-        {/* Redirigir raíz a login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Servicios disponibles */}
+          <Route
+            path="/servicios"
+            element={
+              <RutaProtegida>
+                <ServiciosPage />
+              </RutaProtegida>
+            }
+          />
 
-        {/* Ruta 404 - Redirige a login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+          {/* Perfil del usuario */}
+          <Route
+            path="/perfil"
+            element={
+              <RutaProtegida>
+                <PerfilPage />
+              </RutaProtegida>
+            }
+          />
+
+          {/* Canje de puntos */}
+          <Route
+            path="/canje"
+            element={
+              <RutaProtegida>
+                <CanjePage />
+              </RutaProtegida>
+            }
+          />
+
+          {/* ============ RUTAS DE ADMINISTRADOR ============ */}
+
+          {/* Panel de administracion */}
+          <Route
+            path="/admin"
+            element={
+              <RutaAdmin>
+                <AdminPage />
+              </RutaAdmin>
+            }
+          />
+
+          {/* ============ REDIRECCIONES ============ */}
+
+          {/* Redirigir raiz a login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Ruta 404 - Redirige a login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

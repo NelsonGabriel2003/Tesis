@@ -98,7 +98,7 @@ const CanjeList = ({ rewards, loading, onSelectReward, canRedeem, userPoints }) 
               {/* Precio en puntos */}
               <div className={`flex items-center justify-between rounded-full px-3 py-1.5 ${
                 canRedeemReward
-                  ? 'bg-primaryClr/10 text-primaryClr'
+                  ? 'bg-primary/10 text-primary'
                   : 'bg-gray-100 text-gray-500'
               }`}>
                 <div className="flex items-center gap-1">

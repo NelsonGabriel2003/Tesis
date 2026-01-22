@@ -31,7 +31,7 @@ const LoginPage = () => {
         />
 
         {/* Banner */}
-        <div className="relative hidden bg-primaryClr md:block">
+        <div className="relative hidden bg-primary md:block">
           <img
             src="/images/form-banner.png"
             alt="form banner"

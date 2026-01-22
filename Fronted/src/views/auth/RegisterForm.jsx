@@ -135,7 +135,7 @@ const RegisterForm = ({
         <button
           type="button"
           onClick={onGoToLogin}
-          className="text-primaryClr hover:underline font-medium"
+          className="text-primary hover:underline font-medium"
         >
           Inicia sesión
         </button>

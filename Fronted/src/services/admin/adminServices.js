@@ -346,11 +346,53 @@ export const statsService = {
   }
 }
 
+/**
+ * Servicio para gestión de Fotos/Eventos
+ */
+export const photoService = {
+  // Obtener todas las fotos (publico)
+  getAll: async () => {
+    const response = await api.get('/photos')
+    return response.data
+  },
+
+  // Obtener todas las fotos (admin - incluye inactivas)
+  getAllAdmin: async () => {
+    const response = await api.get('/photos/admin/all')
+    return response.data
+  },
+
+  // Obtener foto por ID
+  getById: async (id) => {
+    const response = await api.get(`/photos/${id}`)
+    return response.data
+  },
+
+  // Crear foto
+  create: async (photoData) => {
+    const response = await api.post('/photos', photoData)
+    return response.data
+  },
+
+  // Actualizar foto
+  update: async (id, photoData) => {
+    const response = await api.put(`/photos/${id}`, photoData)
+    return response.data
+  },
+
+  // Eliminar foto
+  delete: async (id) => {
+    const response = await api.delete(`/photos/${id}`)
+    return response
+  }
+}
+
 export default {
   productService,
   rewardService,
   serviceService,
   userService,
   staffService,
-  statsService
+  statsService,
+  photoService
 }

@@ -15,7 +15,7 @@ const MenuOrderSummary = ({ orderItems, orderTotal, orderPoints, onClearOrder })
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primaryClr text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white">
                 <ShoppingCart size={24} />
               </div>
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
@@ -49,7 +49,7 @@ const MenuOrderSummary = ({ orderItems, orderTotal, orderPoints, onClearOrder })
 
         <button 
           onClick={handleCheckout}
-          className="mt-3 w-full rounded-full bg-primaryClr py-3 font-semibold text-white transition-colors hover:bg-primaryClr/90"
+          className="mt-3 w-full rounded-full bg-primary py-3 font-semibold text-white transition-colors hover:bg-primary/90"
         >
           Ver Pedido →
         </button>
