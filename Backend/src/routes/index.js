@@ -18,6 +18,7 @@ import telegramRoutes from './telegram.routes.js'
 import configRoutes from './config.routes.js'
 import uploadRoutes from './upload.routes.js'
 import photoRoutes from './photo.routes.js'
+import searchRoutes from './search.routes.js'
 
 const router = Router()
 
@@ -54,5 +55,8 @@ router.use('/upload', uploadRoutes)
 
 // Rutas de fotos/eventos
 router.use('/photos', photoRoutes)
+
+// Ruta de búsqueda global
+router.use('/search', searchRoutes)
 
 export default router

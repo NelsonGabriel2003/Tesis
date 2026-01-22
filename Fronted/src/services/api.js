@@ -40,18 +40,23 @@ const request = async (endpoint, options = {}) => {
  */
 export const api = {
   get: (endpoint) => request(endpoint, { method: 'GET' }),
-  
+
   post: (endpoint, body) => request(endpoint, {
     method: 'POST',
     body: JSON.stringify(body),
   }),
-  
+
   put: (endpoint, body) => request(endpoint, {
     method: 'PUT',
     body: JSON.stringify(body),
   }),
-  
+
   delete: (endpoint) => request(endpoint, { method: 'DELETE' }),
+
+  // Búsqueda global
+  search: async (query) => {
+    return request(`/search?q=${encodeURIComponent(query)}`, { method: 'GET' })
+  }
 }
 
 export default api

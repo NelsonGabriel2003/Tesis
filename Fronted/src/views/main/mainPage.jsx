@@ -23,6 +23,7 @@ import {
 import { userModules } from '../../config/modulesConfig'
 import { useAuth } from '../../hooks/useAuth'
 import { photoService } from '../../services/admin/adminServices'
+import api from '../../services/api'
 
 const MainPage = () => {
   // Estados locales del componente
@@ -80,22 +81,30 @@ const MainPage = () => {
   }
 
   // Manejar cambio en el input de busqueda
-  const manejarCambioBusqueda = (evento) => {
+  const manejarCambioBusqueda = async (evento) => {
     const valor = evento.target.value
     setTextoBusqueda(valor)
 
     // Mostrar resultados si hay texto
     if (valor.length >= 2) {
       setMostrarResultados(true)
-      // TODO: Aqui se llamara a la API para buscar
-      // Por ahora usamos datos de ejemplo
-      setResultadosBusqueda([
-        { id: 1, nombre: 'Pizza Margherita', tipo: 'producto', ruta: '/menu' },
-        { id: 2, nombre: 'Cerveza Artesanal', tipo: 'producto', ruta: '/menu' },
-        { id: 3, nombre: 'Reserva VIP', tipo: 'servicio', ruta: '/servicios' }
-      ].filter(item =>
-        item.nombre.toLowerCase().includes(valor.toLowerCase())
-      ))
+
+      try {
+        // Llamar a la API de búsqueda global
+        const respuesta = await api.search(valor)
+        const resultados = respuesta.data.map(item => ({
+          id: item.id,
+          nombre: item.name,
+          tipo: item.type,
+          icono: item.icon,
+          ruta: item.route
+        }))
+
+        setResultadosBusqueda(resultados)
+      } catch (error) {
+        console.error('Error en búsqueda:', error)
+        setResultadosBusqueda([])
+      }
     } else {
       setMostrarResultados(false)
       setResultadosBusqueda([])
@@ -310,8 +319,8 @@ const MainPage = () => {
                       onClick={() => seleccionarResultado(resultado)}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors text-left border-b border-gray-100 last:border-b-0"
                     >
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Search size={16} className="text-primary" />
+                      <div className="p-2 rounded-lg bg-primary/10 text-xl">
+                        {resultado.icono}
                       </div>
                       <div>
                         <p className="font-medium text-text-primary">{resultado.nombre}</p>
