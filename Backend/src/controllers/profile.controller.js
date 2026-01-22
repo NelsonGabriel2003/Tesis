@@ -53,6 +53,7 @@ const getProfile = asyncHandler(async (req, res) => {
       email: user.email,
       name: user.name,
       phone: user.phone,
+      role: user.role,
       membership: {
         level: user.membership_level,
         progress,
