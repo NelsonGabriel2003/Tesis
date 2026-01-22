@@ -155,7 +155,7 @@ const MainPage = () => {
           </button>
 
           {/* Logo a la derecha */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {/* Boton Refrescar (solo admin) */}
             {esAdministrador && (
               <button
