@@ -22,7 +22,7 @@ const UserModel = {
    */
   findById: async (id) => {
     const result = await query(
-      `SELECT id, email, name, phone, membership_level, 
+      `SELECT id, email, name, phone, role, membership_level,
               current_points, total_points, created_at, updated_at
        FROM users WHERE id = $1`,
       [id]
@@ -50,12 +50,12 @@ const UserModel = {
   update: async (id, userData) => {
     const { name, phone } = userData
     const result = await query(
-      `UPDATE users 
-       SET name = COALESCE($2, name), 
+      `UPDATE users
+       SET name = COALESCE($2, name),
            phone = COALESCE($3, phone),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
-       RETURNING id, email, name, phone, membership_level, current_points, total_points`,
+       RETURNING id, email, name, phone, role, membership_level, current_points, total_points`,
       [id, name, phone]
     )
     return result.rows[0]
@@ -66,8 +66,8 @@ const UserModel = {
    */
   updatePoints: async (id, currentPoints, totalPoints) => {
     const result = await query(
-      `UPDATE users 
-       SET current_points = $2, 
+      `UPDATE users
+       SET current_points = $2,
            total_points = $3,
            membership_level = CASE
              WHEN $3 >= 5000 THEN 'platino'
@@ -77,7 +77,7 @@ const UserModel = {
            END,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
-       RETURNING id, email, name, membership_level, current_points, total_points`,
+       RETURNING id, email, name, role, membership_level, current_points, total_points`,
       [id, currentPoints, totalPoints]
     )
     return result.rows[0]
@@ -88,7 +88,7 @@ const UserModel = {
    */
   addPoints: async (id, points) => {
     const result = await query(
-      `UPDATE users 
+      `UPDATE users
        SET current_points = current_points + $2,
            total_points = total_points + $2,
            membership_level = CASE
@@ -99,7 +99,7 @@ const UserModel = {
            END,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
-       RETURNING id, email, name, membership_level, current_points, total_points`,
+       RETURNING id, email, name, role, membership_level, current_points, total_points`,
       [id, points]
     )
     return result.rows[0]
@@ -110,11 +110,11 @@ const UserModel = {
    */
   subtractPoints: async (id, points) => {
     const result = await query(
-      `UPDATE users 
+      `UPDATE users
        SET current_points = current_points - $2,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1 AND current_points >= $2
-       RETURNING id, email, name, membership_level, current_points, total_points`,
+       RETURNING id, email, name, role, membership_level, current_points, total_points`,
       [id, points]
     )
     return result.rows[0]
@@ -125,7 +125,7 @@ const UserModel = {
    */
   findAll: async (limit = 50, offset = 0) => {
     const result = await query(
-      `SELECT id, email, name, phone, membership_level, current_points, total_points, created_at
+      `SELECT id, email, name, phone, role, membership_level, current_points, total_points, created_at
        FROM users
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
