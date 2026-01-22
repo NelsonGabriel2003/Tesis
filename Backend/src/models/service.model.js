@@ -42,6 +42,21 @@ const ServiceModel = {
   },
 
   /**
+   * Buscar servicios por nombre o descripción
+   */
+  search: async (searchTerm) => {
+    const result = await query(
+      `SELECT id, name, description, points_required, points_earned, category, image_url
+       FROM services
+       WHERE is_available = true
+         AND (name ILIKE $1 OR description ILIKE $1)
+       ORDER BY name`,
+      [`%${searchTerm}%`]
+    )
+    return result.rows
+  },
+
+  /**
    * Crear servicio (admin)
    */
   create: async (serviceData) => {
