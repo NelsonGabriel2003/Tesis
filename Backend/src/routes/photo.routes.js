@@ -16,12 +16,14 @@ import { verifyToken, requireRole } from '../middlewares/index.js'
 
 const router = Router()
 
+// Rutas protegidas (Admin) - IMPORTANTE: antes de /:id
+router.get('/admin/all', verifyToken, requireRole('admin'), getPhotosAdmin)
+
 // Rutas publicas
 router.get('/', getPhotos)
 router.get('/:id', getPhotoById)
 
 // Rutas protegidas (Admin)
-router.get('/admin/all', verifyToken, requireRole('admin'), getPhotosAdmin)
 router.post('/', verifyToken, requireRole('admin'), createPhoto)
 router.put('/:id', verifyToken, requireRole('admin'), updatePhoto)
 router.delete('/:id', verifyToken, requireRole('admin'), deletePhoto)

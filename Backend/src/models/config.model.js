@@ -11,7 +11,7 @@ const ConfigModel = {
    */
   findAll: async () => {
     const result = await query(
-      `SELECT id, key, value, description, category, updated_at
+      `SELECT id, key, value, description, category
        FROM business_config
        ORDER BY category, key`
     )
@@ -23,7 +23,7 @@ const ConfigModel = {
    */
   findByCategory: async (category) => {
     const result = await query(
-      `SELECT id, key, value, description, category, updated_at
+      `SELECT id, key, value, description, category
        FROM business_config
        WHERE category = $1
        ORDER BY key`,
@@ -75,7 +75,7 @@ const ConfigModel = {
   update: async (key, value) => {
     const result = await query(
       `UPDATE business_config
-       SET value = $2, updated_at = CURRENT_TIMESTAMP
+       SET value = $2
        WHERE key = $1
        RETURNING *`,
       [key, value]
@@ -105,8 +105,7 @@ const ConfigModel = {
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (key) DO UPDATE SET
          value = EXCLUDED.value,
-         description = COALESCE(EXCLUDED.description, business_config.description),
-         updated_at = CURRENT_TIMESTAMP
+         description = COALESCE(EXCLUDED.description, business_config.description)
        RETURNING *`,
       [key, value, description, category || 'general']
     )

@@ -28,8 +28,7 @@ const getAllConfig = asyncHandler(async (req, res) => {
       key: config.key,
       value: config.value,
       description: config.description,
-      category: config.category,
-      updatedAt: config.updated_at
+      category: config.category
     }))
   })
 })
@@ -117,8 +116,7 @@ const updateConfig = asyncHandler(async (req, res) => {
     message: 'Configuración actualizada',
     data: {
       key: config.key,
-      value: config.value,
-      updatedAt: config.updated_at
+      value: config.value
     }
   })
 })
