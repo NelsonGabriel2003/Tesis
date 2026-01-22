@@ -1,7 +1,7 @@
 /**
  * MainPage Component
  * Pagina principal despues del login - Mobile First
- * Muestra contenido diferente para Admin vs Usuario
+ * Solo para usuarios regulares - Admin es redirigido a /admin
  *
  * Utiliza el contexto de autenticacion (useAuth) para obtener
  * los datos del usuario y evitar duplicacion de logica.
@@ -13,22 +13,14 @@ import {
   Search,
   X,
   LogOut,
-  Gift,
-  ChevronRight,
-  Settings,
-  Users,
-  TrendingUp,
-  Package,
-  Award,
   Loader,
-  RefreshCw,
   Menu,
   HelpCircle,
   Bell,
-  User
+  User,
+  Settings
 } from 'lucide-react'
-import { useDashboardController } from '../../controllers/admin/useDashboardController'
-import { adminModules, userModules } from '../../config/modulesConfig'
+import { userModules } from '../../config/modulesConfig'
 import { useAuth } from '../../hooks/useAuth'
 import { photoService } from '../../services/admin/adminServices'
 
@@ -58,13 +50,12 @@ const MainPage = () => {
     cerrarSesion
   } = useAuth()
 
-  // Controlador del dashboard (solo se usa si es admin)
-  const {
-    stats: estadisticas,
-    loading: cargandoEstadisticas,
-    error: errorEstadisticas,
-    refresh: refrescarEstadisticas
-  } = useDashboardController()
+  // Redirigir admin al panel de administracion
+  useEffect(() => {
+    if (!cargando && esAdministrador) {
+      navegarHacia('/admin')
+    }
+  }, [cargando, esAdministrador, navegarHacia])
 
   // Cargar fotos del carrusel
   useEffect(() => {
@@ -82,9 +73,6 @@ const MainPage = () => {
     }
     cargarFotos()
   }, [])
-
-  // Seleccionar modulos segun el rol del usuario
-  const modulosDisponibles = esAdministrador ? adminModules : userModules
 
   // Navegar a un modulo especifico
   const navegarAModulo = (ruta) => {
@@ -155,24 +143,11 @@ const MainPage = () => {
           </button>
 
           {/* Logo a la derecha */}
-          <div className="flex items-center gap-1">
-            {/* Boton Refrescar (solo admin) */}
-            {esAdministrador && (
-              <button
-                onClick={refrescarEstadisticas}
-                disabled={cargandoEstadisticas}
-                className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary disabled:opacity-50"
-                aria-label="Refrescar estadisticas"
-              >
-                <RefreshCw size={24} className={cargandoEstadisticas ? 'animate-spin' : ''} />
-              </button>
-            )}
-            <img
-              src="/images/Logo.svg"
-              alt="Logo"
-              className="h-10 w-10"
-            />
-          </div>
+          <img
+            src="/images/Logo.svg"
+            alt="Logo"
+            className="h-10 w-10"
+          />
         </div>
       </header>
 
@@ -284,138 +259,8 @@ const MainPage = () => {
       {/* ============ CONTENIDO PRINCIPAL ============ */}
       <main className="px-4 py-6">
 
-        {/* ==================== VISTA ADMIN ==================== */}
-        {esAdministrador ? (
-          <>
-            {/* Saludo Admin */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-text-primary">
-                Panel de Control
-              </h1>
-              <p className="text-text-secondary">
-                Bienvenido, {usuarioActual?.name || 'Administrador'}
-              </p>
-            </div>
-
-            {/* Error de estadisticas */}
-            {errorEstadisticas && (
-              <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                {errorEstadisticas}
-              </div>
-            )}
-
-            {/* Dashboard con estadisticas */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {/* Tarjeta: Total Usuarios */}
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Users size={20} className="text-blue-600" />
-                  </div>
-                  <div>
-                    {cargandoEstadisticas ? (
-                      <Loader size={20} className="animate-spin text-gray-400" />
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {estadisticas?.totalUsers ?? 0}
-                        </p>
-                        <p className="text-xs text-gray-500">Usuarios</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Tarjeta: Total Productos */}
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Package size={20} className="text-orange-600" />
-                  </div>
-                  <div>
-                    {cargandoEstadisticas ? (
-                      <Loader size={20} className="animate-spin text-gray-400" />
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {estadisticas?.totalProducts ?? 0}
-                        </p>
-                        <p className="text-xs text-gray-500">Productos</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Tarjeta: Total Canjes */}
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Award size={20} className="text-purple-600" />
-                  </div>
-                  <div>
-                    {cargandoEstadisticas ? (
-                      <Loader size={20} className="animate-spin text-gray-400" />
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {estadisticas?.totalRedemptions ?? 0}
-                        </p>
-                        <p className="text-xs text-gray-500">Canjes</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Tarjeta: Puntos Emitidos */}
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <TrendingUp size={20} className="text-green-600" />
-                  </div>
-                  <div>
-                    {cargandoEstadisticas ? (
-                      <Loader size={20} className="animate-spin text-gray-400" />
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {estadisticas?.pointsIssued?.toLocaleString() ?? 0}
-                        </p>
-                        <p className="text-xs text-gray-500">Puntos emitidos</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Banner para ir al panel de admin */}
-            <button
-              onClick={() => navegarHacia('/admin')}
-              className="w-full mb-6 p-4 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-lg
-                flex items-center justify-between text-white hover:shadow-xl transition-all hover:-translate-y-1"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg">
-                  <Settings size={24} />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold">Gestionar Sistema</p>
-                  <p className="text-sm opacity-80">Productos, recompensas, servicios</p>
-                </div>
-              </div>
-              <ChevronRight size={24} />
-            </button>
-
-            {/* Titulo de accesos rapidos */}
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Accesos Rapidos</h2>
-          </>
-        ) : (
-          <>
-            {/* ==================== VISTA USUARIO ==================== */}
-            {/* Saludo y Puntos en linea horizontal */}
+        {/* ==================== VISTA USUARIO ==================== */}
+        {/* Saludo y Puntos en linea horizontal */}
             <div className="mb-8 flex items-center gap-6">
               <div>
                 <h1 className="text-2xl font-bold text-text-primary">
@@ -543,34 +388,6 @@ const MainPage = () => {
                 )}
               </div>
             </div>
-          </>
-        )}
-
-        {/* ============ GRID DE MODULOS (solo admin) ============ */}
-        {esAdministrador && (
-          <div className="grid grid-cols-2 gap-4">
-            {adminModules.map((modulo) => {
-              const IconoDelModulo = modulo.icon
-              return (
-                <button
-                  key={modulo.id}
-                  onClick={() => navegarAModulo(modulo.route)}
-                  className="group flex flex-col items-center rounded-2xl bg-surface-primary p-6 shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 active:scale-95"
-                >
-                  <div className={`mb-3 rounded-full ${modulo.color} p-4 text-white transition-transform group-hover:scale-110`}>
-                    <IconoDelModulo size={28} />
-                  </div>
-                  <h3 className="mb-1 font-semibold text-text-primary">
-                    {modulo.name}
-                  </h3>
-                  <p className="text-center text-xs text-text-muted">
-                    {modulo.description}
-                  </p>
-                </button>
-              )
-            })}
-          </div>
-        )}
 
       </main>
 

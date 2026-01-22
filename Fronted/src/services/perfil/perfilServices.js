@@ -51,6 +51,7 @@ export const perfilService = {
       name: data.name,
       email: data.email,
       phone: data.phone || '',
+      role: data.role || 'user',
       avatar: null,
       memberSince: data.memberSince,
       membershipLevel: data.membership?.level?.toLowerCase() || 'bronce',
