@@ -50,7 +50,7 @@ const MainPage = () => {
     cerrarSesion
   } = useAuth()
 
-  // Redirigir admin al panel de administracion
+  // Redirigir admin al panel de administracion!
   useEffect(() => {
     if (!cargando && esAdministrador) {
       navegarHacia('/admin')

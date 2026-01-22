@@ -179,6 +179,7 @@ const getMe = asyncHandler(async (req, res) => {
       email: user.email,
       name: user.name,
       phone: user.phone,
+      role: user.role,
       membershipLevel: user.membership_level,
       points: {
         current: user.current_points,
@@ -213,6 +214,7 @@ const updateMe = asyncHandler(async (req, res) => {
       email: updatedUser.email,
       name: updatedUser.name,
       phone: updatedUser.phone,
+      role: updatedUser.role,
       membershipLevel: updatedUser.membership_level,
       points: {
         current: updatedUser.current_points,
