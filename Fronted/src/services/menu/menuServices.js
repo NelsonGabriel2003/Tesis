@@ -18,7 +18,7 @@ export const menuService = {
       price: parseFloat(product.price),
       points: product.pointsEarned || 0,
       category: product.category,
-      image_url: product.imageUrl,
+      imageUrl: product.imageUrl,
       available: product.isActive !== false
     }))
   },
@@ -39,7 +39,7 @@ export const menuService = {
       price: parseFloat(product.price),
       points: product.pointsEarned || 0,
       category: product.category,
-      image_url: product.imageUrl,
+      imageUrl: product.imageUrl,
       available: product.isActive !== false
     }))
   },
@@ -58,7 +58,7 @@ export const menuService = {
         price: parseFloat(product.price),
         points: product.pointsEarned || 0,
         category: product.category,
-        image_url: product.imageUrl,
+        imageUrl: product.imageUrl,
         available: product.isActive !== false
       }
     } catch {
@@ -105,7 +105,7 @@ export const menuService = {
         price: parseFloat(product.price),
         points: product.pointsEarned || 0,
         category: product.category,
-        image_url: product.imageUrl,
+        imageUrl: product.imageUrl,
         available: product.isActive !== false
       }))
     } catch {

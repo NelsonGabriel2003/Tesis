@@ -120,7 +120,7 @@ export const useMenuController = () => {
           name: item.name,
           price: parseFloat(item.price),
           pointsEarned: item.points || 0,
-          image: item.image_url,
+          image: item.imageUrl,
           quantity: 1
         }]
       }
