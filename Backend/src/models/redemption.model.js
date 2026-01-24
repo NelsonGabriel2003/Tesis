@@ -123,6 +123,47 @@ const RedemptionModel = {
       [userId]
     )
     return result.rows[0]
+  },
+
+  
+  /**
+   * Obtener canjes de usuario con resumen (para admin)
+   */
+  obtenerCanjesConResumen: async (userId) => {
+    const canjesResult = await query(
+      `SELECT r.id, r.points_spent, r.redemption_code, r.status, r.created_at, r.used_at,
+              rw.name as reward_name, rw.category as reward_category
+       FROM redemptions r
+       JOIN rewards rw ON r.reward_id = rw.id
+       WHERE r.user_id = $1
+       ORDER BY r.created_at DESC`,
+      [userId]
+    )
+
+    const resumenResult = await query(
+      `SELECT 
+         COUNT(*) as total_canjes,
+         COALESCE(SUM(points_spent), 0) as puntos_canjeados
+       FROM redemptions
+       WHERE user_id = $1`,
+      [userId]
+    )
+
+    return {
+      canjes: canjesResult.rows,
+      resumen: resumenResult.rows[0]
+    }
+  },
+
+  /**
+   * Contar canjes por usuario (para listado)
+   */
+  contarPorUsuario: async (userId) => {
+    const result = await query(
+      `SELECT COUNT(*) as total FROM redemptions WHERE user_id = $1`,
+      [userId]
+    )
+    return parseInt(result.rows[0].total)
   }
 }
 

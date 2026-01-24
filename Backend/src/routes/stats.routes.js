@@ -10,7 +10,9 @@ import {
   getUserStats,
   getPointsStats,
   getRedemptionStats,
-  getRecentTransactions
+  getRecentTransactions,
+  obtenerCanjesUsuario,
+  entregarCanje
 } from '../controllers/stats.controller.js'
 import { verifyToken, requireRole } from '../middlewares/index.js'
 
@@ -27,5 +29,11 @@ router.get('/users', getUserStats)
 router.get('/points', getPointsStats)
 router.get('/redemptions', getRedemptionStats)
 router.get('/transactions', getRecentTransactions)
+
+
+// Rutas para canjes de usuario (admin)
+router.get('/users/:id/canjes', obtenerCanjesUsuario)
+router.post('/canjes/:id/entregar', entregarCanje)
+
 
 export default router

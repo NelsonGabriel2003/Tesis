@@ -343,6 +343,19 @@ export const statsService = {
   getRecentTransactions: async (limit = 10) => {
     const response = await api.get(`/stats/transactions?limit=${limit}`)
     return response.data
+  },
+
+  
+  // Obtener canjes de un usuario específico
+  obtenerCanjesUsuario: async (usuarioId) => {
+    const response = await api.get(`/stats/users/${usuarioId}/canjes`)
+    return response
+  },
+
+  // Marcar canje como entregado
+  entregarCanje: async (canjeId) => {
+    const response = await api.post(`/stats/canjes/${canjeId}/entregar`)
+    return response
   }
 }
 
@@ -386,6 +399,8 @@ export const photoService = {
     return response
   }
 }
+
+
 
 export default {
   productService,

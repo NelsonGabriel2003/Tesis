@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api'
 import { telegram as config } from '../config/index.js'
-import { StaffModel, TelegramSessionModel, OrderModel, UserModel, TransactionModel } from '../models/index.js'
+import { StaffModel, TelegramSessionModel, OrderModel, UserModel, TransactionModel,RedemptionMode } from '../models/index.js'
 
 class TelegramService {
   constructor() {
@@ -102,6 +102,8 @@ class TelegramService {
     this.bot.onText(/\/descanso/, (msg) => this.handleShiftOff(msg))
     this.bot.onText(/\/estado/, (msg) => this.handleStatus(msg))
     this.bot.onText(/\/pedidos/, (msg) => this.handleListOrders(msg))
+    this.bot.onText(/\/validar$/, (msg) => this.manejarValidarSinCodigo(msg))
+    this.bot.onText(/\/validar (.+)/, (msg, match) => this.manejarValidarCanje(msg, match[1]))
 
     this.bot.on('callback_query', (query) => this.handleCallback(query))
   }
@@ -130,6 +132,7 @@ Para vincular tu cuenta usa:
 /descanso - Terminar turno
 /estado - Ver estado
 /pedidos - Ver pendientes
+/validar CODIGO - Validar canje de cliente
     `, { parse_mode: 'Markdown' })
   }
 
@@ -242,10 +245,165 @@ Usa /turno para iniciar tu turno y recibir pedidos.
     await this.sendMessage(chatId, message, { parse_mode: 'Markdown' })
   }
 
+  /**
+   * Manejar comando /validar sin código
+   */
+  async manejarValidarSinCodigo(msg) {
+    const chatId = msg.chat.id
+    await this.sendMessage(chatId, `
+❌ *Código requerido*
+
+Para validar un canje necesitas el código.
+El cliente debe mostrártelo desde su app.
+
+Uso: \`/validar CODIGO\`
+
+Ejemplo: \`/validar 7X9K2\`
+    `, { parse_mode: 'Markdown' })
+  }
+
+  /**
+   * Manejar comando /validar con código
+   */
+  async manejarValidarCanje(msg, codigo) {
+    const chatId = msg.chat.id
+
+    // Verificar que el empleado esté vinculado
+    const empleado = await StaffModel.findByTelegramChatId(chatId.toString())
+    if (!empleado) {
+      await this.sendMessage(chatId, '❌ No estás vinculado. Usa /vincular primero.')
+      return
+    }
+
+    // Buscar el canje por código
+    const canje = await RedemptionModel.findByCode(codigo.trim().toUpperCase())
+
+    if (!canje) {
+      await this.sendMessage(chatId, `
+❌ *Código no encontrado*
+
+El código \`${codigo.toUpperCase()}\` no existe o es inválido.
+Verifica que el cliente te muestre el código correcto.
+      `, { parse_mode: 'Markdown' })
+      return
+    }
+
+    // Formatear fecha
+    const fechaCanje = new Date(canje.created_at).toLocaleDateString('es-EC', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+
+    // Determinar estado y emoji
+    const esUsado = canje.status === 'used'
+    const estadoTexto = esUsado ? '✅ Usado' : '⏳ Pendiente'
+
+    if (esUsado) {
+      const fechaUso = new Date(canje.used_at).toLocaleDateString('es-EC', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+      
+      await this.sendMessage(chatId, `
+⚠️ *CANJE YA UTILIZADO*
+
+🎫 Código: \`${canje.redemption_code}\`
+🏆 Recompensa: ${canje.reward_name}
+👤 Cliente: ${canje.user_name}
+📅 Canjeado: ${fechaCanje}
+📅 Usado: ${fechaUso}
+📊 Estado: ${estadoTexto}
+
+Este código ya fue procesado anteriormente.
+      `, { parse_mode: 'Markdown' })
+      return
+    }
+
+    // Mostrar información del canje pendiente con botón de confirmar
+    const teclado = {
+      inline_keyboard: [[
+        { text: '✅ Confirmar Entrega', callback_data: `canje_confirmar_${canje.id}` }
+      ]]
+    }
+
+    await this.sendMessage(chatId, `
+🎁 *VALIDACIÓN DE CANJE*
+
+🎫 Código: \`${canje.redemption_code}\`
+🏆 Recompensa: *${canje.reward_name}*
+👤 Cliente: ${canje.user_name}
+📅 Fecha canje: ${fechaCanje}
+📊 Estado: ${estadoTexto}
+
+¿Confirmas la entrega de esta recompensa?
+    `, { 
+      parse_mode: 'Markdown',
+      reply_markup: teclado
+    })
+  }
+
+  /**
+   * Manejar confirmación de canje
+   */
+  async manejarConfirmarCanje(query, canjeId) {
+    const chatId = query.message.chat.id
+    const mensajeId = query.message.message_id
+
+    // Verificar empleado
+    const empleado = await StaffModel.findByTelegramChatId(chatId.toString())
+    if (!empleado) {
+      await this.bot.answerCallbackQuery(query.id, { text: '❌ No autorizado' })
+      return
+    }
+
+    // Marcar canje como usado
+    const canjeActualizado = await RedemptionModel.markAsUsed(parseInt(canjeId))
+
+    if (!canjeActualizado) {
+      await this.bot.answerCallbackQuery(query.id, { text: '❌ Error: Canje no encontrado o ya usado' })
+      return
+    }
+
+    // Obtener datos del canje para el mensaje
+    const canje = await RedemptionModel.findById(parseInt(canjeId))
+
+    await this.bot.answerCallbackQuery(query.id, { text: '✅ Canje procesado' })
+
+    // Actualizar mensaje
+    await this.bot.editMessageText(`
+✅ *CANJE COMPLETADO*
+
+🏆 ${canje.reward_name}
+👤 Entregado a: ${canje.user_name || 'Cliente'}
+👨‍💼 Procesado por: ${empleado.name}
+📅 ${new Date().toLocaleDateString('es-EC')}
+
+El código ya no es válido.
+    `, {
+      chat_id: chatId,
+      message_id: mensajeId,
+      parse_mode: 'Markdown'
+    })
+
+    // Actualizar actividad del empleado
+    await StaffModel.updateLastActivity(empleado.id)
+  }
+
+
   async handleCallback(query) {
     const chatId = query.message.chat.id
     const data = query.data
     const messageId = query.message.message_id
+
+    
+    // Manejar callbacks de canjes
+    if (data.startsWith('canje_confirmar_')) {
+      const canjeId = data.replace('canje_confirmar_', '')
+      await this.manejarConfirmarCanje(query, canjeId)
+      return
+    }
 
     const staff = await StaffModel.findByTelegramChatId(chatId.toString())
     if (!staff) {
