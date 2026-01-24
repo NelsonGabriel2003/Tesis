@@ -4,9 +4,9 @@
  */
 
 import StatsModel from '../models/stats.model.js'
+import RedemptionModel from '../models/redemption.model.js'
 import { asyncHandler } from '../middlewares/index.js'
 import UserModel from '../models/user.model.js'
-import { asyncHandler } from '../middlewares/index.js'
 /**
  * Obtener resumen completo del dashboard
  * GET /api/stats/dashboard
