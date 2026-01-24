@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api'
 import { telegram as config } from '../config/index.js'
-import { StaffModel, TelegramSessionModel, OrderModel, UserModel, TransactionModel,RedemptionMode } from '../models/index.js'
+import { StaffModel, TelegramSessionModel, OrderModel, UserModel, TransactionModel,RedemptionModel } from '../models/index.js'
 
 class TelegramService {
   constructor() {
