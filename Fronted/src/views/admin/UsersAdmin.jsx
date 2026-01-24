@@ -148,7 +148,7 @@ const UsersAdmin = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Usuarios</h1>
-          <p className="text-gray-500">Gestiona los clientes del sistema</p>
+          <p className="text-gray-500">Visualizacion de Canjes</p>
         </div>
         <button
           onClick={cargarDatos}
@@ -170,7 +170,7 @@ const UsersAdmin = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">{estadisticas.total}</p>
-                <p className="text-xs text-gray-500">Total Usuarios</p>
+                <p className="text-xs text-gray-500">Canjes Clientes</p>
               </div>
             </div>
           </div>
@@ -236,7 +236,7 @@ const UsersAdmin = () => {
                 {usuariosFiltrados.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                      No se encontraron usuarios
+                      No se canjearon puntos aun
                     </td>
                   </tr>
                 ) : (
