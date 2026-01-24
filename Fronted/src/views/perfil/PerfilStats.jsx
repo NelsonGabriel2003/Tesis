@@ -41,7 +41,7 @@ const PerfilStats = ({ stats, formatDate, userPoints = 0 }) => {
   const statItems = [
     {
       id: 'visits',
-      label: 'Visitas Al Local',
+      label: 'Produdctos comprados',
       value: stats.totalVisits,
       icon: Calendar,
       color: 'bg-blue-100 text-blue-600'
