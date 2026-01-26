@@ -11,7 +11,6 @@ import cors from 'cors'
 import routes from './routes/index.js'
 import { notFound, errorHandler } from './middlewares/index.js'
 import telegramService from './services/telegram.service.js'
-import adminConfigRoutes from './routes/adminConfig.routes.js'
 // Crear aplicación Express
 const app = express()
 
@@ -65,10 +64,6 @@ app.use(notFound)
 
 // Manejador de errores global
 app.use(errorHandler)
-
-// ... otras rutas ...
-
-app.use('/api/admin/config', adminConfigRoutes)
 
 // ===================
 // INICIAR SERVIDOR

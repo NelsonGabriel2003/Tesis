@@ -1,3 +1,4 @@
+
 /**
  * Routes Index
  * Configura todas las rutas de la API
@@ -16,6 +17,7 @@ import orderAdminRoutes from './orderAdmin.routes.js'
 import staffRoutes from './staff.routes.js'
 import telegramRoutes from './telegram.routes.js'
 import configRoutes from './config.routes.js'
+import adminConfigRoutes from './adminConfig.routes.js'
 import uploadRoutes from './upload.routes.js'
 import photoRoutes from './photo.routes.js'
 import searchRoutes from './search.routes.js'
@@ -49,6 +51,9 @@ router.use('/telegram', telegramRoutes)
 
 // Rutas de configuración del negocio
 router.use('/config', configRoutes)
+
+// Rutas de configuración de admin
+router.use('/admin/config', adminConfigRoutes)
 
 // Rutas de subida de imágenes
 router.use('/upload', uploadRoutes)

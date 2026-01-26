@@ -2,6 +2,7 @@
  * Migration: Crear todas las tablas
  * Ejecutar con: node database/migrations/001_initial.js
  */
+
 import 'dotenv/config'
 import { pool } from '../../src/config/database.js'
 
