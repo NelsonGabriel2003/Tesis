@@ -59,6 +59,17 @@ const LoginForm = ({
         required
       />
 
+      {/* Olvidaste tu contraseña */}
+      <div className="text-right -mt-2">
+        <button
+          type="button"
+          onClick={() => navigate('/forgot-password')}
+          className="text-sm text-primary hover:text-primary/80 hover:underline transition-all"
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+
       {/* Submit */}
       <Button type="submit" loading={status.loading} className="w-full">
         Login

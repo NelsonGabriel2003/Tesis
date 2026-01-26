@@ -7,7 +7,7 @@
   "scripts": {
     "start": "npm run migrate && npm run seed && node src/app.js",
     "dev": "nodemon src/app.js",
-    "migrate": "node database/migrations/001_initial.js && node database/migrations/002_orders_telegram.js && node database/migrations/003_staff_link_codes.js && node database/migrations/004_business_config.js && node database/migrations/005_photos.js",
+    "migrate": "node database/migrations/001_initial.js && node database/migrations/002_orders_telegram.js && node database/migrations/003_staff_link_codes.js && node database/migrations/004_business_config.js && node database/migrations/005_photos.js && node database/migrations/006_password_resets.js",
     "seed": "node database/seeds/001_initial_data.js",
     "setup": "npm run migrate && npm run seed && node src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -30,7 +30,8 @@
     "multer": "^2.0.2",
     "node-telegram-bot-api": "^0.67.0",
     "pg": "^8.16.3",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "resend": "^6.8.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

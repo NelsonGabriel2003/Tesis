@@ -5,3 +5,4 @@
 
 export { useAuthController } from './useAuthController'
 export { useRegisterController } from './useRegisterController'
+export { usePasswordResetController } from './usePasswordResetController'

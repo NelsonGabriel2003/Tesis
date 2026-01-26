@@ -121,6 +121,21 @@ const UserModel = {
   },
 
   /**
+   * Actualizar contraseña del usuario
+   */
+  updatePassword: async (id, hashedPassword) => {
+    const result = await query(
+      `UPDATE users
+       SET password = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING id, email, name`,
+      [id, hashedPassword]
+    )
+    return result.rows[0]
+  },
+
+  /**
    * Obtener todos los usuarios (admin)
    */
   findAll: async (limit = 50, offset = 0) => {
