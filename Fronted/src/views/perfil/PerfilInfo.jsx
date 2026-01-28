@@ -31,7 +31,7 @@ const PerfilInfo = ({
         {!isEditing ? (
           <button
             onClick={onEdit}
-            className="flex items-center gap-2 rounded-full bg-primaryClr/10 px-4 py-2 text-sm font-medium text-primaryClr transition-colors hover:bg-primaryClr/20"
+            className="flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
           >
             <Edit2 size={16} />
             Editar
@@ -48,7 +48,7 @@ const PerfilInfo = ({
             <button
               onClick={onSave}
               disabled={loading}
-              className="flex items-center gap-1 rounded-full bg-primaryClr px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primaryClr/90 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? (
                 <Loader size={16} className="animate-spin" />
@@ -78,7 +78,7 @@ const PerfilInfo = ({
                     type={field.type}
                     value={editData[field.id] || ''}
                     onChange={(e) => onChange(field.id, e.target.value)}
-                    className="w-full rounded-xl border border-input-border bg-surface-secondary py-3 pl-10 pr-4 text-text-primary placeholder-text-muted focus:border-primaryClr focus:outline-none focus:ring-2 focus:ring-primaryClr/20"
+                    className="w-full rounded-xl border border-input-border bg-surface-secondary py-3 pl-10 pr-4 text-text-primary placeholder-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 ) : (
                   <div className="w-full rounded-xl bg-surface-secondary py-3 pl-10 pr-4 text-text-primary">
@@ -89,31 +89,6 @@ const PerfilInfo = ({
             </div>
           )
         })}
-      </div>
-
-      {/* Beneficios del nivel actual */}
-      <div className="mt-6 rounded-xl bg-gradient-to-br from-primaryClr/5 to-purple-500/5 p-4">
-        <h4 className="mb-3 font-semibold text-text-primary">
-          Beneficios de tu nivel
-        </h4>
-        <ul className="space-y-2">
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            2 puntos por cada $1 gastado
-          </li>
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            Descuento 10% en cumpleaños
-          </li>
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            Reserva prioritaria
-          </li>
-          <li className="flex items-center gap-2 text-sm text-text-secondary">
-            <span className="text-primaryClr">✓</span>
-            Bebida de cortesía mensual
-          </li>
-        </ul>
       </div>
     </div>
   )

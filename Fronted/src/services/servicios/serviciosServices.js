@@ -1,78 +1,125 @@
 /**
  * Servicios Services
- * Servicios para el módulo de servicios (mock sin base de datos)
+ * Servicios para el módulo de servicios - Conectado al Backend
  */
 
-import { mockServicios, serviciosCategorias } from '../../models/servicios/serviciosModel'
-
-// Simular delay de API
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+import api from '../api.js'
 
 export const serviciosService = {
   /**
    * Obtener todos los servicios
    */
   getServicios: async () => {
-    await delay(500)
-    return mockServicios
+    const response = await api.get('/services')
+    return response.data.map(service => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      icon: '📋',
+      category: service.category,
+      available: service.isActive !== false,
+      pointsRequired: service.pointsRequired || 0,
+      pointsReward: service.pointsEarned || 0,
+      imageUrl: service.imageUrl
+    }))
   },
 
   /**
    * Obtener servicios por categoría
    */
   getServiciosByCategory: async (categoryId) => {
-    await delay(300)
-    if (categoryId === 'todos') {
-      return mockServicios
+    let endpoint = '/services'
+    if (categoryId && categoryId !== 'todos') {
+      endpoint += `?category=${categoryId}`
     }
-    return mockServicios.filter(service => service.category === categoryId)
+    const response = await api.get(endpoint)
+    return response.data.map(service => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      icon: '📋',
+      category: service.category,
+      available: service.isActive !== false,
+      pointsRequired: service.pointsRequired || 0,
+      pointsReward: service.pointsEarned || 0,
+      imageUrl: service.imageUrl
+    }))
   },
 
   /**
    * Obtener un servicio por ID
    */
   getServicioById: async (id) => {
-    await delay(200)
-    return mockServicios.find(service => service.id === id) || null
+    try {
+      const response = await api.get(`/services/${id}`)
+      const service = response.data
+      return {
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        icon: '📋',
+        category: service.category,
+        available: service.isActive !== false,
+        pointsRequired: service.pointsRequired || 0,
+        pointsReward: service.pointsEarned || 0,
+        imageUrl: service.imageUrl
+      }
+    } catch {
+      return null
+    }
   },
 
   /**
    * Obtener categorías
    */
   getCategorias: async () => {
-    await delay(100)
-    return serviciosCategorias
+    try {
+      const response = await api.get('/services/categories')
+      return [
+        { id: 'todos', name: 'Todos', icon: '📋' },
+        ...response.data.map(cat => ({
+          id: cat,
+          name: cat.charAt(0).toUpperCase() + cat.slice(1),
+          icon: '📋'
+        }))
+      ]
+    } catch {
+      return [
+        { id: 'todos', name: 'Todos', icon: '📋' }
+      ]
+    }
   },
 
   /**
    * Reservar un servicio
    */
-  reservarServicio: async (servicioId, userData) => {
-    await delay(800)
-    const servicio = mockServicios.find(s => s.id === servicioId)
-
-    if (!servicio) {
-      throw new Error('Servicio no encontrado')
-    }
-
-    if (!servicio.available) {
-      throw new Error('Servicio no disponible')
-    }
-
-    // Simular reserva exitosa
+  reservarServicio: async (servicioId, bookingData) => {
+    const response = await api.post(`/services/${servicioId}/book`, bookingData)
     return {
       success: true,
-      reservationId: `RES-${Date.now()}`,
-      servicio: servicio,
-      pointsEarned: servicio.pointsReward,
-      message: 'Reserva realizada exitosamente'
+      reservationId: response.data.bookingId || response.data.id,
+      servicio: response.data.service,
+      pointsEarned: response.data.pointsEarned || 0,
+      message: response.message || 'Reserva realizada exitosamente'
     }
   },
 
   /**
-   * Verificar si el usuario tiene suficientes puntos
+   * Verificar si el usuario tiene suficientes puntos (lógica local)
    */
   canUseService: (service, userPoints) => {
-    return userPoints >= service.pointsRequired
+    return userPoints >= (service.pointsRequired || 0)
+  },
+
+  /**
+   * Buscar servicios
+   */
+  searchServicios: async (query) => {
+    const services = await serviciosService.getServicios()
+    const lowerQuery = query.toLowerCase()
+    return services.filter(service =>
+      service.name.toLowerCase().includes(lowerQuery) ||
+      service.description?.toLowerCase().includes(lowerQuery)
+    )
   }
 }

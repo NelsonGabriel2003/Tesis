@@ -5,6 +5,23 @@
 
 import { Plus, Minus, Star } from 'lucide-react'
 
+// Iconos por categoría (fallback si no hay imagen)
+const CATEGORY_ICONS = {
+  'bebidas': '🍺',
+  'cocteles': '🍹',
+  'cócteles': '🍹',
+  'snacks': '🍕',
+  'comida': '🍔',
+  'promociones': '🔥',
+  'promos': '🔥',
+  'default': '🍽️'
+}
+
+const getIconByCategory = (category) => {
+  const key = category?.toLowerCase() || 'default'
+  return CATEGORY_ICONS[key] || CATEGORY_ICONS['default']
+}
+
 const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) => {
   if (loading) {
     return (
@@ -50,14 +67,19 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
               !item.available ? 'opacity-60' : ''
             }`}
           >
-            {/* Imagen placeholder */}
-            <div className="relative h-32 bg-gradient-to-br from-primaryClr/20 to-purple-500/20">
-              <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                {item.category === 'bebidas' && '🍺'}
-                {item.category === 'cocteles' && '🍹'}
-                {item.category === 'snacks' && '🍕'}
-                {item.category === 'promociones' && '🔥'}
-              </div>
+            {/* Imagen o placeholder */}
+            <div className="relative h-32 bg-gradient-to-br from-primary/20 to-purple-500/20 overflow-hidden">
+              {item.imageUrl ? (
+                <img 
+                  src={item.imageUrl} 
+                  alt={item.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-4xl">
+                  {getIconByCategory(item.category)}
+                </div>
+              )}
 
               {/* Badge de puntos */}
               <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-1 text-xs font-bold text-yellow-900">
@@ -85,7 +107,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
               </p>
 
               <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-primaryClr">
+                <span className="text-lg font-bold text-primary">
                   ${item.price.toFixed(2)}
                 </span>
 
@@ -95,7 +117,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                       <>
                         <button
                           onClick={() => onRemoveItem(item.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600 transition-colors hover:bg-red-200"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-orange-600 transition-colors hover:bg-red-200"
                         >
                           <Minus size={16} />
                         </button>
@@ -104,7 +126,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                         </span>
                         <button
                           onClick={() => onAddItem(item)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-primaryClr text-white transition-colors hover:bg-primaryClr/80"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 transition-colors hover:bg-green-200"
                         >
                           <Plus size={16} />
                         </button>
@@ -112,7 +134,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                     ) : (
                       <button
                         onClick={() => onAddItem(item)}
-                        className="flex items-center gap-1 rounded-full bg-primaryClr px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primaryClr/80"
+                        className="flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-primary/80"
                       >
                         <Plus size={16} />
                         Agregar

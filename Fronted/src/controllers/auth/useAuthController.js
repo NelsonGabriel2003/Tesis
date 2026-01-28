@@ -3,6 +3,8 @@
  * Maneja toda la lógica de negocio para autenticación
  */
 
+
+
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { initialAuthState, initialStatusState } from '../../models/auth/authModel'
@@ -46,7 +48,7 @@ export const useAuthController = () => {
    */
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
-    
+
     setStatus({
       loading: true,
       error: null,
@@ -55,7 +57,7 @@ export const useAuthController = () => {
 
     try {
       const response = await authService.login(formData)
-      
+
       // Guardar token y usuario en localStorage
       localStorage.setItem('token', response.token)
       localStorage.setItem('user', JSON.stringify(response.user))
@@ -66,10 +68,12 @@ export const useAuthController = () => {
         success: true
       })
 
-      
-      // navigate('/dashboard')
-      navigate('/main')
-
+      // Redirigir según el rol del usuario
+      if (response.user.role === 'admin') {
+        navigate('/admin')
+      } else {
+        navigate('/main')
+      }
 
       return response
 
@@ -79,18 +83,17 @@ export const useAuthController = () => {
         error: error.message || 'Error en el inicio de sesión',
         success: false
       })
-      
+
       return null
     }
-  }, [formData])
+  }, [formData, navigate])
 
   return {
-    // Estado
+
     formData,
     showPassword,
     status,
     
-    // Acciones
     handleInputChange,
     togglePassword,
     handleSubmit,

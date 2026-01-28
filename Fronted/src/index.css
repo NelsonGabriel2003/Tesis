@@ -1,11 +1,113 @@
 @import "tailwindcss";
 
+/* ============================================
+   CONFIGURACION TAILWIND CSS v4
+   Migrado desde tailwind.config.ts
+   ============================================ */
+
+@theme {
+  /* Fuentes personalizadas */
+  --font-montserrat: 'Montserrat', sans-serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+
+  /* Color primario */
+  --color-primary: #7A5AF8;
+  --color-primary-hover: #6344d3;
+
+  /* Colores para Alerts */
+  --color-alert-success-bg: #dcfce7;
+  --color-alert-success-text: #15803d;
+  --color-alert-error-bg: #fee2e2;
+  --color-alert-error-text: #b91c1c;
+  --color-alert-warning-bg: #fef9c3;
+  --color-alert-warning-text: #a16207;
+  --color-alert-info-bg: #dbeafe;
+  --color-alert-info-text: #1d4ed8;
+
+  /* Colores para Inputs */
+  --color-input-border: #d1d5db;
+  --color-input-focus: #7A5AF8;
+  --color-input-label: #374151;
+  --color-input-placeholder: #9ca3af;
+
+  /* Colores para Buttons */
+  --color-btn-primary-bg: #7A5AF8;
+  --color-btn-primary-text: #ffffff;
+  --color-btn-primary-hover: #6344d3;
+  --color-btn-secondary-bg: #e5e7eb;
+  --color-btn-secondary-text: #1f2937;
+  --color-btn-secondary-hover: #d1d5db;
+
+  /* Colores de texto */
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+
+  /* Surfaces / Backgrounds */
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f3f4f6;
+  --color-surface-dark: #1f2937;
+}
+
+/* ============================================
+   ESTILOS BASE
+   ============================================ */
+
 @layer base {
   body {
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-montserrat);
   }
 
+  /* Titulos principales - Fuente formal elegante */
+  h1 {
+    font-family: var(--font-cormorant);
+    font-weight: 700;
+  }
+
+  /* Subtitulos - Fuente formal */
   h2, h3 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: var(--font-cormorant);
+    font-weight: 600;
+  }
+
+  /* Textos de enfasis - Fuente gruesa */
+  h4, h5, h6 {
+    font-family: var(--font-montserrat);
+    font-weight: 700;
+  }
+}
+
+/* ============================================
+   CLASES UTILITARIAS DE FUENTES
+   ============================================ */
+
+@layer utilities {
+  /* Fuente gruesa/bold para textos destacados */
+  .font-grueso {
+    font-family: var(--font-montserrat);
+    font-weight: 800;
+  }
+
+  /* Fuente formal para titulos elegantes */
+  .font-formal {
+    font-family: var(--font-cormorant);
+    font-weight: 600;
+  }
+
+  /* Fuente formal extra elegante */
+  .font-elegante {
+    font-family: var(--font-cormorant);
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

@@ -8,7 +8,7 @@ import { Star, Lock, TrendingUp } from 'lucide-react'
 const CanjeList = ({ rewards, loading, onSelectReward, canRedeem, userPoints }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {[1, 2, 3, 4].map((n) => (
           <div
             key={n}
@@ -53,7 +53,7 @@ const CanjeList = ({ rewards, loading, onSelectReward, canRedeem, userPoints }) 
             }`}
           >
             {/* Imagen placeholder */}
-            <div className="relative h-24 bg-gradient-to-br from-primaryClr/20 to-purple-500/20">
+            <div className="relative h-24 to-purple-500 bg-gradient-to-tr from-blue-400 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center text-4xl">
                 {reward.category === 'bebidas' && '🍹'}
                 {reward.category === 'comida' && '🍕'}
@@ -98,7 +98,7 @@ const CanjeList = ({ rewards, loading, onSelectReward, canRedeem, userPoints }) 
               {/* Precio en puntos */}
               <div className={`flex items-center justify-between rounded-full px-3 py-1.5 ${
                 canRedeemReward
-                  ? 'bg-primaryClr/10 text-primaryClr'
+                  ? 'bg-primary/10 text-primary'
                   : 'bg-gray-100 text-gray-500'
               }`}>
                 <div className="flex items-center gap-1">

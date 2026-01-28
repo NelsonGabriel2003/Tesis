@@ -17,11 +17,11 @@ const ServicioModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="w-full max-w-md rounded-t-3xl bg-surface-primary p-6 shadow-xl sm:rounded-3xl">
+      <div className="w-full max-w-md rounded-t-3xl bg-amber-200 p-6 shadow-xl sm:rounded-3xl">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primaryClr/10 text-4xl">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10 text-4xl">
               {service.icon}
             </div>
             <div>
@@ -78,7 +78,7 @@ const ServicioModal = ({
           </div>
 
           {/* Tus puntos actuales */}
-          <div className="flex items-center justify-between rounded-xl bg-surface-secondary p-4">
+          <div className="flex items-center justify-between rounded-xl bg-green-300 p-4">
             <span className="text-text-secondary">Tus puntos actuales</span>
             <span className="font-bold text-text-primary">{userPoints.toLocaleString()} pts</span>
           </div>
@@ -129,7 +129,7 @@ const ServicioModal = ({
               disabled={!service.available || !canUse || reservationStatus?.loading}
               className={`flex flex-1 items-center justify-center gap-2 rounded-full py-3 font-semibold text-white transition-colors ${
                 service.available && canUse
-                  ? 'bg-primaryClr hover:bg-primaryClr/90'
+                  ? 'bg-primary hover:bg-primary/90'
                   : 'cursor-not-allowed bg-gray-300'
               }`}
             >

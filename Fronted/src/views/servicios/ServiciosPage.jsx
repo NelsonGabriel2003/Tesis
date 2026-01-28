@@ -30,12 +30,12 @@ const ServiciosPage = () => {
   return (
     <div className="min-h-screen bg-surface-secondary">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-surface-primary shadow-md">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-400 via-blue-300 to-purple-300 border-b border-blue-200 shadow-md px-4 py-4">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <button
               onClick={goBack}
-              className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primaryClr"
+              className="rounded-full p-2 text-text-secondary transition-colors hover:bg-surface-secondary hover:text-primary"
             >
               <ArrowLeft size={24} />
             </button>
@@ -57,7 +57,7 @@ const ServiciosPage = () => {
               onClick={() => filterByCategory(category.id)}
               className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 selectedCategory === category.id
-                  ? 'bg-primaryClr text-white shadow-md'
+                  ? 'bg-primary text-white shadow-md'
                   : 'bg-surface-primary text-text-secondary hover:bg-surface-secondary'
               }`}
             >

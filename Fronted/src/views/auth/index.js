@@ -1,6 +1,10 @@
+
 /**
- * Auth Views - Barrel Export
+ * Auth Views Index
+ * Exporta todas las vistas de autenticación
  */
 
-export { default as LoginForm } from './LoginForm'
 export { default as LoginPage } from './LoginPage'
+export { default as LoginForm } from './LoginForm'
+export { default as RegisterPage } from './RegisterPage'
+export { default as RegisterForm } from './RegisterForm'

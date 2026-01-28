@@ -16,10 +16,30 @@ export const useCanjeController = () => {
   const [redeemStatus, setRedeemStatus] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Puntos del usuario (mock)
-  const [userPoints, setUserPoints] = useState(1250)
+  // Puntos del usuario desde backend
+  const [userPoints, setUserPoints] = useState(0)
+  const [loadingPoints, setLoadingPoints] = useState(true)
 
   const navigate = useNavigate()
+
+  // Cargar puntos del usuario
+  const loadUserPoints = useCallback(async () => {
+    setLoadingPoints(true)
+    try {
+      const points = await canjeService.getUserPoints()
+      setUserPoints(points)
+    } catch (error) {
+      console.error('Error cargando puntos:', error)
+      // Intentar obtener del localStorage como fallback
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        const user = JSON.parse(storedUser)
+        setUserPoints(user.points?.current || 0)
+      }
+    } finally {
+      setLoadingPoints(false)
+    }
+  }, [])
 
   // Cargar recompensas
   const loadRewards = useCallback(async () => {
@@ -107,8 +127,17 @@ export const useCanjeController = () => {
     setRedeemStatus({ loading: true, error: null, success: false })
 
     try {
-      const result = await canjeService.redeemReward(rewardId, userPoints)
+      const result = await canjeService.redeemReward(rewardId)
       setUserPoints(result.newBalance)
+      
+      // Actualizar puntos en localStorage
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        const user = JSON.parse(storedUser)
+        user.points = { ...user.points, current: result.newBalance }
+        localStorage.setItem('user', JSON.stringify(user))
+      }
+
       setRedeemStatus({
         loading: false,
         error: null,
@@ -122,7 +151,7 @@ export const useCanjeController = () => {
         success: false
       })
     }
-  }, [userPoints])
+  }, [])
 
   // Verificar si puede canjear
   const canRedeem = useCallback((reward) => {
@@ -134,15 +163,16 @@ export const useCanjeController = () => {
     navigate('/main')
   }, [navigate])
 
-  // Cargar recompensas al montar
+  // Cargar datos al montar
   useEffect(() => {
+    loadUserPoints()
     loadRewards()
-  }, [loadRewards])
+  }, [loadUserPoints, loadRewards])
 
   return {
     // Estado
     rewards: state.rewards,
-    loading: state.loading,
+    loading: state.loading || loadingPoints,
     error: state.error,
     selectedCategory: state.selectedCategory,
     categories,

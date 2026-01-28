@@ -40,7 +40,7 @@ const PerfilPage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface-secondary">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primaryClr border-t-transparent" />
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="text-text-muted">Cargando perfil...</p>
         </div>
       </div>
@@ -50,7 +50,7 @@ const PerfilPage = () => {
   return (
     <div className="min-h-screen bg-surface-secondary pb-6">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primaryClr to-purple-600 px-4 pb-20 pt-4 text-white">
+      <header className="bg-gradient-to-br from-primary to-purple-600 px-4 pb-20 pt-4 text-white">
         <div className="flex items-center justify-between">
           <button
             onClick={goBack}
@@ -98,8 +98,8 @@ const PerfilPage = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? 'bg-primaryClr text-white'
-                    : 'text-text-secondary hover:text-primaryClr'
+                    ? 'bg-primary text-white'
+                    : 'text-text-secondary hover:text-primary'
                 }`}
               >
                 <IconComponent size={18} />
@@ -136,6 +136,7 @@ const PerfilPage = () => {
           <PerfilStats
             stats={user.stats}
             formatDate={formatDate}
+            userPoints={user.points?.current || 0}
           />
         )}
       </div>

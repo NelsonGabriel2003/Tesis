@@ -3,7 +3,8 @@
  * Componente de presentación para el formulario de login
  */
 
-import {Alert,Button,Input,PasswordInput} from '../../components/ui'
+import { useNavigate } from 'react-router-dom'
+import { Alert, Button, Input, PasswordInput } from '../../components/ui'
 
 const LoginForm = ({
   formData,
@@ -13,6 +14,8 @@ const LoginForm = ({
   onTogglePassword,
   onSubmit
 }) => {
+  const navigate = useNavigate()
+
   return (
     <form
       onSubmit={onSubmit}
@@ -64,9 +67,13 @@ const LoginForm = ({
       {/* Registro */}
       <p className="text-center text-text-secondary">
         No tienes cuenta?{' '}
-        <a href="#" className="text-primaryClr hover:underline">
+        <button
+          type="button"
+          onClick={() => navigate('/register')}
+          className="text-primary hover:underline font-medium"
+        >
           Registrate
-        </a>
+        </button>
       </p>
     </form>
   )

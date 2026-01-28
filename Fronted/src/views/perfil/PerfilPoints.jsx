@@ -38,7 +38,7 @@ const PerfilPoints = ({ points, formatDate }) => {
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-2xl bg-surface-primary p-4 shadow-md">
           <p className="text-sm text-text-muted">Puntos actuales</p>
-          <p className="text-2xl font-bold text-primaryClr">
+          <p className="text-2xl font-bold text-primary">
             {points.current.toLocaleString()}
           </p>
         </div>

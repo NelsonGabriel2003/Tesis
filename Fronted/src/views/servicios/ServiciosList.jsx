@@ -5,6 +5,22 @@
 
 import { Star, Lock, ChevronRight } from 'lucide-react'
 
+// Iconos por categoría (fallback si no hay imagen)
+const CATEGORY_ICONS = {
+  'reservas': '🪑',
+  'eventos': '🎉',
+  'entretenimiento': '🎵',
+  'vip': '⭐',
+  'exclusivo': '⭐',
+  'delivery': '🚗',
+  'default': '📋'
+}
+
+const getIconByCategory = (category) => {
+  const key = category?.toLowerCase() || 'default'
+  return CATEGORY_ICONS[key] || CATEGORY_ICONS['default']
+}
+
 const ServiciosList = ({ services, loading, onSelectService, canUseService, userPoints }) => {
   if (loading) {
     return (
@@ -12,7 +28,7 @@ const ServiciosList = ({ services, loading, onSelectService, canUseService, user
         {[1, 2, 3, 4].map((n) => (
           <div
             key={n}
-            className="animate-pulse rounded-2xl bg-surface-primary p-4 shadow-md"
+            className="animate-pulse rounded-2xl bg-surface-primary p-4 shadow-md "
           >
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-xl bg-surface-secondary" />
@@ -57,11 +73,19 @@ const ServiciosList = ({ services, loading, onSelectService, canUseService, user
             }`}
           >
             <div className="flex items-center gap-4">
-              {/* Icono */}
-              <div className={`flex h-16 w-16 items-center justify-center rounded-xl text-3xl ${
-                canUse ? 'bg-primaryClr/10' : 'bg-gray-100'
+              {/* Imagen o Icono */}
+              <div className={`flex h-16 w-16 items-center justify-center rounded-xl overflow-hidden ${
+                canUse ? 'bg-primary/10' : 'bg-gray-100'
               }`}>
-                {service.icon}
+                {service.imageUrl ? (
+                  <img 
+                    src={service.imageUrl} 
+                    alt={service.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-3xl">{getIconByCategory(service.category)}</span>
+                )}
               </div>
 
               {/* Info */}

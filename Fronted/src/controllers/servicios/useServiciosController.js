@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { initialServiciosState, serviciosCategorias } from '../../models/servicios/serviciosModel'
 import { serviciosService } from '../../services/servicios/serviciosServices'
+import api from '../../services/api'
 
 export const useServiciosController = () => {
   const [state, setState] = useState(initialServiciosState)
@@ -16,10 +17,22 @@ export const useServiciosController = () => {
   const [showModal, setShowModal] = useState(false)
   const [reservationStatus, setReservationStatus] = useState(null)
 
-  // Puntos del usuario (mock)
-  const [userPoints] = useState(1250)
+
+  // Puntos del usuario (desde API)
+  const [userPoints, setUserPoints] = useState(0)
 
   const navigate = useNavigate()
+
+  // Cargar puntos del usuario
+  const loadUserPoints = useCallback(async () => {
+    try {
+      const response = await api.get('/profile')
+      setUserPoints(response.data?.currentPoints || response.data?.current_points || 0)
+    } catch (error) {
+      console.error('Error cargando puntos:', error)
+    }
+  }, [])
+
 
   // Cargar servicios
   const loadServicios = useCallback(async () => {
@@ -109,7 +122,8 @@ export const useServiciosController = () => {
   // Cargar servicios al montar
   useEffect(() => {
     loadServicios()
-  }, [loadServicios])
+    loadUserPoints() 
+  }, [loadServicios,loadUserPoints])
 
   return {
     // Estado

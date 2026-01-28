@@ -1,104 +1,163 @@
 /**
  * Canje Services
- * Servicios para el módulo de canje (mock sin base de datos)
+ * Servicios para el módulo de canje - Conectado al Backend
  */
-
-import { mockRewards, canjeCategories } from '../../models/canje/canjeModel'
-
-// Simular delay de API
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+import api from '../api.js'
 
 export const canjeService = {
+  /**
+   * Obtener puntos actuales del usuario
+   */
+  getUserPoints: async () => {
+    const res = await api.get('/profile')
+    return res.data.points?.current || 0
+  },
+
   /**
    * Obtener todas las recompensas
    */
   getRewards: async () => {
-    await delay(500)
-    return mockRewards
+    const res = await api.get('/rewards')
+    return res.data.map(reward => ({
+      id: reward.id,
+      name: reward.name,
+      description: reward.description,
+      pointsCost: reward.pointsCost,
+      category: reward.category,
+      imageUrl: reward.imageUrl,
+      stock: reward.stock,
+      popular: reward.isPopular
+    }))
   },
 
   /**
    * Obtener recompensas por categoría
    */
   getRewardsByCategory: async (categoryId) => {
-    await delay(300)
-    if (categoryId === 'todos') {
-      return mockRewards
+    let endpoint = '/rewards'
+    if (categoryId && categoryId !== 'todos') {
+      endpoint += `?category=${categoryId}`
     }
-    return mockRewards.filter(reward => reward.category === categoryId)
+    const res = await api.get(endpoint)
+    return res.data.map(reward => ({
+      id: reward.id,
+      name: reward.name,
+      description: reward.description,
+      pointsCost: reward.pointsCost,
+      category: reward.category,
+      imageUrl: reward.imageUrl,
+      stock: reward.stock,
+      popular: reward.isPopular
+    }))
   },
 
   /**
    * Obtener recompensas populares
    */
   getPopularRewards: async () => {
-    await delay(300)
-    return mockRewards.filter(reward => reward.popular)
+    const rewards = await canjeService.getRewards()
+    return rewards.filter(reward => reward.popular)
   },
 
   /**
    * Obtener una recompensa por ID
    */
   getRewardById: async (id) => {
-    await delay(200)
-    return mockRewards.find(reward => reward.id === id) || null
+    try {
+      const res = await api.get(`/rewards/${id}`)
+      const reward = res.data
+      return {
+        id: reward.id,
+        name: reward.name,
+        description: reward.description,
+        pointsCost: reward.pointsCost,
+        category: reward.category,
+        imageUrl: reward.imageUrl,
+        stock: reward.stock,
+        popular: reward.isPopular
+      }
+    } catch {
+      return null
+    }
   },
 
   /**
    * Obtener categorías
    */
   getCategories: async () => {
-    await delay(100)
-    return canjeCategories
+    try {
+      const res = await api.get('/rewards/categories')
+      return [
+        { id: 'todos', name: 'Todos', icon: '🎁' },
+        ...res.data.map(cat => ({
+          id: cat,
+          name: cat.charAt(0).toUpperCase() + cat.slice(1),
+          icon: getIconForCategory(cat)
+        }))
+      ]
+    } catch {
+      // Devolver categorías por defecto si falla
+      return [
+        { id: 'todos', name: 'Todos', icon: '🎁' },
+        { id: 'bebidas', name: 'Bebidas', icon: '🍺' },
+        { id: 'comidas', name: 'Comidas', icon: '🍔' },
+        { id: 'experiencias', name: 'Experiencias', icon: '✨' },
+        { id: 'descuentos', name: 'Descuentos', icon: '💰' }
+      ]
+    }
   },
 
   /**
    * Canjear una recompensa
    */
-  redeemReward: async (rewardId, userPoints) => {
-    await delay(1000)
-    const reward = mockRewards.find(r => r.id === rewardId)
-
-    if (!reward) {
-      throw new Error('Recompensa no encontrada')
-    }
-
-    if (reward.stock <= 0) {
-      throw new Error('Recompensa agotada')
-    }
-
-    if (userPoints < reward.pointsCost) {
-      throw new Error('Puntos insuficientes')
-    }
-
-    // Simular canje exitoso
+  redeemReward: async (rewardId) => {
+    const res = await api.post(`/rewards/${rewardId}/redeem`)
     return {
       success: true,
-      redeemCode: `CANJE-${Date.now().toString(36).toUpperCase()}`,
-      reward: reward,
-      pointsSpent: reward.pointsCost,
-      newBalance: userPoints - reward.pointsCost,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 días
-      message: '¡Canje realizado exitosamente!'
+      redeemCode: res.data.redemptionCode,
+      reward: res.data.reward,
+      pointsSpent: res.data.reward.pointsSpent,
+      newBalance: res.data.newBalance,
+      message: res.message
     }
   },
 
   /**
-   * Verificar si puede canjear
+   * Verificar si puede canjear (solo lógica local)
    */
   canRedeem: (reward, userPoints) => {
     return userPoints >= reward.pointsCost && reward.stock > 0
   },
 
   /**
-   * Buscar recompensas
+   * Buscar recompensas (filtra localmente)
    */
   searchRewards: async (query) => {
-    await delay(300)
+    const rewards = await canjeService.getRewards()
     const lowerQuery = query.toLowerCase()
-    return mockRewards.filter(reward =>
+    return rewards.filter(reward =>
       reward.name.toLowerCase().includes(lowerQuery) ||
       reward.description.toLowerCase().includes(lowerQuery)
     )
+  },
+
+  /**
+   * Obtener mis canjes
+   */
+  getMyRedemptions: async () => {
+    const res = await api.get('/rewards/user/my-redemptions')
+    return res.data
   }
+}
+
+// Helper para obtener icono de categoría
+const getIconForCategory = (category) => {
+  const icons = {
+    'bebidas': '🍺',
+    'comida': '🍔',
+    'experiencias': '✨',
+    'descuentos': '💰',
+    'merchandise': '👕'
+  }
+  return icons[category.toLowerCase()] || '🎁'
 }
