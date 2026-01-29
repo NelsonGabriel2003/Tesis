@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Clock, CheckCircle, ChefHat, Package, XCircle, RefreshCw, Home, Send, PartyPopper } from 'lucide-react'
 import { getStatusConfig } from '../../models/order/orderModel'
 import { TelegramModal } from '../../components/ui'
 import { useAuth } from '../../hooks/useAuth'
-
-const TELEGRAM_BOT_URL = import.meta.env.VITE_TELEGRAM_BOT_URL || 'https://t.me/tu_bot'
+import { useNotificaciones } from '../../contexts/NotificacionesContext'
 
 const STEPS = [
   { status: 'pending', label: 'Enviado', icon: Clock },
@@ -18,7 +17,9 @@ const STEPS = [
 const OrderTracking = ({ order, onRefresh, isLoading }) => {
   const navigate = useNavigate()
   const { usuarioActual } = useAuth()
+  const { agregarNotificacionPedido, pedidoYaNotificado } = useNotificaciones()
   const [mostrarModalTelegram, setMostrarModalTelegram] = useState(false)
+  const estadoAnterior = useRef(order.status)
 
   const statusConfig = getStatusConfig(order.status)
   const currentStepIndex = STEPS.findIndex(s => s.status === order.status)
@@ -26,6 +27,16 @@ const OrderTracking = ({ order, onRefresh, isLoading }) => {
   const isCancelled = order.status === 'cancelled'
   const isCompleted = order.status === 'completed' || order.status === 'delivered'
   const tieneTelegram = usuarioActual?.telegram_chat_id
+
+  // Detectar cuando el pedido se completa y agregar notificación
+  useEffect(() => {
+    if (order.status === 'completed' && estadoAnterior.current !== 'completed') {
+      if (!pedidoYaNotificado(order.id)) {
+        agregarNotificacionPedido(order, false)
+      }
+    }
+    estadoAnterior.current = order.status
+  }, [order, agregarNotificacionPedido, pedidoYaNotificado])
 
   const irAMain = () => navigate('/main')
 

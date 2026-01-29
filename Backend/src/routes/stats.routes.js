@@ -12,7 +12,9 @@ import {
   getRedemptionStats,
   getRecentTransactions,
   obtenerCanjesUsuario,
-  entregarCanje
+  entregarCanje,
+  obtenerTodosCanjes,
+  obtenerCanjesPendientes
 } from '../controllers/stats.controller.js'
 import { verifyToken, requireRole } from '../middlewares/index.js'
 
@@ -34,6 +36,10 @@ router.get('/transactions', getRecentTransactions)
 // Rutas para canjes de usuario (admin)
 router.get('/users/:id/canjes', obtenerCanjesUsuario)
 router.post('/canjes/:id/entregar', entregarCanje)
+
+// Rutas para panel de canjes con polling
+router.get('/canjes', obtenerTodosCanjes)
+router.get('/canjes/pendientes', obtenerCanjesPendientes)
 
 
 export default router

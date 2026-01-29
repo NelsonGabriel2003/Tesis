@@ -194,6 +194,68 @@ const entregarCanje = asyncHandler(async (req, res) => {
   })
 })
 
+/**
+ * Obtener todos los canjes para panel admin (con polling)
+ * GET /api/stats/canjes
+ */
+const obtenerTodosCanjes = asyncHandler(async (req, res) => {
+  const { status, limit = 50 } = req.query
+
+  const [canjes, resumen] = await Promise.all([
+    RedemptionModel.findAllWithUsers(status || null, parseInt(limit)),
+    RedemptionModel.getAdminSummary()
+  ])
+
+  res.json({
+    exito: true,
+    timestamp: new Date().toISOString(),
+    resumen: {
+      total: parseInt(resumen.total),
+      pendientes: parseInt(resumen.pendientes),
+      usados: parseInt(resumen.usados),
+      puntosTotales: parseInt(resumen.puntos_totales) || 0
+    },
+    canjes: canjes.map(canje => ({
+      id: canje.id,
+      usuarioId: canje.user_id,
+      usuarioNombre: canje.user_name,
+      usuarioEmail: canje.user_email,
+      recompensa: canje.reward_name,
+      categoria: canje.reward_category,
+      codigo: canje.redemption_code,
+      puntosGastados: canje.points_spent,
+      estado: canje.status,
+      fechaCanje: canje.created_at,
+      fechaUso: canje.used_at
+    }))
+  })
+})
+
+/**
+ * Obtener solo canjes pendientes (para notificaciones)
+ * GET /api/stats/canjes/pendientes
+ */
+const obtenerCanjesPendientes = asyncHandler(async (req, res) => {
+  const canjes = await RedemptionModel.findAllPending()
+
+  res.json({
+    exito: true,
+    timestamp: new Date().toISOString(),
+    cantidad: canjes.length,
+    canjes: canjes.map(canje => ({
+      id: canje.id,
+      usuarioId: canje.user_id,
+      usuarioNombre: canje.user_name,
+      usuarioEmail: canje.user_email,
+      recompensa: canje.reward_name,
+      categoria: canje.reward_category,
+      codigo: canje.redemption_code,
+      puntosGastados: canje.points_spent,
+      fechaCanje: canje.created_at
+    }))
+  })
+})
+
 export {
   getDashboardStats,
   getSummary,
@@ -202,5 +264,7 @@ export {
   getRedemptionStats,
   getRecentTransactions,
   obtenerCanjesUsuario,
-  entregarCanje
+  entregarCanje,
+  obtenerTodosCanjes,
+  obtenerCanjesPendientes
 }

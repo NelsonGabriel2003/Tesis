@@ -16,6 +16,7 @@ import { PerfilPage } from '../views/perfil'
 import { CanjePage } from '../views/canje'
 import { AdminPage } from '../views/admin'
 import { AuthProvider } from '../contexts/AuthContext'
+import { NotificacionesProvider } from '../contexts/NotificacionesContext'
 
 /**
  * RutaProtegida - Verifica que el usuario este logueado
@@ -72,6 +73,7 @@ const AppRouter = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <NotificacionesProvider>
         <Routes>
           {/* ============ RUTAS PUBLICAS ============ */}
 
@@ -197,6 +199,7 @@ const AppRouter = () => {
           {/* Ruta 404 - Redirige a login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+        </NotificacionesProvider>
       </AuthProvider>
     </BrowserRouter>
   )
