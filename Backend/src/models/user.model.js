@@ -220,6 +220,49 @@ const UserModel = {
       [telegramChatId]
     )
     return result.rows[0]
+  },
+
+  /**
+   * Buscar usuario por teléfono
+   */
+  findByPhone: async (phone) => {
+    const result = await query(
+      `SELECT id, email, name, phone, telegram_chat_id, current_points
+       FROM users
+       WHERE phone = $1`,
+      [phone]
+    )
+    return result.rows[0]
+  },
+
+  /**
+   * Vincular Telegram y dar puntos de bonificación
+   */
+  vincularTelegramConBono: async (phone, telegramChatId, puntosBonus) => {
+    const result = await query(
+      `UPDATE users
+       SET telegram_chat_id = $2,
+           current_points = current_points + $3,
+           total_points = total_points + $3,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE phone = $1
+         AND telegram_chat_id IS NULL
+       RETURNING id, email, name, phone, telegram_chat_id, current_points`,
+      [phone, telegramChatId, puntosBonus]
+    )
+    return result.rows[0]
+  },
+
+  /**
+   * Verificar si es primer inicio de sesión
+   */
+  esPrimerLogin: async (userId) => {
+    const result = await query(
+      `SELECT COUNT(*) as total FROM transactions
+       WHERE user_id = $1 AND type = 'earned'`,
+      [userId]
+    )
+    return parseInt(result.rows[0].total) === 0
   }
 }
 

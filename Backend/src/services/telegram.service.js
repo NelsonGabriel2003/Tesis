@@ -98,6 +98,7 @@ class TelegramService {
     this.bot.onText(/\/start/, (msg) => this.handleStart(msg))
     this.bot.onText(/\/vincular$/, (msg) => this.handleLinkNoCode(msg))
     this.bot.onText(/\/vincular (.+)/, (msg, match) => this.handleLink(msg, match[1]))
+    this.bot.onText(/\/micuenta/, (msg) => this.handleMiCuenta(msg))
     this.bot.onText(/\/turno/, (msg) => this.handleShiftOn(msg))
     this.bot.onText(/\/descanso/, (msg) => this.handleShiftOff(msg))
     this.bot.onText(/\/estado/, (msg) => this.handleStatus(msg))
@@ -106,6 +107,7 @@ class TelegramService {
     this.bot.onText(/\/validar (.+)/, (msg, match) => this.manejarValidarCanje(msg, match[1]))
 
     this.bot.on('callback_query', (query) => this.handleCallback(query))
+    this.bot.on('contact', (msg) => this.handleContact(msg))
   }
 
   async handleStart(msg) {
@@ -119,21 +121,144 @@ class TelegramService {
       firstName
     })
 
+    // Verificar si ya está vinculado como usuario
+    const usuarioVinculado = await UserModel.findByTelegramChatId(chatId.toString())
+    if (usuarioVinculado) {
+      await this.sendMessage(chatId, `
+🎉 *Hola ${usuarioVinculado.name}!*
+
+Tu cuenta ya está vinculada.
+Recibirás códigos de recuperación y notificaciones aquí.
+      `, { parse_mode: 'Markdown' })
+      return
+    }
+
     await this.sendMessage(chatId, `
-🍺 *¡Bienvenido!*
+🍺 *Bienvenido a Bounty!*
 
-Hola ${firstName}, soy el bot del bar.
+Hola ${firstName}, soy el bot oficial.
 
-Para vincular tu cuenta usa:
-\`/vincular CODIGO\`
+*Para clientes:*
+/micuenta - Vincula tu cuenta y gana 50 puntos
 
-*Comandos:*
-/turno - Iniciar turno
-/descanso - Terminar turno
-/estado - Ver estado
-/pedidos - Ver pendientes
-/validar CODIGO - Validar canje de cliente
+*Para staff:*
+/vincular CODIGO - Vincular cuenta de empleado
     `, { parse_mode: 'Markdown' })
+  }
+
+  async handleMiCuenta(msg) {
+    const chatId = msg.chat.id
+
+    // Verificar si ya está vinculado
+    const usuarioVinculado = await UserModel.findByTelegramChatId(chatId.toString())
+    if (usuarioVinculado) {
+      await this.sendMessage(chatId, `
+✅ *Ya estás vinculado*
+
+Cuenta: ${usuarioVinculado.email}
+Puntos: ${usuarioVinculado.current_points || 0}
+      `, { parse_mode: 'Markdown' })
+      return
+    }
+
+    // Solicitar número de teléfono
+    await this.sendMessage(chatId, `
+📱 *Vincula tu cuenta*
+
+Para vincular tu cuenta y ganar *50 puntos*, comparte tu número de teléfono.
+
+Debe ser el mismo número que registraste en la app.
+    `, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [[{
+          text: '📱 Compartir mi número',
+          request_contact: true
+        }]],
+        resize_keyboard: true,
+        one_time_keyboard: true
+      }
+    })
+  }
+
+  async handleContact(msg) {
+    const chatId = msg.chat.id
+    const contact = msg.contact
+
+    if (!contact || !contact.phone_number) {
+      await this.sendMessage(chatId, '❌ No se pudo obtener tu número.')
+      return
+    }
+
+    // Normalizar número (quitar + y espacios)
+    let phone = contact.phone_number.replace(/[\s+\-]/g, '')
+
+    // Si empieza con código de país, intentar también sin él
+    const variantes = [phone]
+    if (phone.startsWith('593')) variantes.push(phone.substring(3))
+    if (phone.startsWith('0')) variantes.push(phone.substring(1))
+    if (!phone.startsWith('0')) variantes.push('0' + phone)
+
+    let usuario = null
+    for (const variante of variantes) {
+      usuario = await UserModel.findByPhone(variante)
+      if (usuario) break
+    }
+
+    if (!usuario) {
+      await this.sendMessage(chatId, `
+❌ *Número no encontrado*
+
+El número ${contact.phone_number} no está registrado en nuestra app.
+
+Asegúrate de usar el mismo número con el que te registraste.
+      `, {
+        parse_mode: 'Markdown',
+        reply_markup: { remove_keyboard: true }
+      })
+      return
+    }
+
+    if (usuario.telegram_chat_id) {
+      await this.sendMessage(chatId, `
+⚠️ *Cuenta ya vinculada*
+
+Esta cuenta ya tiene Telegram vinculado.
+      `, {
+        parse_mode: 'Markdown',
+        reply_markup: { remove_keyboard: true }
+      })
+      return
+    }
+
+    // Vincular y dar puntos
+    const PUNTOS_BONUS = 50
+    const resultado = await UserModel.vincularTelegramConBono(
+      usuario.phone,
+      chatId.toString(),
+      PUNTOS_BONUS
+    )
+
+    if (resultado) {
+      await this.sendMessage(chatId, `
+🎉 *Cuenta vinculada exitosamente!*
+
+${resultado.name}, ahora puedes:
+• Recibir códigos de recuperación
+• Recibir notificaciones de pedidos
+
+🎁 *+${PUNTOS_BONUS} puntos agregados a tu cuenta!*
+
+Puntos actuales: ${resultado.current_points}
+      `, {
+        parse_mode: 'Markdown',
+        reply_markup: { remove_keyboard: true }
+      })
+    } else {
+      await this.sendMessage(chatId, '❌ Error al vincular. Intenta de nuevo.', {
+        reply_markup: { remove_keyboard: true }
+      })
+    }
   }
 
   async handleLinkNoCode(msg) {
