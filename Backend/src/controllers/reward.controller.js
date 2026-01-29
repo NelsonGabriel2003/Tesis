@@ -3,22 +3,22 @@
  * Maneja operaciones de recompensas y canjes
  */
 
-import RewardModel from '../models/reward.model.js'
-import RedemptionModel from '../models/redemption.model.js'
-import UserModel from '../models/user.model.js'
-import TransactionModel from '../models/transaction.model.js'
+import RecompensaModel from '../models/recompensa.model.js'
+import CanjeModel from '../models/canje.model.js'
+import UsuarioModel from '../models/usuario.model.js'
+import MovimientoModel from '../models/movimiento.model.js'
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
- * Genera un código único de canje
+ * Genera un codigo unico de canje
  */
-const generateRedemptionCode = () => {
+const generarCodigoCanje = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
+  let codigo = ''
   for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
+    codigo += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return code
+  return codigo
 }
 
 /**
@@ -27,21 +27,21 @@ const generateRedemptionCode = () => {
  */
 const getRewards = asyncHandler(async (req, res) => {
   const { category } = req.query
-  
-  const rewards = await RewardModel.findAll(category)
+
+  const recompensas = await RecompensaModel.obtenerTodas(category)
 
   res.json({
     success: true,
-    count: rewards.length,
-    data: rewards.map(reward => ({
-      id: reward.id,
-      name: reward.name,
-      description: reward.description,
-      pointsCost: reward.points_cost,
-      category: reward.category,
-      imageUrl: reward.image_url,
-      stock: reward.stock,
-      isPopular: reward.is_popular
+    count: recompensas.length,
+    data: recompensas.map(r => ({
+      id: r.id,
+      name: r.nombre,
+      description: r.descripcion,
+      pointsCost: r.puntos_requeridos,
+      category: r.categoria,
+      imageUrl: r.imagen_url,
+      stock: r.stock,
+      isPopular: r.es_popular
     }))
   })
 })
@@ -53,9 +53,9 @@ const getRewards = asyncHandler(async (req, res) => {
 const getRewardById = asyncHandler(async (req, res) => {
   const { id } = req.params
 
-  const reward = await RewardModel.findById(id)
+  const recompensa = await RecompensaModel.buscarPorId(id)
 
-  if (!reward) {
+  if (!recompensa) {
     return res.status(404).json({
       success: false,
       message: 'Recompensa no encontrada'
@@ -65,14 +65,14 @@ const getRewardById = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      id: reward.id,
-      name: reward.name,
-      description: reward.description,
-      pointsCost: reward.points_cost,
-      category: reward.category,
-      imageUrl: reward.image_url,
-      stock: reward.stock,
-      isPopular: reward.is_popular
+      id: recompensa.id,
+      name: recompensa.nombre,
+      description: recompensa.descripcion,
+      pointsCost: recompensa.puntos_requeridos,
+      category: recompensa.categoria,
+      imageUrl: recompensa.imagen_url,
+      stock: recompensa.stock,
+      isPopular: recompensa.es_popular
     }
   })
 })
@@ -83,19 +83,19 @@ const getRewardById = asyncHandler(async (req, res) => {
  */
 const redeemReward = asyncHandler(async (req, res) => {
   const { id } = req.params
-  const userId = req.user.id
+  const usuarioId = req.user.id
 
   // Obtener recompensa
-  const reward = await RewardModel.findById(id)
+  const recompensa = await RecompensaModel.buscarPorId(id)
 
-  if (!reward) {
+  if (!recompensa) {
     return res.status(404).json({
       success: false,
       message: 'Recompensa no encontrada'
     })
   }
 
-  if (!reward.is_available || reward.stock <= 0) {
+  if (!recompensa.disponible || recompensa.stock <= 0) {
     return res.status(400).json({
       success: false,
       message: 'Recompensa no disponible'
@@ -103,54 +103,54 @@ const redeemReward = asyncHandler(async (req, res) => {
   }
 
   // Obtener usuario
-  const user = await UserModel.findById(userId)
+  const usuario = await UsuarioModel.buscarPorId(usuarioId)
 
-  if (user.current_points < reward.points_cost) {
+  if (usuario.puntos_actuales < recompensa.puntos_requeridos) {
     return res.status(400).json({
       success: false,
       message: 'No tienes suficientes puntos',
-      required: reward.points_cost,
-      available: user.current_points
+      required: recompensa.puntos_requeridos,
+      available: usuario.puntos_actuales
     })
   }
 
-  // Generar código de canje
-  const redemptionCode = generateRedemptionCode()
+  // Generar codigo de canje
+  const codigoCanje = generarCodigoCanje()
 
   // Restar puntos al usuario
-  const updatedUser = await UserModel.subtractPoints(userId, reward.points_cost)
+  const usuarioActualizado = await UsuarioModel.restarPuntos(usuarioId, recompensa.puntos_requeridos)
 
   // Reducir stock de la recompensa
-  await RewardModel.decreaseStock(id)
+  await RecompensaModel.reducirStock(id)
 
   // Crear registro de canje
-  const redemption = await RedemptionModel.create({
-    user_id: userId,
-    reward_id: id,
-    points_spent: reward.points_cost,
-    redemption_code: redemptionCode
+  const canje = await CanjeModel.crear({
+    usuario_id: usuarioId,
+    recompensa_id: id,
+    puntos_gastados: recompensa.puntos_requeridos,
+    codigo_canje: codigoCanje
   })
 
-  // Registrar transacción
-  await TransactionModel.create({
-    user_id: userId,
-    type: 'redeemed',
-    points: reward.points_cost,
-    description: `Canje: ${reward.name}`,
-    reference_type: 'redemption',
-    reference_id: redemption.id
+  // Registrar movimiento de puntos
+  await MovimientoModel.crear({
+    usuario_id: usuarioId,
+    tipo: 'canjeado',
+    puntos: recompensa.puntos_requeridos,
+    descripcion: `Canje: ${recompensa.nombre}`,
+    tipo_referencia: 'canje',
+    referencia_id: canje.id
   })
 
   res.status(201).json({
     success: true,
     message: 'Canje realizado exitosamente',
     data: {
-      redemptionCode,
+      redemptionCode: codigoCanje,
       reward: {
-        name: reward.name,
-        pointsSpent: reward.points_cost
+        name: recompensa.nombre,
+        pointsSpent: recompensa.puntos_requeridos
       },
-      newBalance: updatedUser.current_points
+      newBalance: usuarioActualizado.puntos_actuales
     }
   })
 })
@@ -160,52 +160,52 @@ const redeemReward = asyncHandler(async (req, res) => {
  * GET /api/rewards/my-redemptions
  */
 const getMyRedemptions = asyncHandler(async (req, res) => {
-  const userId = req.user.id
+  const usuarioId = req.user.id
   const { limit = 20, offset = 0 } = req.query
 
-  const redemptions = await RedemptionModel.findByUserId(userId, parseInt(limit), parseInt(offset))
+  const canjes = await CanjeModel.obtenerPorUsuario(usuarioId, parseInt(limit), parseInt(offset))
 
   res.json({
     success: true,
-    count: redemptions.length,
-    data: redemptions.map(r => ({
-      id: r.id,
-      rewardName: r.reward_name,
-      rewardCategory: r.reward_category,
-      pointsSpent: r.points_spent,
-      redemptionCode: r.redemption_code,
-      status: r.status,
-      createdAt: r.created_at,
-      usedAt: r.used_at
+    count: canjes.length,
+    data: canjes.map(c => ({
+      id: c.id,
+      rewardName: c.nombre_recompensa,
+      rewardCategory: c.categoria_recompensa,
+      pointsSpent: c.puntos_gastados,
+      redemptionCode: c.codigo_canje,
+      status: c.estado,
+      createdAt: c.fecha_canje,
+      usedAt: c.fecha_uso
     }))
   })
 })
 
 /**
- * Validar código de canje (para empleados)
+ * Validar codigo de canje (para empleados)
  * GET /api/rewards/validate/:code
  */
 const validateRedemptionCode = asyncHandler(async (req, res) => {
   const { code } = req.params
 
-  const redemption = await RedemptionModel.findByCode(code.toUpperCase())
+  const canje = await CanjeModel.buscarPorCodigo(code.toUpperCase())
 
-  if (!redemption) {
+  if (!canje) {
     return res.status(404).json({
       success: false,
-      message: 'Código de canje no encontrado'
+      message: 'Codigo de canje no encontrado'
     })
   }
 
   res.json({
     success: true,
     data: {
-      id: redemption.id,
-      rewardName: redemption.reward_name,
-      userName: redemption.user_name,
-      status: redemption.status,
-      createdAt: redemption.created_at,
-      usedAt: redemption.used_at
+      id: canje.id,
+      rewardName: canje.nombre_recompensa,
+      userName: canje.nombre_usuario,
+      status: canje.estado,
+      createdAt: canje.fecha_canje,
+      usedAt: canje.fecha_uso
     }
   })
 })
@@ -217,12 +217,12 @@ const validateRedemptionCode = asyncHandler(async (req, res) => {
 const useRedemptionCode = asyncHandler(async (req, res) => {
   const { code } = req.params
 
-  const redemption = await RedemptionModel.markAsUsedByCode(code.toUpperCase())
+  const canje = await CanjeModel.marcarComoUsadoPorCodigo(code.toUpperCase())
 
-  if (!redemption) {
+  if (!canje) {
     return res.status(400).json({
       success: false,
-      message: 'Código inválido o ya fue utilizado'
+      message: 'Codigo invalido o ya fue utilizado'
     })
   }
 
@@ -230,23 +230,23 @@ const useRedemptionCode = asyncHandler(async (req, res) => {
     success: true,
     message: 'Canje procesado exitosamente',
     data: {
-      id: redemption.id,
-      status: redemption.status,
-      usedAt: redemption.used_at
+      id: canje.id,
+      status: canje.estado,
+      usedAt: canje.fecha_uso
     }
   })
 })
 
 /**
- * Obtener categorías de recompensas
+ * Obtener categorias de recompensas
  * GET /api/rewards/categories
  */
 const getCategories = asyncHandler(async (req, res) => {
-  const categories = await RewardModel.getCategories()
+  const categorias = await RecompensaModel.obtenerCategorias()
 
   res.json({
     success: true,
-    data: categories
+    data: categorias
   })
 })
 
@@ -255,21 +255,34 @@ const getCategories = asyncHandler(async (req, res) => {
  * POST /api/rewards
  */
 const createReward = asyncHandler(async (req, res) => {
-  const rewardData = req.body
+  const { name, description, points_cost, category, image_url, stock, is_popular } = req.body
 
-  if (!rewardData.name || !rewardData.points_cost || !rewardData.category) {
+  if (!name || !points_cost || !category) {
     return res.status(400).json({
       success: false,
-      message: 'Nombre, costo en puntos y categoría son requeridos'
+      message: 'Nombre, costo en puntos y categoria son requeridos'
     })
   }
 
-  const reward = await RewardModel.create(rewardData)
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const recompensa = await RecompensaModel.crear({
+    nombre: name,
+    descripcion: description,
+    puntos_requeridos: points_cost,
+    categoria: category,
+    imagen_url: image_url,
+    stock,
+    es_popular: is_popular
+  }, req.user?.id, infoSolicitud)
 
   res.status(201).json({
     success: true,
     message: 'Recompensa creada exitosamente',
-    data: reward
+    data: recompensa
   })
 })
 
@@ -279,11 +292,25 @@ const createReward = asyncHandler(async (req, res) => {
  */
 const updateReward = asyncHandler(async (req, res) => {
   const { id } = req.params
-  const rewardData = req.body
+  const { name, description, points_cost, category, image_url, stock, is_popular, is_available } = req.body
 
-  const reward = await RewardModel.update(id, rewardData)
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
 
-  if (!reward) {
+  const recompensa = await RecompensaModel.actualizar(id, {
+    nombre: name,
+    descripcion: description,
+    puntos_requeridos: points_cost,
+    categoria: category,
+    imagen_url: image_url,
+    stock,
+    es_popular: is_popular,
+    disponible: is_available
+  }, req.user?.id, infoSolicitud)
+
+  if (!recompensa) {
     return res.status(404).json({
       success: false,
       message: 'Recompensa no encontrada'
@@ -293,7 +320,7 @@ const updateReward = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Recompensa actualizada',
-    data: reward
+    data: recompensa
   })
 })
 

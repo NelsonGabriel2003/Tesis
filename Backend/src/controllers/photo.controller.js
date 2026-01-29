@@ -3,7 +3,7 @@
  * Maneja operaciones de fotos/eventos
  */
 
-import PhotoModel from '../models/photo.model.js'
+import FotoModel from '../models/foto.model.js'
 import cloudinary from '../config/cloudinary.js'
 import { asyncHandler } from '../middlewares/index.js'
 
@@ -12,16 +12,16 @@ import { asyncHandler } from '../middlewares/index.js'
  * GET /api/photos
  */
 const getPhotos = asyncHandler(async (req, res) => {
-  const photos = await PhotoModel.findAll()
+  const fotos = await FotoModel.obtenerTodas()
 
   res.json({
     success: true,
-    count: photos.length,
-    data: photos.map(photo => ({
-      id: photo.id,
-      title: photo.title,
-      description: photo.description,
-      imageUrl: photo.image_url
+    count: fotos.length,
+    data: fotos.map(foto => ({
+      id: foto.id,
+      title: foto.titulo,
+      description: foto.descripcion,
+      imageUrl: foto.imagen_url
     }))
   })
 })
@@ -31,18 +31,18 @@ const getPhotos = asyncHandler(async (req, res) => {
  * GET /api/photos/admin
  */
 const getPhotosAdmin = asyncHandler(async (req, res) => {
-  const photos = await PhotoModel.findAllAdmin()
+  const fotos = await FotoModel.obtenerTodasAdmin()
 
   res.json({
     success: true,
-    count: photos.length,
-    data: photos.map(photo => ({
-      id: photo.id,
-      title: photo.title,
-      description: photo.description,
-      imageUrl: photo.image_url,
-      cloudinaryPublicId: photo.cloudinary_public_id,
-      isActive: photo.is_active
+    count: fotos.length,
+    data: fotos.map(foto => ({
+      id: foto.id,
+      title: foto.titulo,
+      description: foto.descripcion,
+      imageUrl: foto.imagen_url,
+      cloudinaryPublicId: foto.cloudinary_public_id,
+      isActive: foto.activa
     }))
   })
 })
@@ -54,9 +54,9 @@ const getPhotosAdmin = asyncHandler(async (req, res) => {
 const getPhotoById = asyncHandler(async (req, res) => {
   const { id } = req.params
 
-  const photo = await PhotoModel.findById(id)
+  const foto = await FotoModel.buscarPorId(id)
 
-  if (!photo) {
+  if (!foto) {
     return res.status(404).json({
       success: false,
       message: 'Foto no encontrada'
@@ -66,11 +66,11 @@ const getPhotoById = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      id: photo.id,
-      title: photo.title,
-      description: photo.description,
-      imageUrl: photo.image_url,
-      isActive: photo.is_active
+      id: foto.id,
+      title: foto.titulo,
+      description: foto.descripcion,
+      imageUrl: foto.imagen_url,
+      isActive: foto.activa
     }
   })
 })
@@ -89,17 +89,22 @@ const createPhoto = asyncHandler(async (req, res) => {
     })
   }
 
-  const photo = await PhotoModel.create({
-    title,
-    description,
-    image_url,
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const foto = await FotoModel.crear({
+    titulo: title,
+    descripcion: description,
+    imagen_url: image_url,
     cloudinary_public_id
-  })
+  }, req.user?.id, infoSolicitud)
 
   res.status(201).json({
     success: true,
     message: 'Foto creada exitosamente',
-    data: photo
+    data: foto
   })
 })
 
@@ -109,11 +114,22 @@ const createPhoto = asyncHandler(async (req, res) => {
  */
 const updatePhoto = asyncHandler(async (req, res) => {
   const { id } = req.params
-  const photoData = req.body
+  const { title, description, image_url, cloudinary_public_id, is_active } = req.body
 
-  const photo = await PhotoModel.update(id, photoData)
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
 
-  if (!photo) {
+  const foto = await FotoModel.actualizar(id, {
+    titulo: title,
+    descripcion: description,
+    imagen_url: image_url,
+    cloudinary_public_id,
+    activa: is_active
+  }, req.user?.id, infoSolicitud)
+
+  if (!foto) {
     return res.status(404).json({
       success: false,
       message: 'Foto no encontrada'
@@ -123,7 +139,7 @@ const updatePhoto = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Foto actualizada',
-    data: photo
+    data: foto
   })
 })
 
@@ -135,9 +151,9 @@ const deletePhoto = asyncHandler(async (req, res) => {
   const { id } = req.params
 
   // Obtener foto para eliminar imagen de Cloudinary
-  const photo = await PhotoModel.findById(id)
+  const foto = await FotoModel.buscarPorId(id)
 
-  if (!photo) {
+  if (!foto) {
     return res.status(404).json({
       success: false,
       message: 'Foto no encontrada'
@@ -145,16 +161,21 @@ const deletePhoto = asyncHandler(async (req, res) => {
   }
 
   // Eliminar imagen de Cloudinary si tiene publicId
-  if (photo.cloudinary_public_id) {
+  if (foto.cloudinary_public_id) {
     try {
-      await cloudinary.uploader.destroy(photo.cloudinary_public_id)
+      await cloudinary.uploader.destroy(foto.cloudinary_public_id)
     } catch (error) {
       console.error('Error eliminando imagen de Cloudinary:', error)
     }
   }
 
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
   // Eliminar de la base de datos
-  await PhotoModel.delete(id)
+  await FotoModel.eliminar(id, req.user?.id, infoSolicitud)
 
   res.json({
     success: true,

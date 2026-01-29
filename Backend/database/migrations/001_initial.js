@@ -1,152 +1,147 @@
 /**
- * Migration: Crear todas las tablas
+ * Migration: Crear tablas principales del sistema
  * Ejecutar con: node database/migrations/001_initial.js
+ *
+ * Nota: Las tablas maestras no tienen campos de fecha porque
+ * el historial se encarga de registrar todos los cambios
  */
 
 import 'dotenv/config'
 import { pool } from '../../src/config/database.js'
 
-const createTables = async () => {
+const crearTablasIniciales = async () => {
   const client = await pool.connect()
 
   try {
     await client.query('BEGIN')
 
-    console.log('🚀 Iniciando migración...\n')
+    console.log('Iniciando migracion de tablas principales...\n')
 
     // ===================
-    // TABLA: users
+    // TABLA: usuarios (sin fechas - historial las registra)
     // ===================
-    console.log('📦 Creando tabla users...')
+    console.log('Creando tabla usuarios...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
+      CREATE TABLE IF NOT EXISTS usuarios (
         id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        phone VARCHAR(20),
-        role VARCHAR(20) DEFAULT 'user',
-        membership_level VARCHAR(20) DEFAULT 'bronce',
-        current_points INTEGER DEFAULT 0,
-        total_points INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        correo VARCHAR(255) UNIQUE NOT NULL,
+        contrasena VARCHAR(255) NOT NULL,
+        nombre VARCHAR(255) NOT NULL,
+        telefono VARCHAR(20),
+        rol VARCHAR(20) DEFAULT 'usuario',
+        nivel_membresia VARCHAR(20) DEFAULT 'bronce',
+        puntos_actuales INTEGER DEFAULT 0,
+        puntos_totales INTEGER DEFAULT 0
       )
     `)
 
     // ===================
-    // TABLA: products
+    // TABLA: productos (sin fechas - historial las registra)
     // ===================
-    console.log('📦 Creando tabla products...')
+    console.log('Creando tabla productos...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS products (
+      CREATE TABLE IF NOT EXISTS productos (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        price DECIMAL(10, 2) NOT NULL,
-        points_earned INTEGER DEFAULT 0,
-        category VARCHAR(100) NOT NULL,
-        image_url VARCHAR(500),
-        is_available BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        nombre VARCHAR(255) NOT NULL,
+        descripcion TEXT,
+        precio DECIMAL(10, 2) NOT NULL,
+        puntos_otorgados INTEGER DEFAULT 0,
+        categoria VARCHAR(100) NOT NULL,
+        imagen_url VARCHAR(500),
+        disponible BOOLEAN DEFAULT true
       )
     `)
 
     // ===================
-    // TABLA: rewards
+    // TABLA: recompensas (sin fechas - historial las registra)
     // ===================
-    console.log('📦 Creando tabla rewards...')
+    console.log('Creando tabla recompensas...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS rewards (
+      CREATE TABLE IF NOT EXISTS recompensas (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        points_cost INTEGER NOT NULL,
-        category VARCHAR(100) NOT NULL,
-        image_url VARCHAR(500),
+        nombre VARCHAR(255) NOT NULL,
+        descripcion TEXT,
+        puntos_requeridos INTEGER NOT NULL,
+        categoria VARCHAR(100) NOT NULL,
+        imagen_url VARCHAR(500),
         stock INTEGER DEFAULT 100,
-        is_popular BOOLEAN DEFAULT false,
-        is_available BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        es_popular BOOLEAN DEFAULT false,
+        disponible BOOLEAN DEFAULT true
       )
     `)
 
     // ===================
-    // TABLA: services
+    // TABLA: servicios (sin fechas - historial las registra)
     // ===================
-    console.log('📦 Creando tabla services...')
+    console.log('Creando tabla servicios...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS services (
+      CREATE TABLE IF NOT EXISTS servicios (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        points_required INTEGER DEFAULT 0,
-        points_earned INTEGER DEFAULT 0,
-        category VARCHAR(100) NOT NULL,
-        image_url VARCHAR(500),
-        is_available BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        nombre VARCHAR(255) NOT NULL,
+        descripcion TEXT,
+        puntos_requeridos INTEGER DEFAULT 0,
+        puntos_otorgados INTEGER DEFAULT 0,
+        categoria VARCHAR(100) NOT NULL,
+        imagen_url VARCHAR(500),
+        disponible BOOLEAN DEFAULT true
       )
     `)
 
     // ===================
-    // TABLA: transactions
+    // TABLA: movimientos_puntos (con fecha - es dato del negocio)
     // ===================
-    console.log('📦 Creando tabla transactions...')
+    console.log('Creando tabla movimientos_puntos...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS transactions (
+      CREATE TABLE IF NOT EXISTS movimientos_puntos (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-        type VARCHAR(20) NOT NULL,
-        points INTEGER NOT NULL,
-        description TEXT,
-        reference_type VARCHAR(50),
-        reference_id INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+        tipo VARCHAR(20) NOT NULL,
+        puntos INTEGER NOT NULL,
+        descripcion TEXT,
+        tipo_referencia VARCHAR(50),
+        referencia_id INTEGER,
+        fecha_movimiento TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `)
 
     // ===================
-    // TABLA: redemptions
+    // TABLA: canjes (con fechas - son datos del ciclo de vida)
     // ===================
-    console.log('📦 Creando tabla redemptions...')
+    console.log('Creando tabla canjes...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS redemptions (
+      CREATE TABLE IF NOT EXISTS canjes (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-        reward_id INTEGER REFERENCES rewards(id),
-        points_spent INTEGER NOT NULL,
-        redemption_code VARCHAR(20) UNIQUE NOT NULL,
-        status VARCHAR(20) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        used_at TIMESTAMP
+        usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+        recompensa_id INTEGER REFERENCES recompensas(id),
+        puntos_gastados INTEGER NOT NULL,
+        codigo_canje VARCHAR(20) UNIQUE NOT NULL,
+        estado VARCHAR(20) DEFAULT 'pendiente',
+        fecha_canje TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        fecha_uso TIMESTAMP
       )
     `)
 
     // ===================
-    // ÍNDICES
+    // INDICES
     // ===================
-    console.log('📦 Creando índices...')
+    console.log('Creando indices...')
 
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)`)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_rewards_category ON rewards(category)`)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_services_category ON services(category)`)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id)`)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type)`)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_redemptions_user ON redemptions(user_id)`)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_redemptions_code ON redemptions(redemption_code)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_usuarios_correo ON usuarios(correo)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_recompensas_categoria ON recompensas(categoria)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_servicios_categoria ON servicios(categoria)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_movimientos_usuario ON movimientos_puntos(usuario_id)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_movimientos_tipo ON movimientos_puntos(tipo)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_canjes_usuario ON canjes(usuario_id)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_canjes_codigo ON canjes(codigo_canje)`)
 
     await client.query('COMMIT')
 
-    console.log('\n✅ Migración completada exitosamente!')
+    console.log('\nMigracion completada exitosamente!')
 
   } catch (error) {
     await client.query('ROLLBACK')
-    console.error('❌ Error en la migración:', error.message)
+    console.error('Error en la migracion:', error.message)
     throw error
   } finally {
     client.release()
@@ -154,8 +149,8 @@ const createTables = async () => {
   }
 }
 
-createTables()
+crearTablasIniciales()
   .then(() => process.exit(0))
   .catch(() => process.exit(1))
 
-export default createTables
+export default crearTablasIniciales

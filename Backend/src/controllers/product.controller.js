@@ -1,32 +1,31 @@
 /**
  * Product Controller
- * Maneja operaciones del menú de productos
+ * Maneja operaciones del menu de productos
  */
 
-import ProductModel from '../models/product.model.js'
+import ProductoModel from '../models/producto.model.js'
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
  * Obtener todos los productos
  * GET /api/products
- * Query params: ?category=bebidas
  */
 const getProducts = asyncHandler(async (req, res) => {
   const { category } = req.query
-  
-  const products = await ProductModel.findAll(category)
+
+  const productos = await ProductoModel.obtenerTodos(category)
 
   res.json({
     success: true,
-    count: products.length,
-    data: products.map(product => ({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: parseFloat(product.price),
-      pointsEarned: product.points_earned,
-      category: product.category,
-      imageUrl: product.image_url
+    count: productos.length,
+    data: productos.map(producto => ({
+      id: producto.id,
+      name: producto.nombre,
+      description: producto.descripcion,
+      price: parseFloat(producto.precio),
+      pointsEarned: producto.puntos_otorgados,
+      category: producto.categoria,
+      imageUrl: producto.imagen_url
     }))
   })
 })
@@ -38,9 +37,9 @@ const getProducts = asyncHandler(async (req, res) => {
 const getProductById = asyncHandler(async (req, res) => {
   const { id } = req.params
 
-  const product = await ProductModel.findById(id)
+  const producto = await ProductoModel.buscarPorId(id)
 
-  if (!product) {
+  if (!producto) {
     return res.status(404).json({
       success: false,
       message: 'Producto no encontrado'
@@ -50,14 +49,14 @@ const getProductById = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: parseFloat(product.price),
-      pointsEarned: product.points_earned,
-      category: product.category,
-      imageUrl: product.image_url,
-      isAvailable: product.is_available
+      id: producto.id,
+      name: producto.nombre,
+      description: producto.descripcion,
+      price: parseFloat(producto.precio),
+      pointsEarned: producto.puntos_otorgados,
+      category: producto.categoria,
+      imageUrl: producto.imagen_url,
+      isAvailable: producto.disponible
     }
   })
 })
@@ -72,37 +71,37 @@ const searchProducts = asyncHandler(async (req, res) => {
   if (!q || q.length < 2) {
     return res.status(400).json({
       success: false,
-      message: 'El término de búsqueda debe tener al menos 2 caracteres'
+      message: 'El termino de busqueda debe tener al menos 2 caracteres'
     })
   }
 
-  const products = await ProductModel.search(q)
+  const productos = await ProductoModel.buscar(q)
 
   res.json({
     success: true,
-    count: products.length,
-    data: products.map(product => ({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: parseFloat(product.price),
-      pointsEarned: product.points_earned,
-      category: product.category,
-      imageUrl: product.image_url
+    count: productos.length,
+    data: productos.map(producto => ({
+      id: producto.id,
+      name: producto.nombre,
+      description: producto.descripcion,
+      price: parseFloat(producto.precio),
+      pointsEarned: producto.puntos_otorgados,
+      category: producto.categoria,
+      imageUrl: producto.imagen_url
     }))
   })
 })
 
 /**
- * Obtener categorías disponibles
+ * Obtener categorias disponibles
  * GET /api/products/categories
  */
 const getCategories = asyncHandler(async (req, res) => {
-  const categories = await ProductModel.getCategories()
+  const categorias = await ProductoModel.obtenerCategorias()
 
   res.json({
     success: true,
-    data: categories
+    data: categorias
   })
 })
 
@@ -116,23 +115,28 @@ const createProduct = asyncHandler(async (req, res) => {
   if (!name || !price || !category) {
     return res.status(400).json({
       success: false,
-      message: 'Nombre, precio y categoría son requeridos'
+      message: 'Nombre, precio y categoria son requeridos'
     })
   }
 
-  const product = await ProductModel.create({
-    name,
-    description,
-    price,
-    points_earned: points_earned || Math.floor(price),
-    category,
-    image_url
-  })
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const producto = await ProductoModel.crear({
+    nombre: name,
+    descripcion: description,
+    precio: price,
+    puntos_otorgados: points_earned || Math.floor(price),
+    categoria: category,
+    imagen_url: image_url
+  }, req.user?.id, infoSolicitud)
 
   res.status(201).json({
     success: true,
     message: 'Producto creado exitosamente',
-    data: product
+    data: producto
   })
 })
 
@@ -142,11 +146,24 @@ const createProduct = asyncHandler(async (req, res) => {
  */
 const updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params
-  const productData = req.body
+  const { name, description, price, points_earned, category, image_url, is_available } = req.body
 
-  const product = await ProductModel.update(id, productData)
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
 
-  if (!product) {
+  const producto = await ProductoModel.actualizar(id, {
+    nombre: name,
+    descripcion: description,
+    precio: price,
+    puntos_otorgados: points_earned,
+    categoria: category,
+    imagen_url: image_url,
+    disponible: is_available
+  }, req.user?.id, infoSolicitud)
+
+  if (!producto) {
     return res.status(404).json({
       success: false,
       message: 'Producto no encontrado'
@@ -156,7 +173,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Producto actualizado',
-    data: product
+    data: producto
   })
 })
 
@@ -167,9 +184,14 @@ const updateProduct = asyncHandler(async (req, res) => {
 const deleteProduct = asyncHandler(async (req, res) => {
   const { id } = req.params
 
-  const product = await ProductModel.delete(id)
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
 
-  if (!product) {
+  const producto = await ProductoModel.eliminar(id, req.user?.id, infoSolicitud)
+
+  if (!producto) {
     return res.status(404).json({
       success: false,
       message: 'Producto no encontrado'

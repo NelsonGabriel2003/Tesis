@@ -1,36 +1,40 @@
 /**
  * Models Index
- * Exporta todos los modelos
+ * Exporta todos los modelos del sistema
  */
 
-import UserModel from './user.model.js'
-import ProductModel from './product.model.js'
-import RewardModel from './reward.model.js'
-import ServiceModel from './service.model.js'
-import TransactionModel from './transaction.model.js'
-import RedemptionModel from './redemption.model.js'
-import OrderModel from './order.model.js'
-import OrderItemModel from './orderItem.model.js'
-import StaffModel from './staff.model.js'
-import TelegramSessionModel from './telegramSession.model.js'
-import StatsModel from './stats.model.js'
-import NotificationModel from './notification.model.js'
-import ConfigModel from './config.model.js'
-import AdminConfigModel from './adminConfig.model.js'
+// Modelos principales en espanol
+import UsuarioModel from './usuario.model.js'
+import ProductoModel from './producto.model.js'
+import RecompensaModel from './recompensa.model.js'
+import ServicioModel from './servicio.model.js'
+import MovimientoModel from './movimiento.model.js'
+import CanjeModel from './canje.model.js'
+import PedidoModel from './pedido.model.js'
+import ItemPedidoModel from './itemPedido.model.js'
+import PersonalModel from './personal.model.js'
+import SesionTelegramModel from './sesionTelegram.model.js'
+import EstadisticasModel from './estadisticas.model.js'
+import NotificacionModel from './notificacion.model.js'
+import ConfiguracionModel from './configuracion.model.js'
+import FotoModel from './foto.model.js'
+import HistorialModel from './historial.model.js'
 
 export {
-  UserModel,
-  ProductModel,
-  RewardModel,
-  ServiceModel,
-  TransactionModel,
-  RedemptionModel,
-  OrderModel,
-  OrderItemModel,
-  StaffModel,
-  TelegramSessionModel,
-  StatsModel,
-  NotificationModel,
-  ConfigModel,
-  AdminConfigModel
+  // Modelos en espanol
+  UsuarioModel,
+  ProductoModel,
+  RecompensaModel,
+  ServicioModel,
+  MovimientoModel,
+  CanjeModel,
+  PedidoModel,
+  ItemPedidoModel,
+  PersonalModel,
+  SesionTelegramModel,
+  EstadisticasModel,
+  NotificacionModel,
+  ConfiguracionModel,
+  FotoModel,
+  HistorialModel
 }

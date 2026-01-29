@@ -1,203 +1,241 @@
-import { StaffModel } from '../models/index.js'
+/**
+ * Staff Controller
+ * Maneja operaciones del personal
+ */
 
-const StaffController = {
-  // GET /api/staff - Obtener todo el personal
-  getAll: async (req, res) => {
-    try {
-      const staff = await StaffModel.findAll(true)
-      res.json({
-        success: true,
-        data: staff.map(s => ({
-          id: s.id,
-          name: s.name,
-          phone: s.phone,
-          email: s.email,
-          role: s.role,
-          isOnShift: s.is_on_shift,
-          telegramLinked: !!s.telegram_chat_id,
-          telegramUsername: s.telegram_username,
-          linkCode: s.link_code,
-          linkCodeExpires: s.link_code_expires,
-          createdAt: s.created_at
-        }))
-      })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al obtener personal' })
-    }
-  },
+import PersonalModel from '../models/personal.model.js'
+import { asyncHandler } from '../middlewares/index.js'
 
-  // GET /api/staff/:id - Obtener un miembro del staff
-  getById: async (req, res) => {
-    try {
-      const { id } = req.params
-      const staff = await StaffModel.findById(id)
+/**
+ * Obtener todo el personal
+ * GET /api/staff
+ */
+const getAll = asyncHandler(async (req, res) => {
+  const personal = await PersonalModel.obtenerTodos(true)
+  res.json({
+    success: true,
+    data: personal.map(p => ({
+      id: p.id,
+      name: p.nombre,
+      phone: p.telefono,
+      email: p.correo,
+      role: p.rol,
+      isOnShift: p.en_turno,
+      telegramLinked: !!p.telegram_chat_id,
+      telegramUsername: p.telegram_username,
+      linkCode: p.codigo_vinculacion,
+      linkCodeExpires: p.expiracion_codigo
+    }))
+  })
+})
 
-      if (!staff) {
-        return res.status(404).json({ success: false, message: 'Personal no encontrado' })
-      }
+/**
+ * Obtener un miembro del personal
+ * GET /api/staff/:id
+ */
+const getById = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const personal = await PersonalModel.buscarPorId(id)
 
-      res.json({
-        success: true,
-        data: {
-          id: staff.id,
-          name: staff.name,
-          phone: staff.phone,
-          email: staff.email,
-          role: staff.role,
-          isOnShift: staff.is_on_shift,
-          telegramLinked: !!staff.telegram_chat_id,
-          telegramUsername: staff.telegram_username,
-          linkCode: staff.link_code,
-          linkCodeExpires: staff.link_code_expires
-        }
-      })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al obtener personal' })
-    }
-  },
-
-  // POST /api/staff - Crear nuevo personal
-  create: async (req, res) => {
-    try {
-      const { name, phone, email, role } = req.body
-      if (!name) {
-        return res.status(400).json({ success: false, message: 'El nombre es requerido' })
-      }
-
-      const staff = await StaffModel.create({ name, phone, email, role })
-      res.status(201).json({ success: true, data: staff, message: 'Personal creado' })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al crear personal' })
-    }
-  },
-
-  // PUT /api/staff/:id - Actualizar personal
-  update: async (req, res) => {
-    try {
-      const { id } = req.params
-      const staffData = req.body
-
-      const staff = await StaffModel.update(id, staffData)
-      if (!staff) {
-        return res.status(404).json({ success: false, message: 'Personal no encontrado' })
-      }
-
-      res.json({ success: true, data: staff, message: 'Personal actualizado' })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al actualizar personal' })
-    }
-  },
-
-  // POST /api/staff/:id/generate-code - Generar código de vinculación
-  generateLinkCode: async (req, res) => {
-    try {
-      const { id } = req.params
-      const staff = await StaffModel.findById(id)
-
-      if (!staff) {
-        return res.status(404).json({ success: false, message: 'Personal no encontrado' })
-      }
-
-      if (staff.telegram_chat_id) {
-        return res.status(400).json({
-          success: false,
-          message: 'Este personal ya tiene Telegram vinculado'
-        })
-      }
-
-      const updated = await StaffModel.generateLinkCode(id)
-
-      res.json({
-        success: true,
-        data: {
-          name: updated.name,
-          linkCode: updated.link_code,
-          expiresAt: updated.link_code_expires
-        },
-        message: `Código generado: ${updated.link_code} (válido por 24 horas)`
-      })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al generar código' })
-    }
-  },
-
-  // DELETE /api/staff/:id/telegram - Desvincular Telegram
-  unlinkTelegram: async (req, res) => {
-    try {
-      const { id } = req.params
-      const staff = await StaffModel.findById(id)
-
-      if (!staff) {
-        return res.status(404).json({ success: false, message: 'Personal no encontrado' })
-      }
-
-      if (!staff.telegram_chat_id) {
-        return res.status(400).json({ success: false, message: 'No tiene Telegram vinculado' })
-      }
-
-      await StaffModel.unlinkTelegram(id)
-      res.json({ success: true, message: 'Telegram desvinculado correctamente' })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al desvincular' })
-    }
-  },
-
-  // PUT /api/staff/:id/shift - Cambiar estado de turno
-  toggleShift: async (req, res) => {
-    try {
-      const { id } = req.params
-      const { isOnShift } = req.body
-      const staff = await StaffModel.findById(id)
-
-      if (!staff) {
-        return res.status(404).json({ success: false, message: 'Personal no encontrado' })
-      }
-
-      const updatedStaff = await StaffModel.setShiftStatus(id, isOnShift)
-      res.json({
-        success: true,
-        data: updatedStaff,
-        message: isOnShift ? 'Turno iniciado' : 'Turno finalizado'
-      })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al cambiar turno' })
-    }
-  },
-
-  // GET /api/staff/on-shift - Obtener personal en turno
-  getOnShift: async (req, res) => {
-    try {
-      const staff = await StaffModel.findOnShift()
-      res.json({ success: true, data: staff })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error' })
-    }
-  },
-
-  // DELETE /api/staff/:id - Eliminar (desactivar) personal
-  delete: async (req, res) => {
-    try {
-      const { id } = req.params
-      const staff = await StaffModel.delete(id)
-
-      if (!staff) {
-        return res.status(404).json({ success: false, message: 'Personal no encontrado' })
-      }
-
-      res.json({ success: true, message: 'Personal eliminado' })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al eliminar' })
-    }
+  if (!personal) {
+    return res.status(404).json({ success: false, message: 'Personal no encontrado' })
   }
-}
 
-export const staffController = StaffController
+  res.json({
+    success: true,
+    data: {
+      id: personal.id,
+      name: personal.nombre,
+      phone: personal.telefono,
+      email: personal.correo,
+      role: personal.rol,
+      isOnShift: personal.en_turno,
+      telegramLinked: !!personal.telegram_chat_id,
+      telegramUsername: personal.telegram_username,
+      linkCode: personal.codigo_vinculacion,
+      linkCodeExpires: personal.expiracion_codigo
+    }
+  })
+})
+
+/**
+ * Crear nuevo personal
+ * POST /api/staff
+ */
+const create = asyncHandler(async (req, res) => {
+  const { name, phone, email, role } = req.body
+  if (!name) {
+    return res.status(400).json({ success: false, message: 'El nombre es requerido' })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const personal = await PersonalModel.crear({
+    nombre: name,
+    telefono: phone,
+    correo: email,
+    rol: role
+  }, req.user?.id, infoSolicitud)
+
+  res.status(201).json({ success: true, data: personal, message: 'Personal creado' })
+})
+
+/**
+ * Actualizar personal
+ * PUT /api/staff/:id
+ */
+const update = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const { name, phone, email, role } = req.body
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const personal = await PersonalModel.actualizar(id, {
+    nombre: name,
+    telefono: phone,
+    correo: email,
+    rol: role
+  }, req.user?.id, infoSolicitud)
+
+  if (!personal) {
+    return res.status(404).json({ success: false, message: 'Personal no encontrado' })
+  }
+
+  res.json({ success: true, data: personal, message: 'Personal actualizado' })
+})
+
+/**
+ * Generar código de vinculación
+ * POST /api/staff/:id/generate-code
+ */
+const generateLinkCode = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const personal = await PersonalModel.buscarPorId(id)
+
+  if (!personal) {
+    return res.status(404).json({ success: false, message: 'Personal no encontrado' })
+  }
+
+  if (personal.telegram_chat_id) {
+    return res.status(400).json({
+      success: false,
+      message: 'Este personal ya tiene Telegram vinculado'
+    })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const actualizado = await PersonalModel.generarCodigoVinculacion(id, req.user?.id, infoSolicitud)
+
+  res.json({
+    success: true,
+    data: {
+      name: actualizado.nombre,
+      linkCode: actualizado.codigo_vinculacion,
+      expiresAt: actualizado.expiracion_codigo
+    },
+    message: `Código generado: ${actualizado.codigo_vinculacion} (válido por 24 horas)`
+  })
+})
+
+/**
+ * Desvincular Telegram
+ * DELETE /api/staff/:id/telegram
+ */
+const unlinkTelegram = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const personal = await PersonalModel.buscarPorId(id)
+
+  if (!personal) {
+    return res.status(404).json({ success: false, message: 'Personal no encontrado' })
+  }
+
+  if (!personal.telegram_chat_id) {
+    return res.status(400).json({ success: false, message: 'No tiene Telegram vinculado' })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  await PersonalModel.desvincularTelegram(id, req.user?.id, infoSolicitud)
+  res.json({ success: true, message: 'Telegram desvinculado correctamente' })
+})
+
+/**
+ * Cambiar estado de turno
+ * PUT /api/staff/:id/shift
+ */
+const toggleShift = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const { isOnShift } = req.body
+  const personal = await PersonalModel.buscarPorId(id)
+
+  if (!personal) {
+    return res.status(404).json({ success: false, message: 'Personal no encontrado' })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const personalActualizado = await PersonalModel.establecerEstadoTurno(id, isOnShift, req.user?.id, infoSolicitud)
+  res.json({
+    success: true,
+    data: personalActualizado,
+    message: isOnShift ? 'Turno iniciado' : 'Turno finalizado'
+  })
+})
+
+/**
+ * Obtener personal en turno
+ * GET /api/staff/on-shift
+ */
+const getOnShift = asyncHandler(async (req, res) => {
+  const personal = await PersonalModel.obtenerEnTurno()
+  res.json({ success: true, data: personal })
+})
+
+/**
+ * Eliminar (desactivar) personal
+ * DELETE /api/staff/:id
+ */
+const deleteStaff = asyncHandler(async (req, res) => {
+  const { id } = req.params
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const personal = await PersonalModel.eliminar(id, req.user?.id, infoSolicitud)
+
+  if (!personal) {
+    return res.status(404).json({ success: false, message: 'Personal no encontrado' })
+  }
+
+  res.json({ success: true, message: 'Personal eliminado' })
+})
+
+export const staffController = {
+  getAll,
+  getById,
+  create,
+  update,
+  generateLinkCode,
+  unlinkTelegram,
+  toggleShift,
+  getOnShift,
+  delete: deleteStaff
+}
