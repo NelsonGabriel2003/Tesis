@@ -16,13 +16,13 @@ import {
   Loader,
   Menu,
   HelpCircle,
-  Bell,
   User,
   Settings
 } from 'lucide-react'
 import { userModules } from '../../config/modulesConfig'
 import { useAuth } from '../../hooks/useAuth'
 import { photoService } from '../../services/admin/adminServices'
+import NotificacionesPanel from './NotificacionesPanel'
 import api from '../../services/api'
 
 const MainPage = () => {
@@ -219,15 +219,7 @@ const MainPage = () => {
               </button>
             </li>
             <li>
-              <button
-                onClick={() => {
-                  alternarMenuLateral()
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
-              >
-                <Bell size={20} className="text-primary" />
-                <span>Notificaciones</span>
-              </button>
+              <NotificacionesPanel />
             </li>
             <li>
               <button
