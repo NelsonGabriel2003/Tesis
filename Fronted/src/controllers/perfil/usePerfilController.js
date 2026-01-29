@@ -17,62 +17,72 @@ export const usePerfilController = () => {
   const navigate = useNavigate()
 
   // Cargar perfil del usuario
- // Cargar perfil del usuario
-const loadUserProfile = useCallback(async () => {
-  setState(prev => ({ ...prev, loading: true, error: null }))
+  const loadUserProfile = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }))
 
-  try {
-    const userData = await perfilService.getUserProfile()
-    const statsData = await perfilService.getStats()
-    
-    const user = {
-      ...userData,
-      stats: statsData || {
-        totalVisits: 0,
-        totalSpent: 0,
-        favoriteItem: '-',
-        lastVisit: null
+    try {
+      // Cargar datos en paralelo
+      const [userData, statsData, historial] = await Promise.all([
+        perfilService.getUserProfile(),
+        perfilService.getStats(),
+        perfilService.getPointsHistory()
+      ])
+
+      const user = {
+        ...userData,
+        points: {
+          ...userData.points,
+          history: historial  // Historial de transacciones desde BD
+        },
+        stats: statsData || {
+          totalVisits: 0,
+          totalSpent: 0,
+          favoriteItem: '-',
+          lastVisit: null
+        }
       }
+
+      setState(prev => ({
+        ...prev,
+        user,
+        loading: false
+      }))
+
+      setEditData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+      })
+
+      // Actualizar localStorage
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+      localStorage.setItem('user', JSON.stringify({
+        ...storedUser,
+        points: user.points,
+        membershipLevel: user.membership?.level || user.membershipLevel
+      }))
+
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error.message
+      }))
     }
+  }, [])
 
-    setState(prev => ({
-      ...prev,
-      user,
-      loading: false
-    }))
-    
-    setEditData({
-      name: user.name,
-      email: user.email,
-      phone: user.phone
-    })
-
-    // Actualizar localStorage
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
-    localStorage.setItem('user', JSON.stringify({
-      ...storedUser,
-      points: user.points,
-      membershipLevel: user.membership?.level || user.membershipLevel
-    }))
-
-  } catch (error) {
-    setState(prev => ({
-      ...prev,
-      loading: false,
-      error: error.message
-    }))
-  }
-}, [])
-
-  // Actualizar perfil
+  // Actualizar perfil - conserva datos existentes (puntos, stats, etc.)
   const updateProfile = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true }))
 
     try {
-      const updatedUser = await perfilService.updateUserProfile(editData)
+      const datosActualizados = await perfilService.updateUserProfile(editData)
       setState(prev => ({
         ...prev,
-        user: updatedUser,
+        user: {
+          ...prev.user,           // Mantener datos existentes
+          ...datosActualizados    // Actualizar solo name, phone
+        },
         loading: false
       }))
       setIsEditing(false)

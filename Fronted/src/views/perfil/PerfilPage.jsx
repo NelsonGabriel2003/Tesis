@@ -114,29 +114,29 @@ const PerfilPage = () => {
       <div className="mt-6 px-4">
         {activeTab === 'info' && user && (
           <PerfilInfo
-            user={user}
-            isEditing={isEditing}
-            editData={editData}
-            loading={loading}
-            onEdit={() => setIsEditing(true)}
-            onCancel={cancelEdit}
-            onSave={updateProfile}
-            onChange={handleEditChange}
+            usuario={user}
+            estaEditando={isEditing}
+            datosFormulario={editData}
+            estaCargando={loading}
+            alEditar={() => setIsEditing(true)}
+            alCancelar={cancelEdit}
+            alGuardar={updateProfile}
+            alCambiar={handleEditChange}
           />
         )}
 
         {activeTab === 'points' && user && (
           <PerfilPoints
-            points={user.points}
-            formatDate={formatDate}
+            puntos={user.points}
+            formatearFecha={formatDate}
           />
         )}
 
         {activeTab === 'stats' && user && (
           <PerfilStats
-            stats={user.stats}
-            formatDate={formatDate}
-            userPoints={user.points?.current || 0}
+            estadisticas={user.stats}
+            formatearFecha={formatDate}
+            puntosUsuario={user.points?.current || 0}
           />
         )}
       </div>

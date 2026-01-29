@@ -1,91 +1,146 @@
-import { useState } from 'react'
-import { MapPin, FileText, ArrowLeft, Loader } from 'lucide-react'
+/**
+ * OrderSummary - Resumen y confirmación del pedido
+ */
 
-const OrderSummary = ({ 
-  items, 
-  cartTotals, 
-  tableNumber,
-  notes,
-  onTableChange,
-  onNotesChange,
-  onSubmit, 
-  onBack,
-  isLoading 
+import { useState } from 'react'
+import { FileText, ArrowLeft, Table2 } from 'lucide-react'
+import Button from '../../components/ui/Button'
+import Select from '../../components/ui/Select'
+
+const OrderSummary = ({
+  items,
+  cartTotals,
+  numeroMesa,
+  notas,
+  alCambiarMesa,
+  alCambiarNotas,
+  alEnviar,
+  alVolver,
+  estaCargando
 }) => {
+  const [intentoEnviar, setIntentoEnviar] = useState(false)
+
+  // Opciones de mesas disponibles
+  const opcionesMesas = [
+    { id: '1', nombre: 'Mesa 1' },
+    { id: '2', nombre: 'Mesa 2' },
+    { id: '3', nombre: 'Mesa 3' },
+    { id: '4', nombre: 'Mesa 4' },
+    { id: '5', nombre: 'Mesa 5' },
+    { id: '6', nombre: 'Mesa 6' },
+    { id: '7', nombre: 'Mesa 7' },
+    { id: '8', nombre: 'Mesa 8' },
+    { id: '9', nombre: 'Mesa 9' },
+    { id: '10', nombre: 'Mesa 10' },
+    { id: 'barra', nombre: 'Barra' }
+  ]
+
+  // Validar si puede enviar
+  const puedeEnviar = numeroMesa && numeroMesa.trim() !== ''
+  const mostrarError = intentoEnviar && !puedeEnviar
+
+  // Manejar cambio de mesa
+  const manejarCambioMesa = (mesaId) => {
+    alCambiarMesa(mesaId)
+    setIntentoEnviar(false)
+  }
+
+  // Manejar envío
+  const manejarEnvio = () => {
+    if (!puedeEnviar) {
+      setIntentoEnviar(true)
+      return
+    }
+    alEnviar()
+  }
+
   return (
     <div className="p-4">
-      <button 
-        onClick={onBack}
-        className="flex items-center gap-2 text-gray-600 mb-4 hover:text-gray-800"
+      {/* Botón volver */}
+      <Button
+        variante="ghost"
+        onClick={alVolver}
+        className="mb-4 px-0"
       >
         <ArrowLeft size={20} />
-        <span>Volver al carrito</span>
-      </button>
+        Volver al carrito
+      </Button>
 
-      <h2 className="text-lg font-bold text-gray-800 mb-4">Confirmar Pedido</h2>
+      <h2 className="mb-4 font-formal text-lg font-semibold text-text-primary">
+        Confirmar Pedido
+      </h2>
 
-      <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
-        <label className="flex items-center gap-2 text-gray-700 font-medium mb-2">
-          <MapPin size={18} />
-          Número de Mesa (opcional)
-        </label>
-        <input
-          type="text"
-          value={tableNumber}
-          onChange={(e) => onTableChange(e.target.value)}
-          placeholder="Ej: 5, Barra, Terraza..."
-          className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+      {/* Selector de Mesa */}
+      <div className="mb-4 rounded-xl bg-surface-primary p-4 shadow-sm">
+        <Select
+          label="Número de Mesa"
+          opciones={opcionesMesas}
+          valor={numeroMesa}
+          placeholder="Selecciona una mesa"
+          onChange={manejarCambioMesa}
+          requerido={true}
+          error={mostrarError}
+          mensajeError="Debes seleccionar una mesa para continuar"
+          icono={Table2}
+          className="mb-0"
         />
       </div>
 
-      <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
-        <label className="flex items-center gap-2 text-gray-700 font-medium mb-2">
+      {/* Notas */}
+      <div className="mb-4 rounded-xl bg-surface-primary p-4 shadow-sm">
+        <label className="mb-2 flex items-center gap-2 font-medium text-input-label">
           <FileText size={18} />
           Notas (opcional)
         </label>
         <textarea
-          value={notes}
-          onChange={(e) => onNotesChange(e.target.value)}
-          placeholder="Instrucciones especiales..."
+          value={notas}
+          onChange={(e) => alCambiarNotas(e.target.value)}
+          placeholder="Alguna alergia, celebramos algún momento especial..."
           rows={3}
-          className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+          className="w-full resize-none rounded-xl border border-input-border bg-surface-primary p-3 text-text-primary placeholder-input-placeholder focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>
 
-      <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
-        <h3 className="font-semibold text-gray-800 mb-3">Resumen</h3>
+      {/* Resumen del pedido */}
+      <div className="mb-4 rounded-xl bg-surface-primary p-4 shadow-sm">
+        <h3 className="mb-3 font-semibold text-text-primary">Resumen</h3>
+
         {items.map((item) => (
-          <div key={item.productId} className="flex justify-between text-sm py-2 border-b border-gray-100 last:border-0">
-            <span className="text-gray-600">{item.quantity}x {item.name}</span>
-            <span className="text-gray-800">${(item.price * item.quantity).toFixed(2)}</span>
+          <div
+            key={item.productId}
+            className="flex justify-between border-b border-surface-secondary py-2 text-sm last:border-0"
+          >
+            <span className="text-text-secondary">
+              {item.quantity}x {item.name}
+            </span>
+            <span className="text-text-primary">
+              ${(item.price * item.quantity).toFixed(2)}
+            </span>
           </div>
         ))}
-        
-        <div className="flex justify-between text-amber-600 mt-3 pt-3 border-t">
+
+        <div className="mt-3 flex justify-between border-t border-surface-secondary pt-3 text-primary">
           <span>Puntos a ganar</span>
           <span className="font-semibold">+{cartTotals.totalPoints} pts</span>
         </div>
-        
-        <div className="flex justify-between text-lg font-bold text-gray-800 mt-2">
+
+        <div className="mt-2 flex justify-between text-lg font-bold text-text-primary">
           <span>Total</span>
           <span>${cartTotals.total.toFixed(2)}</span>
         </div>
       </div>
 
-      <button
-        onClick={onSubmit}
-        disabled={isLoading}
-        className="w-full bg-green-500 text-white py-4 rounded-xl font-semibold hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      {/* Botón confirmar */}
+      <Button
+        onClick={manejarEnvio}
+        variante={puedeEnviar ? 'success' : 'secondary'}
+        disabled={!puedeEnviar && !intentoEnviar}
+        cargando={estaCargando}
+        fullWidth={true}
+        className="py-4"
       >
-        {isLoading ? (
-          <>
-            <Loader size={20} className="animate-spin" />
-            Enviando...
-          </>
-        ) : (
-          'Confirmar Pedido'
-        )}
-      </button>
+        Confirmar Pedido
+      </Button>
     </div>
   )
 }
