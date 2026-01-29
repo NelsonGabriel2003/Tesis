@@ -47,5 +47,33 @@ export const authService = {
   getUser: () => {
     const user = localStorage.getItem('user')
     return user ? JSON.parse(user) : null
+  },
+
+  /**
+   * Verificar métodos de recuperación disponibles
+   */
+  verificarMetodosRecuperacion: async (email) => {
+    return api.post('/auth/check-recovery-methods', { email })
+  },
+
+  /**
+   * Solicitar código de recuperación
+   */
+  solicitarCodigoRecuperacion: async (email, metodo) => {
+    return api.post('/auth/forgot-password', { email, metodo })
+  },
+
+  /**
+   * Verificar código de recuperación
+   */
+  verificarCodigo: async (email, codigo) => {
+    return api.post('/auth/verify-code', { email, codigo })
+  },
+
+  /**
+   * Cambiar contraseña con código
+   */
+  cambiarPassword: async (email, codigo, nuevaPassword) => {
+    return api.post('/auth/reset-password', { email, codigo, nuevaPassword })
   }
 }

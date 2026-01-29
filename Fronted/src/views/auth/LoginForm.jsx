@@ -54,13 +54,23 @@ const LoginForm = ({
         name="password"
         value={formData.password}
         onChange={onInputChange}
-        showPassword={showPassword}
         onTogglePassword={onTogglePassword}
         required
       />
 
+      {/* Olvidé contraseña */}
+      <div className="text-right">
+        <button
+          type="button"
+          onClick={() => navigate('/recuperar-password')}
+          className="text-sm text-primary hover:underline"
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+
       {/* Submit */}
-      <Button type="submit" loading={status.loading} className="w-full">
+      <Button type="submit" cargando={status.loading} className="w-full">
         Login
       </Button>
 

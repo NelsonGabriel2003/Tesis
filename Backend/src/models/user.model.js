@@ -132,6 +132,94 @@ const UserModel = {
       [limit, offset]
     )
     return result.rows
+  },
+
+  /**
+   * Guardar código de recuperación de contraseña
+   */
+  guardarCodigoReset: async (email, codigo, minutosExpiracion = 15) => {
+    const result = await query(
+      `UPDATE users
+       SET reset_code = $2,
+           reset_code_expires = NOW() + INTERVAL '${minutosExpiracion} minutes'
+       WHERE email = $1
+       RETURNING id, email, name, phone, telegram_chat_id`,
+      [email, codigo]
+    )
+    return result.rows[0]
+  },
+
+  /**
+   * Verificar código de recuperación
+   */
+  verificarCodigoReset: async (email, codigo) => {
+    const result = await query(
+      `SELECT id, email, name
+       FROM users
+       WHERE email = $1
+         AND reset_code = $2
+         AND reset_code_expires > NOW()`,
+      [email, codigo]
+    )
+    return result.rows[0]
+  },
+
+  /**
+   * Cambiar contraseña y limpiar código de reset
+   */
+  cambiarPassword: async (email, nuevaPasswordHash) => {
+    const result = await query(
+      `UPDATE users
+       SET password = $2,
+           reset_code = NULL,
+           reset_code_expires = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE email = $1
+       RETURNING id, email, name`,
+      [email, nuevaPasswordHash]
+    )
+    return result.rows[0]
+  },
+
+  /**
+   * Limpiar código de reset (después de usarlo o si expira)
+   */
+  limpiarCodigoReset: async (email) => {
+    await query(
+      `UPDATE users
+       SET reset_code = NULL,
+           reset_code_expires = NULL
+       WHERE email = $1`,
+      [email]
+    )
+  },
+
+  /**
+   * Vincular Telegram chat ID al usuario
+   */
+  vincularTelegram: async (userId, telegramChatId) => {
+    const result = await query(
+      `UPDATE users
+       SET telegram_chat_id = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING id, email, name, telegram_chat_id`,
+      [userId, telegramChatId]
+    )
+    return result.rows[0]
+  },
+
+  /**
+   * Buscar usuario por Telegram chat ID
+   */
+  findByTelegramChatId: async (telegramChatId) => {
+    const result = await query(
+      `SELECT id, email, name, phone, telegram_chat_id
+       FROM users
+       WHERE telegram_chat_id = $1`,
+      [telegramChatId]
+    )
+    return result.rows[0]
   }
 }
 

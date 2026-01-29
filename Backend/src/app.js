@@ -11,6 +11,7 @@ import cors from 'cors'
 import routes from './routes/index.js'
 import { notFound, errorHandler } from './middlewares/index.js'
 import telegramService from './services/telegram.service.js'
+import emailService from './services/email.service.js'
 // Crear aplicación Express
 const app = express()
 
@@ -73,6 +74,7 @@ const PORT = process.env.PORT || 3000
 
 app.listen(PORT, () => {
   telegramService.initialize()
+  emailService.inicializar()
   console.log(`
 
   🍺 Sistema de Bounty - API    
