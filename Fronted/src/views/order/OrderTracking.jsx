@@ -1,5 +1,11 @@
-import { Clock, CheckCircle, ChefHat, Package, XCircle, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Clock, CheckCircle, ChefHat, Package, XCircle, RefreshCw, Home, Send, PartyPopper } from 'lucide-react'
 import { getStatusConfig } from '../../models/order/orderModel'
+import { TelegramModal } from '../../components/ui'
+import { useAuth } from '../../hooks/useAuth'
+
+const TELEGRAM_BOT_URL = import.meta.env.VITE_TELEGRAM_BOT_URL || 'https://t.me/tu_bot'
 
 const STEPS = [
   { status: 'pending', label: 'Enviado', icon: Clock },
@@ -10,12 +16,18 @@ const STEPS = [
 ]
 
 const OrderTracking = ({ order, onRefresh, isLoading }) => {
+  const navigate = useNavigate()
+  const { usuarioActual } = useAuth()
+  const [mostrarModalTelegram, setMostrarModalTelegram] = useState(false)
+
   const statusConfig = getStatusConfig(order.status)
-  
   const currentStepIndex = STEPS.findIndex(s => s.status === order.status)
   const isRejected = order.status === 'rejected'
   const isCancelled = order.status === 'cancelled'
   const isCompleted = order.status === 'completed' || order.status === 'delivered'
+  const tieneTelegram = usuarioActual?.telegram_chat_id
+
+  const irAMain = () => navigate('/main')
 
   const getTimeSince = () => {
     const created = new Date(order.created_at)
@@ -107,12 +119,41 @@ const OrderTracking = ({ order, onRefresh, isLoading }) => {
       </div>
 
       {isCompleted && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-          <p className="text-green-700 font-semibold">
-            🎉 ¡+{order.points_earned || order.points_to_earn} puntos acreditados!
-          </p>
-        </div>
+        <>
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center mb-4">
+            <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
+              <PartyPopper size={20} />
+              <span>+{order.points_earned || order.points_to_earn} puntos acreditados</span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={irAMain}
+              className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+            >
+              <Home size={20} />
+              Ir al inicio
+            </button>
+
+            {!tieneTelegram && (
+              <button
+                onClick={() => setMostrarModalTelegram(true)}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-colors"
+              >
+                <Send size={20} />
+                Vincular Telegram (+50 pts)
+              </button>
+            )}
+          </div>
+        </>
       )}
+
+      <TelegramModal
+        visible={mostrarModalTelegram}
+        onCerrar={() => setMostrarModalTelegram(false)}
+        puntos={50}
+      />
     </div>
   )
 }

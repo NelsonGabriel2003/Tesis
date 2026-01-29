@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { useOrderController } from '../../controllers/order/useOrderController'
@@ -8,6 +8,8 @@ import OrderTracking from './OrderTracking'
 import OrderQRCode from './OrderQRCode'
 
 const VIEWS = { CART: 'cart', SUMMARY: 'summary', TRACKING: 'tracking' }
+const POLLING_INTERVAL = 5000
+const ESTADOS_FINALES = ['completed', 'delivered', 'rejected', 'cancelled']
 
 const OrderPage = () => {
   const { id: orderId } = useParams()
@@ -28,6 +30,18 @@ const OrderPage = () => {
       fetchActiveOrders()
     }
   }, [orderId, fetchOrderById, fetchActiveOrders])
+
+  // Polling para auto-actualizar tracking
+  useEffect(() => {
+    if (currentView !== VIEWS.TRACKING || !currentOrder) return
+    if (ESTADOS_FINALES.includes(currentOrder.status)) return
+
+    const intervalo = setInterval(() => {
+      fetchOrderById(currentOrder.id)
+    }, POLLING_INTERVAL)
+
+    return () => clearInterval(intervalo)
+  }, [currentView, currentOrder, fetchOrderById])
 
   const handleSubmitOrder = async () => {
     const order = await submitOrder()

@@ -16,13 +16,14 @@ import {
   Loader,
   Menu,
   HelpCircle,
-  Bell,
   User,
   Settings
 } from 'lucide-react'
 import { userModules } from '../../config/modulesConfig'
 import { useAuth } from '../../hooks/useAuth'
 import { photoService } from '../../services/admin/adminServices'
+import { TelegramModal } from '../../components/ui'
+import NotificacionesPanel from './NotificacionesPanel'
 import api from '../../services/api'
 
 const MainPage = () => {
@@ -33,6 +34,7 @@ const MainPage = () => {
   const [menuLateralAbierto, setMenuLateralAbierto] = useState(false)
   const [fotos, setFotos] = useState([])
   const [cargandoFotos, setCargandoFotos] = useState(true)
+  const [mostrarModalTelegram, setMostrarModalTelegram] = useState(false)
 
   // Alternar menu lateral
   const alternarMenuLateral = () => {
@@ -74,6 +76,23 @@ const MainPage = () => {
     }
     cargarFotos()
   }, [])
+
+  // Mostrar modal de Telegram en primer inicio
+  useEffect(() => {
+    if (!usuarioActual || cargando) return
+
+    const yaVioModal = localStorage.getItem('telegramModalVisto')
+    const tieneTelegram = usuarioActual.telegram_chat_id
+
+    if (!yaVioModal && !tieneTelegram) {
+      setMostrarModalTelegram(true)
+      localStorage.setItem('telegramModalVisto', 'true')
+    }
+  }, [usuarioActual, cargando])
+
+  const cerrarModalTelegram = () => {
+    setMostrarModalTelegram(false)
+  }
 
   // Navegar a un modulo especifico
   const navegarAModulo = (ruta) => {
@@ -219,15 +238,7 @@ const MainPage = () => {
               </button>
             </li>
             <li>
-              <button
-                onClick={() => {
-                  alternarMenuLateral()
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
-              >
-                <Bell size={20} className="text-primary" />
-                <span>Notificaciones</span>
-              </button>
+              <NotificacionesPanel />
             </li>
             <li>
               <button
@@ -404,6 +415,13 @@ const MainPage = () => {
             </div>
 
       </main>
+
+      {/* Modal de vinculación Telegram */}
+      <TelegramModal
+        visible={mostrarModalTelegram}
+        onCerrar={cerrarModalTelegram}
+        puntos={50}
+      />
 
     </div>
   )
