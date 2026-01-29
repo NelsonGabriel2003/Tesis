@@ -164,6 +164,64 @@ const RedemptionModel = {
       [userId]
     )
     return parseInt(result.rows[0].total)
+  },
+
+  /**
+   * Obtener todos los canjes pendientes (para panel admin)
+   */
+  findAllPending: async () => {
+    const result = await query(
+      `SELECT r.id, r.user_id, r.points_spent, r.redemption_code, r.status, r.created_at, r.used_at,
+              rw.name as reward_name, rw.category as reward_category,
+              u.name as user_name, u.email as user_email
+       FROM redemptions r
+       JOIN rewards rw ON r.reward_id = rw.id
+       JOIN users u ON r.user_id = u.id
+       WHERE r.status = 'pending'
+       ORDER BY r.created_at DESC`
+    )
+    return result.rows
+  },
+
+  /**
+   * Obtener todos los canjes con filtro opcional (para panel admin)
+   */
+  findAllWithUsers: async (status = null, limit = 50) => {
+    let queryText = `
+      SELECT r.id, r.user_id, r.points_spent, r.redemption_code, r.status, r.created_at, r.used_at,
+             rw.name as reward_name, rw.category as reward_category,
+             u.name as user_name, u.email as user_email
+      FROM redemptions r
+      JOIN rewards rw ON r.reward_id = rw.id
+      JOIN users u ON r.user_id = u.id
+    `
+    const params = []
+
+    if (status) {
+      queryText += ` WHERE r.status = $1`
+      params.push(status)
+    }
+
+    queryText += ` ORDER BY r.created_at DESC LIMIT $${params.length + 1}`
+    params.push(limit)
+
+    const result = await query(queryText, params)
+    return result.rows
+  },
+
+  /**
+   * Obtener resumen de canjes para admin
+   */
+  getAdminSummary: async () => {
+    const result = await query(
+      `SELECT
+         COUNT(*) as total,
+         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendientes,
+         COUNT(CASE WHEN status = 'used' THEN 1 END) as usados,
+         COALESCE(SUM(points_spent), 0) as puntos_totales
+       FROM redemptions`
+    )
+    return result.rows[0]
   }
 }
 

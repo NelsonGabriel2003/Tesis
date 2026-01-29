@@ -29,6 +29,9 @@ import StaffAdmin from './StaffAdmin'
 import ConfigAdmin from './ConfigAdmin'
 import PhotosAdmin from './PhotosAdmin'
 
+// Contexto de canjes para el admin
+import { CanjesAdminProvider } from '../../contexts/CanjesAdminContext'
+
 const AdminPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -88,6 +91,7 @@ const AdminPage = () => {
   }
 
   return (
+    <CanjesAdminProvider>
     <div className="min-h-screen bg-gray-100">
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-white shadow-md">
@@ -195,6 +199,7 @@ const AdminPage = () => {
         </main>
       </div>
     </div>
+    </CanjesAdminProvider>
   )
 }
 

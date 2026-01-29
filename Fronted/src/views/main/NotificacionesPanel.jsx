@@ -1,91 +1,13 @@
 /**
  * NotificacionesPanel Component
- * Panel de notificaciones para pedidos completados
- * Usa polling para detectar cambios de estado
+ * Panel de notificaciones usando contexto global
  */
 
-import { useState, useEffect, useCallback } from 'react'
 import { Bell, X, PartyPopper, Sparkles } from 'lucide-react'
-import { orderServices } from '../../services/order/orderServices'
-
-const POLLING_INTERVAL = 5000
-
-// Mensajes para primera compra
-const MENSAJES_PRIMERA_COMPRA = [
-  'Bienvenido a la fiesta! Tu primera ronda esta lista',
-  'Oficialmente eres parte del crew! Disfruta tu primera',
-  'Primera compra completada! Que empiece la noche'
-]
-
-// Mensajes para compras regulares
-const MENSAJES_REGULARES = [
-  'Tu pedido esta listo! A pasarla bien',
-  'Listo para seguir la fiesta! Disfruta',
-  'Pedido completado! La noche es joven',
-  'Ya esta tu pedido! A bailar se ha dicho',
-  'Servido! Que siga la buena vibra'
-]
-
-const obtenerMensaje = (esPrimeraCompra) => {
-  const mensajes = esPrimeraCompra ? MENSAJES_PRIMERA_COMPRA : MENSAJES_REGULARES
-  const indice = Math.floor(Math.random() * mensajes.length)
-  return mensajes[indice]
-}
+import { useNotificaciones } from '../../contexts/NotificacionesContext'
 
 const NotificacionesPanel = () => {
-  const [notificaciones, setNotificaciones] = useState([])
-  const [pedidosAnteriores, setPedidosAnteriores] = useState({})
-  const [primeraCarga, setPrimeraCarga] = useState(true)
-  const [totalPedidosCompletados, setTotalPedidosCompletados] = useState(0)
-
-  const verificarPedidos = useCallback(async () => {
-    try {
-      const respuesta = await orderServices.getMyOrders(20)
-      const pedidos = respuesta.data || []
-
-      // Contar pedidos completados para saber si es primera compra
-      const completados = pedidos.filter(p => p.status === 'completed' || p.status === 'delivered')
-      setTotalPedidosCompletados(completados.length)
-
-      if (!primeraCarga) {
-        pedidos.forEach(pedido => {
-          const estadoAnterior = pedidosAnteriores[pedido.id]
-
-          if (pedido.status === 'completed' && estadoAnterior && estadoAnterior !== 'completed') {
-            const esPrimeraCompra = completados.length === 1
-            const nuevaNotificacion = {
-              id: Date.now(),
-              pedidoId: pedido.id,
-              codigo: pedido.order_code,
-              mensaje: obtenerMensaje(esPrimeraCompra),
-              puntos: pedido.points_earned || pedido.points_to_earn,
-              total: pedido.total,
-              esPrimeraCompra,
-              fecha: new Date()
-            }
-            setNotificaciones(prev => [nuevaNotificacion, ...prev])
-          }
-        })
-      }
-
-      const nuevosEstados = {}
-      pedidos.forEach(p => { nuevosEstados[p.id] = p.status })
-      setPedidosAnteriores(nuevosEstados)
-      setPrimeraCarga(false)
-    } catch (error) {
-      // Silenciar errores de polling
-    }
-  }, [pedidosAnteriores, primeraCarga])
-
-  useEffect(() => {
-    verificarPedidos()
-    const intervalo = setInterval(verificarPedidos, POLLING_INTERVAL)
-    return () => clearInterval(intervalo)
-  }, [verificarPedidos])
-
-  const eliminarNotificacion = (id) => {
-    setNotificaciones(prev => prev.filter(n => n.id !== id))
-  }
+  const { notificaciones, eliminarNotificacion } = useNotificaciones()
 
   return (
     <div className="relative">

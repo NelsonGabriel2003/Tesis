@@ -356,6 +356,20 @@ export const statsService = {
   entregarCanje: async (canjeId) => {
     const response = await api.post(`/stats/canjes/${canjeId}/entregar`)
     return response
+  },
+
+  // Obtener todos los canjes (para polling)
+  obtenerTodosCanjes: async (status = null, limit = 50) => {
+    let url = `/stats/canjes?limit=${limit}`
+    if (status) url += `&status=${status}`
+    const response = await api.get(url)
+    return response
+  },
+
+  // Obtener solo canjes pendientes
+  obtenerCanjesPendientes: async () => {
+    const response = await api.get('/stats/canjes/pendientes')
+    return response
   }
 }
 
