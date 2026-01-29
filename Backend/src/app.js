@@ -46,7 +46,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: '🍺 API Sistema de Fidelización',
+    message: '🍺 API Sistema de Bounty',
     version: '1.0.0',
     docs: '/api/health'
   })
@@ -74,13 +74,12 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   telegramService.initialize()
   console.log(`
-  ╔═══════════════════════════════════════════╗
-  ║                                           ║
-  ║   🍺 Sistema de Fidelización - API        ║
-  ║                                           ║
-  ║   Puerto: ${PORT}                            ║
-  ║   Entorno: ${process.env.NODE_ENV || 'development'}                 ║
-  ║                                           ║
+
+  🍺 Sistema de Bounty - API    
+
+   Puerto: ${PORT}                            
+   Entorno: ${process.env.NODE_ENV || 'development'}                 
+
   ║   Endpoints disponibles:                  ║
   ║   • GET  /api/health                      ║
   ║   • POST /api/auth/login                  ║
@@ -89,8 +88,8 @@ app.listen(PORT, () => {
   ║   • GET  /api/rewards                     ║
   ║   • GET  /api/services                    ║
   ║   • GET  /api/profile                     ║
-  ║                                           ║
-  ╚═══════════════════════════════════════════╝
+  ║   • POST /api/transactions               ║
+  ║   • GET  /api/transactions               
   `)
 })
 
