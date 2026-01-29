@@ -1,91 +1,103 @@
 /**
- * PerfilStats Component
- * Tab de estadísticas del usuario
+ * PerfilStats - Estadísticas del usuario
  */
 
 import { useState, useEffect } from 'react'
 import { Calendar, DollarSign, Heart, TrendingUp, Gift, Loader } from 'lucide-react'
 import { rewardService } from '../../services/admin/adminServices'
 
-const PerfilStats = ({ stats, formatDate, userPoints = 0 }) => {
-  const [nearRewards, setNearRewards] = useState([])
-  const [loadingRewards, setLoadingRewards] = useState(true)
+const PerfilStats = ({ estadisticas, formatearFecha, puntosUsuario = 0 }) => {
+  const [recompensasCercanas, setRecompensasCercanas] = useState([])
+  const [cargando, setCargando] = useState(true)
 
-  // Cargar recompensas cercanas
+  // Cargar recompensas cercanas al montar
   useEffect(() => {
-    const loadNearRewards = async () => {
+    const cargarRecompensas = async () => {
       try {
-        const allRewards = await rewardService.getAll()
-        // Filtrar y ordenar por cercanía a los puntos del usuario
-        const sorted = allRewards
+        const todasRecompensas = await rewardService.getAll()
+
+        // Filtrar disponibles y ordenar por cercanía
+        const ordenadas = todasRecompensas
           .filter(r => r.isAvailable)
           .map(r => ({
             ...r,
-            canRedeem: userPoints >= r.pointsCost,
-            pointsNeeded: Math.max(0, r.pointsCost - userPoints)
+            puedeReclamar: puntosUsuario >= r.pointsCost,
+            puntosFaltantes: Math.max(0, r.pointsCost - puntosUsuario)
           }))
-          .sort((a, b) => a.pointsNeeded - b.pointsNeeded)
-          .slice(0, 3) // Solo las 3 más cercanas
-        
-        setNearRewards(sorted)
+          .sort((a, b) => a.puntosFaltantes - b.puntosFaltantes)
+          .slice(0, 3)
+
+        setRecompensasCercanas(ordenadas)
       } catch (error) {
         console.error('Error cargando recompensas:', error)
       } finally {
-        setLoadingRewards(false)
+        setCargando(false)
       }
     }
 
-    loadNearRewards()
-  }, [userPoints])
+    cargarRecompensas()
+  }, [puntosUsuario])
 
-  const statItems = [
+  // Configuración de estadísticas a mostrar
+  const itemsEstadisticas = [
     {
-      id: 'visits',
-      label: 'Produdctos comprados',
-      value: stats.totalVisits,
-      icon: Calendar,
+      id: 'compras',
+      etiqueta: 'Productos comprados',
+      valor: estadisticas.totalVisits,
+      icono: Calendar,
       color: 'bg-blue-100 text-blue-600'
     },
     {
-      id: 'spent',
-      label: 'Total gastado',
-      value: `$${stats.totalSpent.toFixed(2)}`,
-      icon: DollarSign,
+      id: 'gastado',
+      etiqueta: 'Total gastado',
+      valor: `$${estadisticas.totalSpent.toFixed(2)}`,
+      icono: DollarSign,
       color: 'bg-green-100 text-green-600'
     },
     {
-      id: 'favorite',
-      label: 'Favorito',
-      value: stats.favoriteItem,
-      icon: Heart,
+      id: 'favorito',
+      etiqueta: 'Favorito',
+      valor: estadisticas.favoriteItem,
+      icono: Heart,
       color: 'bg-red-100 text-red-600'
     },
     {
-      id: 'lastVisit',
-      label: 'Última compra',
-      value: formatDate(stats.lastVisit),
-      icon: TrendingUp,
+      id: 'ultimaCompra',
+      etiqueta: 'Última compra',
+      valor: formatearFecha(estadisticas.lastVisit),
+      icono: TrendingUp,
       color: 'bg-purple-100 text-purple-600'
     }
   ]
+
+  // Obtener emoji según categoría
+  const obtenerEmoji = (categoria) => {
+    const emojis = {
+      'Bebidas': '🍺',
+      'Comida': '🍔',
+      'Descuentos': '💰',
+      'Experiencias': '⭐'
+    }
+    return emojis[categoria] || '🎁'
+  }
 
   return (
     <div className="space-y-4">
       {/* Grid de estadísticas */}
       <div className="grid grid-cols-2 gap-4">
-        {statItems.map((stat) => {
-          const IconComponent = stat.icon
+        {itemsEstadisticas.map((item) => {
+          const Icono = item.icono
           return (
             <div
-              key={stat.id}
+              key={item.id}
               className="rounded-2xl bg-surface-primary p-4 shadow-md"
             >
-              <div className={`mb-3 inline-flex rounded-xl ${stat.color} p-3`}>
-                <IconComponent size={24} />
+              <div className={`mb-3 inline-flex rounded-xl ${item.color} p-3`}>
+                <Icono size={24} />
               </div>
-              <p className="text-sm text-text-muted">{stat.label}</p>
+              <p className="text-sm text-text-muted">{item.etiqueta}</p>
               <p className="mt-1 text-lg font-bold text-text-primary">
-                {stat.value}
+                {item.valor}
               </p>
             </div>
           )
@@ -101,44 +113,40 @@ const PerfilStats = ({ stats, formatDate, userPoints = 0 }) => {
           </h3>
         </div>
 
-        {loadingRewards ? (
+        {cargando ? (
           <div className="flex justify-center py-8">
             <Loader className="animate-spin text-primary" size={32} />
           </div>
-        ) : nearRewards.length === 0 ? (
-          <p className="text-center text-text-muted py-4">
+        ) : recompensasCercanas.length === 0 ? (
+          <p className="py-4 text-center text-text-muted">
             No hay recompensas disponibles
           </p>
         ) : (
           <div className="space-y-3">
-            {nearRewards.map((reward) => (
+            {recompensasCercanas.map((recompensa) => (
               <div
-                key={reward.id}
+                key={recompensa.id}
                 className={`flex items-center gap-4 rounded-xl p-4 ${
-                  reward.canRedeem 
-                    ? 'bg-green-50 border border-green-200' 
+                  recompensa.puedeReclamar
+                    ? 'border border-green-200 bg-green-50'
                     : 'bg-surface-secondary'
                 }`}
               >
                 <div className="text-3xl">
-                  {reward.category === 'Bebidas' && '🍺'}
-                  {reward.category === 'Comida' && '🍔'}
-                  {reward.category === 'Descuentos' && '💰'}
-                  {reward.category === 'Experiencias' && '⭐'}
-                  {!['Bebidas', 'Comida', 'Descuentos', 'Experiencias'].includes(reward.category) && '🎁'}
+                  {obtenerEmoji(recompensa.category)}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-text-primary">{reward.name}</p>
-                  <p className="text-sm text-text-muted">{reward.pointsCost} pts</p>
+                  <p className="font-medium text-text-primary">{recompensa.name}</p>
+                  <p className="text-sm text-text-muted">{recompensa.pointsCost} pts</p>
                 </div>
                 <div className="text-right">
-                  {reward.canRedeem ? (
+                  {recompensa.puedeReclamar ? (
                     <span className="text-sm font-medium text-green-600">
                       ¡Disponible!
                     </span>
                   ) : (
                     <span className="text-sm text-text-muted">
-                      Te faltan {reward.pointsNeeded} pts
+                      Te faltan {recompensa.puntosFaltantes} pts
                     </span>
                   )}
                 </div>

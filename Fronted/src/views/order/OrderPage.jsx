@@ -112,13 +112,13 @@ const OrderPage = () => {
           <OrderSummary
             items={cart.items}
             cartTotals={cartTotals}
-            tableNumber={cart.tableNumber}
-            notes={cart.notes}
-            onTableChange={setTableNumber}
-            onNotesChange={setNotes}
-            onSubmit={handleSubmitOrder}
-            onBack={() => setCurrentView(VIEWS.CART)}
-            isLoading={isLoading}
+            numeroMesa={cart.tableNumber}
+            notas={cart.notes}
+            alCambiarMesa={setTableNumber}
+            alCambiarNotas={setNotes}
+            alEnviar={handleSubmitOrder}
+            alVolver={() => setCurrentView(VIEWS.CART)}
+            estaCargando={isLoading}
           />
         )}
 

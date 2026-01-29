@@ -104,21 +104,20 @@ export const perfilService = {
   },
 
   /**
-   * Obtener historial de transacciones
+   * Obtener historial de transacciones desde BD
    */
   getPointsHistory: async () => {
     try {
-      const result = await api.get('/profile/transactions')
-      const transactions = result.data || result.transactions || []
+      const resultado = await api.get('/profile/transactions')
+      const transacciones = resultado.data || []
 
-      return transactions.map(t => ({
+      return transacciones.map(t => ({
         id: t.id,
         type: t.type,
         points: t.points,
         description: t.description,
-        date: t.created_at,
-        referenceType: t.reference_type,
-        referenceId: t.reference_id
+        date: t.date,  // Backend ya devuelve 'date'
+        referenceType: t.referenceType
       }))
     } catch {
       return []
