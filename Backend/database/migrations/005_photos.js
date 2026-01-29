@@ -4,45 +4,46 @@
  *
  * Las imagenes se almacenan en Cloudinary, aqui solo guardamos la referencia
  */
+
 import 'dotenv/config'
 import { pool } from '../../src/config/database.js'
 
-const createPhotosTable = async () => {
+const crearTablaFotos = async () => {
   const client = await pool.connect()
 
   try {
     await client.query('BEGIN')
 
-    console.log('🚀 Iniciando migración de fotos...\n')
+    console.log('Iniciando migracion de fotos...\n')
 
     // ===================
-    // TABLA: photos
+    // TABLA: fotos (sin fechas - historial las registra)
     // ===================
-    console.log('📦 Creando tabla photos...')
+    console.log('Creando tabla fotos...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS photos (
+      CREATE TABLE IF NOT EXISTS fotos (
         id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        image_url VARCHAR(500) NOT NULL,
+        titulo VARCHAR(255) NOT NULL,
+        descripcion TEXT,
+        imagen_url VARCHAR(500) NOT NULL,
         cloudinary_public_id VARCHAR(255),
-        is_active BOOLEAN DEFAULT true
+        activo BOOLEAN DEFAULT true
       )
     `)
 
     // ===================
-    // ÍNDICE
+    // INDICE
     // ===================
-    console.log('📦 Creando índice...')
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_photos_active ON photos(is_active)`)
+    console.log('Creando indice...')
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_fotos_activo ON fotos(activo)`)
 
     await client.query('COMMIT')
 
-    console.log('\n✅ Migración de fotos completada exitosamente!')
+    console.log('\nMigracion de fotos completada exitosamente!')
 
   } catch (error) {
     await client.query('ROLLBACK')
-    console.error('❌ Error en la migración:', error.message)
+    console.error('Error en la migracion:', error.message)
     throw error
   } finally {
     client.release()
@@ -50,8 +51,8 @@ const createPhotosTable = async () => {
   }
 }
 
-createPhotosTable()
+crearTablaFotos()
   .then(() => process.exit(0))
   .catch(() => process.exit(1))
 
-export default createPhotosTable
+export default crearTablaFotos

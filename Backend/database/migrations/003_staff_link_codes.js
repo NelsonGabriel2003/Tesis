@@ -1,36 +1,39 @@
+/**
+ * Migration: Agregar campos de codigo de vinculacion a personal
+ * Ejecutar con: node database/migrations/003_staff_link_codes.js
+ */
+
 import 'dotenv/config'
 import { pool } from '../../src/config/database.js'
 
-const addLinkCodeToStaff = async () => {
+const agregarCodigoVinculacion = async () => {
   const client = await pool.connect()
 
   try {
     await client.query('BEGIN')
 
-    console.log('🚀 Agregando campos de código de vinculación a staff...\n')
+    console.log('Agregando campos de codigo de vinculacion a personal...\n')
 
-    // Agregar columnas link_code y link_code_expires a staff
     await client.query(`
-      ALTER TABLE staff
-      ADD COLUMN IF NOT EXISTS link_code VARCHAR(10) UNIQUE,
-      ADD COLUMN IF NOT EXISTS link_code_expires TIMESTAMP
+      ALTER TABLE personal
+      ADD COLUMN IF NOT EXISTS codigo_vinculacion VARCHAR(10) UNIQUE,
+      ADD COLUMN IF NOT EXISTS codigo_vinculacion_expira TIMESTAMP
     `)
 
-    console.log('✅ Columnas agregadas a staff')
+    console.log('Columnas agregadas a personal')
 
-    // Crear índice para búsqueda rápida por código
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_staff_link_code ON staff(link_code)
+      CREATE INDEX IF NOT EXISTS idx_personal_codigo_vinculacion ON personal(codigo_vinculacion)
     `)
 
-    console.log('✅ Índice creado')
+    console.log('Indice creado')
 
     await client.query('COMMIT')
-    console.log('\n✅ Migración completada!')
+    console.log('\nMigracion completada!')
 
   } catch (error) {
     await client.query('ROLLBACK')
-    console.error('❌ Error:', error.message)
+    console.error('Error:', error.message)
     throw error
   } finally {
     client.release()
@@ -38,8 +41,8 @@ const addLinkCodeToStaff = async () => {
   }
 }
 
-addLinkCodeToStaff()
+agregarCodigoVinculacion()
   .then(() => process.exit(0))
   .catch(() => process.exit(1))
 
-export default addLinkCodeToStaff
+export default agregarCodigoVinculacion

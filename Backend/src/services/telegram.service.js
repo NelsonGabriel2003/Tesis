@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api'
 import { telegram as config } from '../config/index.js'
-import { StaffModel, TelegramSessionModel, OrderModel, UserModel, TransactionModel,RedemptionModel } from '../models/index.js'
+import { PersonalModel, SesionTelegramModel, PedidoModel, UsuarioModel, MovimientoModel, CanjeModel } from '../models/index.js'
 
 class TelegramService {
   constructor() {
@@ -114,18 +114,18 @@ class TelegramService {
     const chatId = msg.chat.id
     const firstName = msg.from.first_name || 'Usuario'
 
-    await TelegramSessionModel.create({
-      chatId: chatId.toString(),
-      telegramUserId: msg.from.id.toString(),
+    await SesionTelegramModel.crear({
+      chat_id: chatId.toString(),
+      telegram_user_id: msg.from.id.toString(),
       username: msg.from.username,
-      firstName
+      nombre: firstName
     })
 
     // Verificar si ya está vinculado como usuario
-    const usuarioVinculado = await UserModel.findByTelegramChatId(chatId.toString())
+    const usuarioVinculado = await UsuarioModel.buscarPorTelegramChatId(chatId.toString())
     if (usuarioVinculado) {
       await this.sendMessage(chatId, `
-🎉 *Hola ${usuarioVinculado.name}!*
+🎉 *Hola ${usuarioVinculado.nombre}!*
 
 Tu cuenta ya está vinculada.
 Recibirás códigos de recuperación y notificaciones aquí.
@@ -150,13 +150,13 @@ Hola ${firstName}, soy el bot oficial.
     const chatId = msg.chat.id
 
     // Verificar si ya está vinculado
-    const usuarioVinculado = await UserModel.findByTelegramChatId(chatId.toString())
+    const usuarioVinculado = await UsuarioModel.buscarPorTelegramChatId(chatId.toString())
     if (usuarioVinculado) {
       await this.sendMessage(chatId, `
 ✅ *Ya estás vinculado*
 
-Cuenta: ${usuarioVinculado.email}
-Puntos: ${usuarioVinculado.current_points || 0}
+Cuenta: ${usuarioVinculado.correo}
+Puntos: ${usuarioVinculado.puntos_actuales || 0}
       `, { parse_mode: 'Markdown' })
       return
     }
@@ -201,7 +201,7 @@ Debe ser el mismo número que registraste en la app.
 
     let usuario = null
     for (const variante of variantes) {
-      usuario = await UserModel.findByPhone(variante)
+      usuario = await UsuarioModel.buscarPorTelefono(variante)
       if (usuario) break
     }
 
@@ -233,8 +233,8 @@ Esta cuenta ya tiene Telegram vinculado.
 
     // Vincular y dar puntos
     const PUNTOS_BONUS = 50
-    const resultado = await UserModel.vincularTelegramConBono(
-      usuario.phone,
+    const resultado = await UsuarioModel.vincularTelegramConBono(
+      usuario.telefono,
       chatId.toString(),
       PUNTOS_BONUS
     )
@@ -243,13 +243,13 @@ Esta cuenta ya tiene Telegram vinculado.
       await this.sendMessage(chatId, `
 🎉 *Cuenta vinculada exitosamente!*
 
-${resultado.name}, ahora puedes:
+${resultado.nombre}, ahora puedes:
 • Recibir códigos de recuperación
 • Recibir notificaciones de pedidos
 
 🎁 *+${PUNTOS_BONUS} puntos agregados a tu cuenta!*
 
-Puntos actuales: ${resultado.current_points}
+Puntos actuales: ${resultado.puntos_actuales}
       `, {
         parse_mode: 'Markdown',
         reply_markup: { remove_keyboard: true }
@@ -277,20 +277,20 @@ Uso: \`/vincular CODIGO\`
     const chatId = msg.chat.id
 
     // Verificar si ya está vinculado
-    const existingStaff = await StaffModel.findByTelegramChatId(chatId.toString())
-    if (existingStaff) {
+    const personalExistente = await PersonalModel.buscarPorTelegramChatId(chatId.toString())
+    if (personalExistente) {
       await this.sendMessage(chatId, `
-⚠️ Ya estás vinculado como *${existingStaff.name}*
+⚠️ Ya estás vinculado como *${personalExistente.nombre}*
 
 Usa /estado para ver tu información.
       `, { parse_mode: 'Markdown' })
       return
     }
 
-    // Buscar staff por código
-    const staff = await StaffModel.findByLinkCode(code.trim())
+    // Buscar personal por código
+    const personal = await PersonalModel.buscarPorCodigoVinculacion(code.trim())
 
-    if (!staff) {
+    if (!personal) {
       await this.sendMessage(chatId, `
 ❌ *Código inválido o expirado*
 
@@ -301,13 +301,13 @@ Si el problema persiste, pide un nuevo código al administrador.
     }
 
     // Vincular
-    await StaffModel.linkTelegram(staff.id, chatId.toString(), msg.from.username)
-    await TelegramSessionModel.linkToStaff(chatId.toString(), staff.id)
+    await PersonalModel.vincularTelegram(personal.id, chatId.toString(), msg.from.username)
+    await SesionTelegramModel.vincularAPersonal(chatId.toString(), personal.id)
 
     await this.sendMessage(chatId, `
 ✅ *¡Vinculación exitosa!*
 
-Bienvenido/a *${staff.name}*
+Bienvenido/a *${personal.nombre}*
 Tu cuenta ha sido vinculada correctamente.
 
 Usa /turno para iniciar tu turno y recibir pedidos.
@@ -316,55 +316,55 @@ Usa /turno para iniciar tu turno y recibir pedidos.
 
   async handleShiftOn(msg) {
     const chatId = msg.chat.id
-    const staff = await StaffModel.findByTelegramChatId(chatId.toString())
+    const personal = await PersonalModel.buscarPorTelegramChatId(chatId.toString())
 
-    if (!staff) {
+    if (!personal) {
       await this.sendMessage(chatId, '❌ No estás vinculado. Usa /vincular primero.')
       return
     }
 
-    await StaffModel.setShiftStatus(staff.id, true)
-    await this.sendMessage(chatId, `✅ *Turno Iniciado*\n\n${staff.name}, recibirás pedidos. 💪`, { parse_mode: 'Markdown' })
+    await PersonalModel.establecerEstadoTurno(personal.id, true)
+    await this.sendMessage(chatId, `✅ *Turno Iniciado*\n\n${personal.nombre}, recibirás pedidos. 💪`, { parse_mode: 'Markdown' })
   }
 
   async handleShiftOff(msg) {
     const chatId = msg.chat.id
-    const staff = await StaffModel.findByTelegramChatId(chatId.toString())
+    const personal = await PersonalModel.buscarPorTelegramChatId(chatId.toString())
 
-    if (!staff) {
+    if (!personal) {
       await this.sendMessage(chatId, '❌ No estás vinculado.')
       return
     }
 
-    await StaffModel.setShiftStatus(staff.id, false)
+    await PersonalModel.establecerEstadoTurno(personal.id, false)
     await this.sendMessage(chatId, `😴 *Turno Finalizado*\n\n¡Descansa! 👋`, { parse_mode: 'Markdown' })
   }
 
   async handleStatus(msg) {
     const chatId = msg.chat.id
-    const staff = await StaffModel.findByTelegramChatId(chatId.toString())
+    const personal = await PersonalModel.buscarPorTelegramChatId(chatId.toString())
 
-    if (!staff) {
+    if (!personal) {
       await this.sendMessage(chatId, '❌ No estás vinculado.')
       return
     }
 
-    const status = staff.is_on_shift ? '🟢 En turno' : '🔴 Fuera de turno'
-    await this.sendMessage(chatId, `📊 *Estado*\n\n👤 ${staff.name}\n${status}`, { parse_mode: 'Markdown' })
+    const status = personal.en_turno ? '🟢 En turno' : '🔴 Fuera de turno'
+    await this.sendMessage(chatId, `📊 *Estado*\n\n👤 ${personal.nombre}\n${status}`, { parse_mode: 'Markdown' })
   }
 
   async handleListOrders(msg) {
     const chatId = msg.chat.id
-    const pendingOrders = await OrderModel.findPending()
+    const pedidosPendientes = await PedidoModel.obtenerPendientes()
 
-    if (pendingOrders.length === 0) {
+    if (pedidosPendientes.length === 0) {
       await this.sendMessage(chatId, '✨ No hay pedidos pendientes.')
       return
     }
 
-    let message = `📋 *Pedidos Pendientes (${pendingOrders.length})*\n\n`
-    pendingOrders.slice(0, 5).forEach(order => {
-      message += `• #${order.order_code} - Mesa ${order.table_number || 'N/A'} - $${order.total}\n`
+    let message = `📋 *Pedidos Pendientes (${pedidosPendientes.length})*\n\n`
+    pedidosPendientes.slice(0, 5).forEach(pedido => {
+      message += `• #${pedido.codigo_pedido} - Mesa ${pedido.numero_mesa || 'N/A'} - $${pedido.total}\n`
     })
 
     await this.sendMessage(chatId, message, { parse_mode: 'Markdown' })
@@ -394,14 +394,14 @@ Ejemplo: \`/validar 7X9K2\`
     const chatId = msg.chat.id
 
     // Verificar que el empleado esté vinculado
-    const empleado = await StaffModel.findByTelegramChatId(chatId.toString())
+    const empleado = await PersonalModel.buscarPorTelegramChatId(chatId.toString())
     if (!empleado) {
       await this.sendMessage(chatId, '❌ No estás vinculado. Usa /vincular primero.')
       return
     }
 
     // Buscar el canje por código
-    const canje = await RedemptionModel.findByCode(codigo.trim().toUpperCase())
+    const canje = await CanjeModel.buscarPorCodigo(codigo.trim().toUpperCase())
 
     if (!canje) {
       await this.sendMessage(chatId, `
@@ -414,29 +414,29 @@ Verifica que el cliente te muestre el código correcto.
     }
 
     // Formatear fecha
-    const fechaCanje = new Date(canje.created_at).toLocaleDateString('es-EC', {
+    const fechaCanje = new Date(canje.fecha_canje).toLocaleDateString('es-EC', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     })
 
     // Determinar estado y emoji
-    const esUsado = canje.status === 'used'
+    const esUsado = canje.estado === 'usado'
     const estadoTexto = esUsado ? '✅ Usado' : '⏳ Pendiente'
 
     if (esUsado) {
-      const fechaUso = new Date(canje.used_at).toLocaleDateString('es-EC', {
+      const fechaUso = new Date(canje.fecha_uso).toLocaleDateString('es-EC', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
       })
-      
+
       await this.sendMessage(chatId, `
 ⚠️ *CANJE YA UTILIZADO*
 
-🎫 Código: \`${canje.redemption_code}\`
-🏆 Recompensa: ${canje.reward_name}
-👤 Cliente: ${canje.user_name}
+🎫 Código: \`${canje.codigo_canje}\`
+🏆 Recompensa: ${canje.nombre_recompensa}
+👤 Cliente: ${canje.nombre_usuario}
 📅 Canjeado: ${fechaCanje}
 📅 Usado: ${fechaUso}
 📊 Estado: ${estadoTexto}
@@ -456,14 +456,14 @@ Este código ya fue procesado anteriormente.
     await this.sendMessage(chatId, `
 🎁 *VALIDACIÓN DE CANJE*
 
-🎫 Código: \`${canje.redemption_code}\`
-🏆 Recompensa: *${canje.reward_name}*
-👤 Cliente: ${canje.user_name}
+🎫 Código: \`${canje.codigo_canje}\`
+🏆 Recompensa: *${canje.nombre_recompensa}*
+👤 Cliente: ${canje.nombre_usuario}
 📅 Fecha canje: ${fechaCanje}
 📊 Estado: ${estadoTexto}
 
 ¿Confirmas la entrega de esta recompensa?
-    `, { 
+    `, {
       parse_mode: 'Markdown',
       reply_markup: teclado
     })
@@ -477,14 +477,14 @@ Este código ya fue procesado anteriormente.
     const mensajeId = query.message.message_id
 
     // Verificar empleado
-    const empleado = await StaffModel.findByTelegramChatId(chatId.toString())
+    const empleado = await PersonalModel.buscarPorTelegramChatId(chatId.toString())
     if (!empleado) {
       await this.bot.answerCallbackQuery(query.id, { text: '❌ No autorizado' })
       return
     }
 
     // Marcar canje como usado
-    const canjeActualizado = await RedemptionModel.markAsUsed(parseInt(canjeId))
+    const canjeActualizado = await CanjeModel.marcarComoUsado(parseInt(canjeId))
 
     if (!canjeActualizado) {
       await this.bot.answerCallbackQuery(query.id, { text: '❌ Error: Canje no encontrado o ya usado' })
@@ -492,7 +492,7 @@ Este código ya fue procesado anteriormente.
     }
 
     // Obtener datos del canje para el mensaje
-    const canje = await RedemptionModel.findById(parseInt(canjeId))
+    const canje = await CanjeModel.buscarPorId(parseInt(canjeId))
 
     await this.bot.answerCallbackQuery(query.id, { text: '✅ Canje procesado' })
 
@@ -500,9 +500,9 @@ Este código ya fue procesado anteriormente.
     await this.bot.editMessageText(`
 ✅ *CANJE COMPLETADO*
 
-🏆 ${canje.reward_name}
-👤 Entregado a: ${canje.user_name || 'Cliente'}
-👨‍💼 Procesado por: ${empleado.name}
+🏆 ${canje.nombre_recompensa}
+👤 Entregado a: ${canje.nombre_usuario || 'Cliente'}
+👨‍💼 Procesado por: ${empleado.nombre}
 📅 ${new Date().toLocaleDateString('es-EC')}
 
 El código ya no es válido.
@@ -513,7 +513,7 @@ El código ya no es válido.
     })
 
     // Actualizar actividad del empleado
-    await StaffModel.updateLastActivity(empleado.id)
+    await PersonalModel.actualizarUltimaActividad(empleado.id)
   }
 
 
@@ -522,7 +522,7 @@ El código ya no es válido.
     const data = query.data
     const messageId = query.message.message_id
 
-    
+
     // Manejar callbacks de canjes
     if (data.startsWith('canje_confirmar_')) {
       const canjeId = data.replace('canje_confirmar_', '')
@@ -530,135 +530,135 @@ El código ya no es válido.
       return
     }
 
-    const staff = await StaffModel.findByTelegramChatId(chatId.toString())
-    if (!staff) {
+    const personal = await PersonalModel.buscarPorTelegramChatId(chatId.toString())
+    if (!personal) {
       await this.bot.answerCallbackQuery(query.id, { text: '❌ No autorizado' })
       return
     }
 
-    const [action, orderId] = data.split('_')
-    const order = await OrderModel.findById(parseInt(orderId))
+    const [action, pedidoId] = data.split('_')
+    const pedido = await PedidoModel.buscarPorId(parseInt(pedidoId))
 
-    if (!order) {
+    if (!pedido) {
       await this.bot.answerCallbackQuery(query.id, { text: '❌ Pedido no encontrado' })
       return
     }
 
     let responseText = ''
-    let newStatus = ''
+    let nuevoEstado = ''
 
     switch (action) {
       case 'approve':
-        newStatus = 'approved'
+        nuevoEstado = 'aprobado'
         responseText = '✅ Aprobado'
-        await OrderModel.updateStatus(order.id, newStatus, staff.id)
+        await PedidoModel.actualizarEstado(pedido.id, nuevoEstado, personal.id)
         break
 
       case 'reject':
-        newStatus = 'rejected'
+        nuevoEstado = 'rechazado'
         responseText = '❌ Rechazado'
-        await OrderModel.updateStatus(order.id, newStatus, staff.id, { rejectionReason: 'Rechazado por staff' })
+        await PedidoModel.actualizarEstado(pedido.id, nuevoEstado, personal.id, null, { motivo_rechazo: 'Rechazado por staff' })
         break
 
       case 'preparing':
-        newStatus = 'preparing'
+        nuevoEstado = 'preparando'
         responseText = '🍳 Preparando'
-        await OrderModel.updateStatus(order.id, newStatus, staff.id)
+        await PedidoModel.actualizarEstado(pedido.id, nuevoEstado, personal.id)
         break
 
       case 'complete':
-        newStatus = 'completed'
+        nuevoEstado = 'completado'
         responseText = '🎉 Completado'
-        await OrderModel.updateStatus(order.id, newStatus, staff.id, { pointsEarned: order.points_to_earn })
+        await PedidoModel.actualizarEstado(pedido.id, nuevoEstado, personal.id, null, { puntos_ganados: pedido.puntos_a_ganar })
 
-        if (order.user_id) {
-          await UserModel.addPoints(order.user_id, order.points_to_earn)
-          await TransactionModel.create({
-            userId: order.user_id,
-            type: 'earned',
-            points: order.points_to_earn,
-            description: `Compra - Pedido #${order.order_code}`,
-            referenceType: 'order',
-            referenceId: order.id
+        if (pedido.usuario_id) {
+          await UsuarioModel.agregarPuntos(pedido.usuario_id, pedido.puntos_a_ganar)
+          await MovimientoModel.crear({
+            usuario_id: pedido.usuario_id,
+            tipo: 'ganado',
+            puntos: pedido.puntos_a_ganar,
+            descripcion: `Compra - Pedido #${pedido.codigo_pedido}`,
+            tipo_referencia: 'pedido',
+            referencia_id: pedido.id
           })
         }
         break
 
       case 'deliver':
-        newStatus = 'delivered'
+        nuevoEstado = 'entregado'
         responseText = '📦 Entregado'
-        await OrderModel.updateStatus(order.id, newStatus, staff.id)
+        await PedidoModel.actualizarEstado(pedido.id, nuevoEstado, personal.id)
         break
     }
 
     await this.bot.answerCallbackQuery(query.id, { text: responseText })
-    await this.updateOrderMessage(chatId, messageId, order, newStatus, staff.name)
-    await StaffModel.updateLastActivity(staff.id)
+    await this.updateOrderMessage(chatId, messageId, pedido, nuevoEstado, personal.nombre)
+    await PersonalModel.actualizarUltimaActividad(personal.id)
   }
 
-  async sendOrderAlert(order, items) {
+  async sendOrderAlert(pedido, items) {
     if (!this.isInitialized) return null
 
-    const staffOnShift = await StaffModel.findOnShift()
-    if (staffOnShift.length === 0) {
-      console.log('⚠️ No hay staff en turno')
+    const personalEnTurno = await PersonalModel.obtenerEnTurno()
+    if (personalEnTurno.length === 0) {
+      console.log('⚠️ No hay personal en turno')
       return null
     }
 
-    const itemsList = items.map(item => 
-      `• ${item.quantity}x ${item.product_name} ($${item.item_total})`
+    const itemsList = items.map(item =>
+      `• ${item.cantidad}x ${item.nombre_producto} ($${item.total_item})`
     ).join('\n')
 
     const message = `
-🆕 *NUEVO PEDIDO #${order.order_code}*
+🆕 *NUEVO PEDIDO #${pedido.codigo_pedido}*
 
-👤 ${order.user_name || 'Cliente'}
-🪑 Mesa: ${order.table_number || 'N/A'}
+👤 ${pedido.user_name || 'Cliente'}
+🪑 Mesa: ${pedido.numero_mesa || 'N/A'}
 
 📋 *PRODUCTOS:*
 ${itemsList}
 
-💰 Total: $${order.total}
-⭐ Puntos: +${order.points_to_earn}
-${order.notes ? `\n📝 ${order.notes}` : ''}
+💰 Total: $${pedido.total}
+⭐ Puntos: +${pedido.puntos_a_ganar}
+${pedido.notas ? `\n📝 ${pedido.notas}` : ''}
     `
 
     const keyboard = {
       inline_keyboard: [[
-        { text: '✅ Aprobar', callback_data: `approve_${order.id}` },
-        { text: '❌ Rechazar', callback_data: `reject_${order.id}` }
+        { text: '✅ Aprobar', callback_data: `approve_${pedido.id}` },
+        { text: '❌ Rechazar', callback_data: `reject_${pedido.id}` }
       ]]
     }
 
     let sentMessageId = null
-    for (const staff of staffOnShift) {
+    for (const empleado of personalEnTurno) {
       try {
-        const sent = await this.sendMessage(staff.telegram_chat_id, message, {
+        const sent = await this.sendMessage(empleado.telegram_chat_id, message, {
           parse_mode: 'Markdown',
           reply_markup: keyboard
         })
         if (sent && !sentMessageId) sentMessageId = sent.message_id
       } catch (error) {
-        console.error(`Error enviando a ${staff.name}:`, error.message)
+        console.error(`Error enviando a ${empleado.nombre}:`, error.message)
       }
     }
 
     return sentMessageId
   }
 
-  async updateOrderMessage(chatId, messageId, order, newStatus, staffName) {
-    const emoji = config.statusEmoji[newStatus] || '📋'
-    const statusText = newStatus.toUpperCase()
+  async updateOrderMessage(chatId, messageId, pedido, nuevoEstado, nombreEmpleado) {
+    const emoji = config.statusEmoji[nuevoEstado] || '📋'
+    const statusText = nuevoEstado.toUpperCase()
 
-    const message = `${emoji} *PEDIDO ${statusText}*\n\n#${order.order_code}\nPor: ${staffName}`
+    const message = `${emoji} *PEDIDO ${statusText}*\n\n#${pedido.codigo_pedido}\nPor: ${nombreEmpleado}`
 
     let keyboard = null
-    if (newStatus === 'approved') {
-      keyboard = { inline_keyboard: [[{ text: '🍳 Preparando', callback_data: `preparing_${order.id}` }]] }
-    } else if (newStatus === 'preparing') {
-      keyboard = { inline_keyboard: [[{ text: '🎉 Completado', callback_data: `complete_${order.id}` }]] }
-    } else if (newStatus === 'completed') {
-      keyboard = { inline_keyboard: [[{ text: '📦 Entregado', callback_data: `deliver_${order.id}` }]] }
+    if (nuevoEstado === 'aprobado') {
+      keyboard = { inline_keyboard: [[{ text: '🍳 Preparando', callback_data: `preparing_${pedido.id}` }]] }
+    } else if (nuevoEstado === 'preparando') {
+      keyboard = { inline_keyboard: [[{ text: '🎉 Completado', callback_data: `complete_${pedido.id}` }]] }
+    } else if (nuevoEstado === 'completado') {
+      keyboard = { inline_keyboard: [[{ text: '📦 Entregado', callback_data: `deliver_${pedido.id}` }]] }
     }
 
     try {

@@ -41,6 +41,7 @@ export const perfilService = {
 
   /**
    * Obtener datos del usuario desde el backend
+   * Mapea campos en español del backend a nombres internos del frontend
    */
   getUserProfile: async () => {
     const result = await api.get('/profile')
@@ -48,9 +49,9 @@ export const perfilService = {
 
     return {
       id: data.id,
-      name: data.name,
-      email: data.email,
-      phone: data.phone || '',
+      name: data.name,           // Backend ya devuelve 'name' en response
+      email: data.email,         // Backend ya devuelve 'email' en response
+      phone: data.phone || '',   // Backend ya devuelve 'phone' en response
       role: data.role || 'user',
       avatar: null,
       memberSince: data.memberSince,

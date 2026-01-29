@@ -3,7 +3,7 @@
  * Maneja operaciones de configuración del negocio
  */
 
-import ConfigModel from '../models/config.model.js'
+import ConfiguracionModel from '../models/configuracion.model.js'
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
@@ -15,9 +15,9 @@ const getAllConfig = asyncHandler(async (req, res) => {
 
   let configs
   if (category) {
-    configs = await ConfigModel.findByCategory(category)
+    configs = await ConfiguracionModel.obtenerPorCategoria(category)
   } else {
-    configs = await ConfigModel.findAll()
+    configs = await ConfiguracionModel.obtenerTodas()
   }
 
   res.json({
@@ -25,10 +25,10 @@ const getAllConfig = asyncHandler(async (req, res) => {
     count: configs.length,
     data: configs.map(config => ({
       id: config.id,
-      key: config.key,
-      value: config.value,
-      description: config.description,
-      category: config.category
+      key: config.clave,
+      value: config.valor,
+      description: config.descripcion,
+      category: config.categoria
     }))
   })
 })
@@ -38,7 +38,7 @@ const getAllConfig = asyncHandler(async (req, res) => {
  * GET /api/config/points
  */
 const getPointsConfig = asyncHandler(async (req, res) => {
-  const config = await ConfigModel.getPointsConfig()
+  const config = await ConfiguracionModel.obtenerConfigPuntos()
 
   res.json({
     success: true,
@@ -51,7 +51,7 @@ const getPointsConfig = asyncHandler(async (req, res) => {
  * GET /api/config/membership
  */
 const getMembershipConfig = asyncHandler(async (req, res) => {
-  const config = await ConfigModel.getMembershipConfig()
+  const config = await ConfiguracionModel.obtenerConfigMembresia()
 
   res.json({
     success: true,
@@ -66,7 +66,7 @@ const getMembershipConfig = asyncHandler(async (req, res) => {
 const getConfigByKey = asyncHandler(async (req, res) => {
   const { key } = req.params
 
-  const config = await ConfigModel.findByKey(key)
+  const config = await ConfiguracionModel.buscarPorClave(key)
 
   if (!config) {
     return res.status(404).json({
@@ -79,10 +79,10 @@ const getConfigByKey = asyncHandler(async (req, res) => {
     success: true,
     data: {
       id: config.id,
-      key: config.key,
-      value: config.value,
-      description: config.description,
-      category: config.category
+      key: config.clave,
+      value: config.valor,
+      description: config.descripcion,
+      category: config.categoria
     }
   })
 })
@@ -102,7 +102,12 @@ const updateConfig = asyncHandler(async (req, res) => {
     })
   }
 
-  const config = await ConfigModel.update(key, String(value))
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const config = await ConfiguracionModel.actualizar(key, String(value), req.user?.id, infoSolicitud)
 
   if (!config) {
     return res.status(404).json({
@@ -115,8 +120,8 @@ const updateConfig = asyncHandler(async (req, res) => {
     success: true,
     message: 'Configuración actualizada',
     data: {
-      key: config.key,
-      value: config.value
+      key: config.clave,
+      value: config.valor
     }
   })
 })
@@ -135,14 +140,19 @@ const updateManyConfig = asyncHandler(async (req, res) => {
     })
   }
 
-  const updated = await ConfigModel.updateMany(configs)
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const updated = await ConfiguracionModel.actualizarVarias(configs, req.user?.id, infoSolicitud)
 
   res.json({
     success: true,
     message: `${updated.length} configuraciones actualizadas`,
     data: updated.map(config => ({
-      key: config.key,
-      value: config.value
+      key: config.clave,
+      value: config.valor
     }))
   })
 })
@@ -161,12 +171,17 @@ const createConfig = asyncHandler(async (req, res) => {
     })
   }
 
-  const config = await ConfigModel.create({
-    key,
-    value: String(value),
-    description,
-    category
-  })
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const config = await ConfiguracionModel.crear({
+    clave: key,
+    valor: String(value),
+    descripcion: description,
+    categoria: category
+  }, req.user?.id, infoSolicitud)
 
   res.status(201).json({
     success: true,

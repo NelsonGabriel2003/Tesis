@@ -1,11 +1,11 @@
 /**
  * Auth Controller
- * Maneja login, registro y autenticación
+ * Maneja login, registro y autenticacion
  */
 
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import UserModel from '../models/user.model.js'
+import UsuarioModel from '../models/usuario.model.js'
 import jwtConfig from '../config/jwt.js'
 import { asyncHandler } from '../middlewares/index.js'
 
@@ -20,56 +20,56 @@ const login = asyncHandler(async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: 'Email y contraseña son requeridos'
+      message: 'Email y contrasena son requeridos'
     })
   }
 
-  // Buscar usuario por email
-  const user = await UserModel.findByEmail(email)
+  // Buscar usuario por correo
+  const usuario = await UsuarioModel.buscarPorCorreo(email)
 
-  if (!user) {
+  if (!usuario) {
     return res.status(401).json({
       success: false,
-      message: 'Credenciales inválidas'
+      message: 'Credenciales invalidas'
     })
   }
 
-  // Verificar contraseña
-  const isValidPassword = await bcrypt.compare(password, user.password)
+  // Verificar contrasena
+  const contrasenaValida = await bcrypt.compare(password, usuario.contrasena)
 
-  if (!isValidPassword) {
+  if (!contrasenaValida) {
     return res.status(401).json({
       success: false,
-      message: 'Credenciales inválidas'
+      message: 'Credenciales invalidas'
     })
   }
 
   // Generar token JWT
   const token = jwt.sign(
     {
-      id: user.id,
-      email: user.email,
-      role: user.role || 'user'
+      id: usuario.id,
+      email: usuario.correo,
+      role: usuario.rol || 'usuario'
     },
     jwtConfig.secret,
     { expiresIn: jwtConfig.expiresIn }
   )
 
-  // Respuesta exitosa (sin incluir password)
+  // Respuesta exitosa (sin incluir contrasena)
   res.json({
     success: true,
     message: 'Login exitoso',
     token,
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      phone: user.phone,
-      role: user.role,
-      membershipLevel: user.membership_level,
+      id: usuario.id,
+      email: usuario.correo,
+      name: usuario.nombre,
+      phone: usuario.telefono,
+      role: usuario.rol,
+      membershipLevel: usuario.nivel_membresia,
       points: {
-        current: user.current_points,
-        total: user.total_points
+        current: usuario.puntos_actuales,
+        total: usuario.puntos_totales
       }
     }
   })
@@ -86,7 +86,7 @@ const register = asyncHandler(async (req, res) => {
   if (!email || !password || !name) {
     return res.status(400).json({
       success: false,
-      message: 'Email, contraseña y nombre son requeridos'
+      message: 'Email, contrasena y nombre son requeridos'
     })
   }
 
@@ -95,46 +95,52 @@ const register = asyncHandler(async (req, res) => {
   if (!emailRegex.test(email)) {
     return res.status(400).json({
       success: false,
-      message: 'Formato de email inválido'
+      message: 'Formato de email invalido'
     })
   }
 
-  // Validar longitud de contraseña
+  // Validar longitud de contrasena
   if (password.length < 6) {
     return res.status(400).json({
       success: false,
-      message: 'La contraseña debe tener al menos 6 caracteres'
+      message: 'La contrasena debe tener al menos 6 caracteres'
     })
   }
 
   // Verificar si el email ya existe
-  const existingUser = await UserModel.findByEmail(email)
+  const usuarioExistente = await UsuarioModel.buscarPorCorreo(email)
 
-  if (existingUser) {
+  if (usuarioExistente) {
     return res.status(409).json({
       success: false,
-      message: 'El email ya está registrado'
+      message: 'El email ya esta registrado'
     })
   }
 
-  // Hashear contraseña
+  // Hashear contrasena
   const saltRounds = 10
-  const hashedPassword = await bcrypt.hash(password, saltRounds)
+  const contrasenaHash = await bcrypt.hash(password, saltRounds)
+
+  // Obtener info de la solicitud para historial
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
 
   // Crear usuario
-  const newUser = await UserModel.create({
-    email,
-    password: hashedPassword,
-    name,
-    phone
-  })
+  const nuevoUsuario = await UsuarioModel.crear({
+    correo: email,
+    contrasena: contrasenaHash,
+    nombre: name,
+    telefono: phone
+  }, null, infoSolicitud)
 
   // Generar token JWT
   const token = jwt.sign(
     {
-      id: newUser.id,
-      email: newUser.email,
-      role: 'user'
+      id: nuevoUsuario.id,
+      email: nuevoUsuario.correo,
+      role: 'usuario'
     },
     jwtConfig.secret,
     { expiresIn: jwtConfig.expiresIn }
@@ -145,14 +151,14 @@ const register = asyncHandler(async (req, res) => {
     message: 'Usuario registrado exitosamente',
     token,
     user: {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      phone: newUser.phone,
-      membershipLevel: newUser.membership_level,
+      id: nuevoUsuario.id,
+      email: nuevoUsuario.correo,
+      name: nuevoUsuario.nombre,
+      phone: nuevoUsuario.telefono,
+      membershipLevel: nuevoUsuario.nivel_membresia,
       points: {
-        current: newUser.current_points,
-        total: newUser.total_points
+        current: nuevoUsuario.puntos_actuales,
+        total: nuevoUsuario.puntos_totales
       }
     }
   })
@@ -163,9 +169,9 @@ const register = asyncHandler(async (req, res) => {
  * GET /api/auth/me
  */
 const getMe = asyncHandler(async (req, res) => {
-  const user = await UserModel.findById(req.user.id)
+  const usuario = await UsuarioModel.buscarPorId(req.user.id)
 
-  if (!user) {
+  if (!usuario) {
     return res.status(404).json({
       success: false,
       message: 'Usuario no encontrado'
@@ -175,17 +181,16 @@ const getMe = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      phone: user.phone,
-      role: user.role,
-      membershipLevel: user.membership_level,
+      id: usuario.id,
+      email: usuario.correo,
+      name: usuario.nombre,
+      phone: usuario.telefono,
+      role: usuario.rol,
+      membershipLevel: usuario.nivel_membresia,
       points: {
-        current: user.current_points,
-        total: user.total_points
-      },
-      createdAt: user.created_at
+        current: usuario.puntos_actuales,
+        total: usuario.puntos_totales
+      }
     }
   })
 })
@@ -197,9 +202,20 @@ const getMe = asyncHandler(async (req, res) => {
 const updateMe = asyncHandler(async (req, res) => {
   const { name, phone } = req.body
 
-  const updatedUser = await UserModel.update(req.user.id, { name, phone })
+  // Obtener info de la solicitud para historial
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
 
-  if (!updatedUser) {
+  const usuarioActualizado = await UsuarioModel.actualizar(
+    req.user.id,
+    { nombre: name, telefono: phone },
+    req.user.id,
+    infoSolicitud
+  )
+
+  if (!usuarioActualizado) {
     return res.status(404).json({
       success: false,
       message: 'Usuario no encontrado'
@@ -210,15 +226,15 @@ const updateMe = asyncHandler(async (req, res) => {
     success: true,
     message: 'Perfil actualizado',
     user: {
-      id: updatedUser.id,
-      email: updatedUser.email,
-      name: updatedUser.name,
-      phone: updatedUser.phone,
-      role: updatedUser.role,
-      membershipLevel: updatedUser.membership_level,
+      id: usuarioActualizado.id,
+      email: usuarioActualizado.correo,
+      name: usuarioActualizado.nombre,
+      phone: usuarioActualizado.telefono,
+      role: usuarioActualizado.rol,
+      membershipLevel: usuarioActualizado.nivel_membresia,
       points: {
-        current: updatedUser.current_points,
-        total: updatedUser.total_points
+        current: usuarioActualizado.puntos_actuales,
+        total: usuarioActualizado.puntos_totales
       }
     }
   })

@@ -1,11 +1,11 @@
 /**
  * Profile Controller
- * Maneja operaciones del perfil de usuario y transacciones
+ * Maneja operaciones del perfil de usuario y movimientos de puntos
  */
 
-import UserModel from '../models/user.model.js'
-import TransactionModel from '../models/transaction.model.js'
-import RedemptionModel from '../models/redemption.model.js'
+import UsuarioModel from '../models/usuario.model.js'
+import MovimientoModel from '../models/movimiento.model.js'
+import CanjeModel from '../models/canje.model.js'
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
@@ -13,11 +13,11 @@ import { asyncHandler } from '../middlewares/index.js'
  * GET /api/profile
  */
 const getProfile = asyncHandler(async (req, res) => {
-  const userId = req.user.id
+  const usuarioId = req.user.id
 
-  const user = await UserModel.findById(userId)
+  const usuario = await UsuarioModel.buscarPorId(usuarioId)
 
-  if (!user) {
+  if (!usuario) {
     return res.status(404).json({
       success: false,
       message: 'Usuario no encontrado'
@@ -25,172 +25,171 @@ const getProfile = asyncHandler(async (req, res) => {
   }
 
   // Calcular nivel y progreso
-  const levels = [
+  const niveles = [
     { name: 'bronce', minPoints: 0, maxPoints: 499 },
     { name: 'plata', minPoints: 500, maxPoints: 1499 },
     { name: 'oro', minPoints: 1500, maxPoints: 4999 },
     { name: 'platino', minPoints: 5000, maxPoints: Infinity }
   ]
 
-  const currentLevel = levels.find(l => l.name === user.membership_level)
-  const nextLevelIndex = levels.findIndex(l => l.name === user.membership_level) + 1
-  const nextLevel = levels[nextLevelIndex] || null
+  const nivelActual = niveles.find(n => n.name === usuario.nivel_membresia)
+  const indiceSiguienteNivel = niveles.findIndex(n => n.name === usuario.nivel_membresia) + 1
+  const siguienteNivel = niveles[indiceSiguienteNivel] || null
 
-  let progress = 100
-  let pointsToNextLevel = 0
+  let progreso = 100
+  let puntosParaSiguienteNivel = 0
 
-  if (nextLevel) {
-    pointsToNextLevel = nextLevel.minPoints - user.total_points
-    const levelRange = nextLevel.minPoints - currentLevel.minPoints
-    const pointsInLevel = user.total_points - currentLevel.minPoints
-    progress = Math.min(100, Math.floor((pointsInLevel / levelRange) * 100))
+  if (siguienteNivel) {
+    puntosParaSiguienteNivel = siguienteNivel.minPoints - usuario.puntos_totales
+    const rangoNivel = siguienteNivel.minPoints - nivelActual.minPoints
+    const puntosEnNivel = usuario.puntos_totales - nivelActual.minPoints
+    progreso = Math.min(100, Math.floor((puntosEnNivel / rangoNivel) * 100))
   }
 
   res.json({
     success: true,
     data: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      phone: user.phone,
-      role: user.role,
+      id: usuario.id,
+      email: usuario.correo,
+      name: usuario.nombre,
+      phone: usuario.telefono,
+      role: usuario.rol,
       membership: {
-        level: user.membership_level,
-        progress,
-        pointsToNextLevel,
-        nextLevel: nextLevel?.name || null
+        level: usuario.nivel_membresia,
+        progress: progreso,
+        pointsToNextLevel: puntosParaSiguienteNivel,
+        nextLevel: siguienteNivel?.name || null
       },
       points: {
-        current: user.current_points,
-        total: user.total_points
-      },
-      memberSince: user.created_at
-    }
-  })
-})
-
-/**
- * Obtener historial de transacciones
- * GET /api/profile/transactions
- */
-const getTransactions = asyncHandler(async (req, res) => {
-  const userId = req.user.id
-  const { limit = 20, offset = 0 } = req.query
-
-  const transactions = await TransactionModel.findByUserId(
-    userId, 
-    parseInt(limit), 
-    parseInt(offset)
-  )
-
-  res.json({
-    success: true,
-    count: transactions.length,
-    data: transactions.map(t => ({
-      id: t.id,
-      type: t.type,
-      points: t.points,
-      description: t.description,
-      referenceType: t.reference_type,
-      date: t.created_at
-    }))
-  })
-})
-
-/**
- * Obtener resumen de transacciones
- * GET /api/profile/transactions/summary
- */
-const getTransactionsSummary = asyncHandler(async (req, res) => {
-  const userId = req.user.id
-
-  const summary = await TransactionModel.getSummary(userId)
-
-  res.json({
-    success: true,
-    data: {
-      totalEarned: parseInt(summary.total_earned) || 0,
-      totalRedeemed: parseInt(summary.total_redeemed) || 0,
-      transactionsEarned: parseInt(summary.transactions_earned) || 0,
-      transactionsRedeemed: parseInt(summary.transactions_redeemed) || 0
-    }
-  })
-})
-
-/**
- * Obtener estadísticas del usuario
- * GET /api/profile/stats
- */
-const getStats = asyncHandler(async (req, res) => {
-  const userId = req.user.id
-  const { query } = await import('../config/database.js')
-
-  // Obtener resumen de transacciones
-  const transactionSummary = await TransactionModel.getSummary(userId)
-  
-  // Obtener estadísticas de canjes
-  const redemptionStats = await RedemptionModel.getStats(userId)
-
-  // Obtener estadísticas de pedidos
-  const ordersStatsResult = await query(`
-    SELECT 
-      COUNT(*) FILTER (WHERE status IN ('completed', 'delivered')) as total_visits,
-      COALESCE(SUM(total) FILTER (WHERE status IN ('completed', 'delivered')), 0) as total_spent,
-      MAX(created_at) FILTER (WHERE status IN ('completed', 'delivered')) as last_visit
-    FROM orders 
-    WHERE user_id = $1
-  `, [userId])
-
-  // Obtener producto favorito (más pedido)
-  const favoriteResult = await query(`
-    SELECT p.name, SUM(oi.quantity) as total_quantity
-    FROM order_items oi
-    JOIN orders o ON o.id = oi.order_id
-    JOIN products p ON p.id = oi.product_id
-    WHERE o.user_id = $1 AND o.status IN ('completed', 'delivered')
-    GROUP BY p.id, p.name
-    ORDER BY total_quantity DESC
-    LIMIT 1
-  `, [userId])
-
-  const ordersStats = ordersStatsResult.rows[0] || {}
-  const favorite = favoriteResult.rows[0]
-
-  res.json({
-    success: true,
-    data: {
-      points: {
-        totalEarned: parseInt(transactionSummary.total_earned) || 0,
-        totalRedeemed: parseInt(transactionSummary.total_redeemed) || 0
-      },
-      redemptions: {
-        total: parseInt(redemptionStats.total_redemptions) || 0,
-        used: parseInt(redemptionStats.used_count) || 0,
-        pending: parseInt(redemptionStats.pending_count) || 0
-      },
-      orders: {
-        totalVisits: parseInt(ordersStats.total_visits) || 0,
-        totalSpent: parseFloat(ordersStats.total_spent) || 0,
-        favoriteItem: favorite?.name || '-',
-        lastVisit: ordersStats.last_visit || null
+        current: usuario.puntos_actuales,
+        total: usuario.puntos_totales
       }
     }
   })
 })
 
 /**
- * Obtener niveles de membresía
+ * Obtener historial de movimientos de puntos
+ * GET /api/profile/transactions
+ */
+const getTransactions = asyncHandler(async (req, res) => {
+  const usuarioId = req.user.id
+  const { limit = 20, offset = 0 } = req.query
+
+  const movimientos = await MovimientoModel.obtenerPorUsuario(
+    usuarioId,
+    parseInt(limit),
+    parseInt(offset)
+  )
+
+  res.json({
+    success: true,
+    count: movimientos.length,
+    data: movimientos.map(m => ({
+      id: m.id,
+      type: m.tipo,
+      points: m.puntos,
+      description: m.descripcion,
+      referenceType: m.tipo_referencia,
+      date: m.fecha_movimiento
+    }))
+  })
+})
+
+/**
+ * Obtener resumen de movimientos
+ * GET /api/profile/transactions/summary
+ */
+const getTransactionsSummary = asyncHandler(async (req, res) => {
+  const usuarioId = req.user.id
+
+  const resumen = await MovimientoModel.obtenerResumen(usuarioId)
+
+  res.json({
+    success: true,
+    data: {
+      totalEarned: parseInt(resumen.total_ganado) || 0,
+      totalRedeemed: parseInt(resumen.total_canjeado) || 0,
+      transactionsEarned: parseInt(resumen.movimientos_ganados) || 0,
+      transactionsRedeemed: parseInt(resumen.movimientos_canjeados) || 0
+    }
+  })
+})
+
+/**
+ * Obtener estadisticas del usuario
+ * GET /api/profile/stats
+ */
+const getStats = asyncHandler(async (req, res) => {
+  const usuarioId = req.user.id
+  const { query } = await import('../config/database.js')
+
+  // Obtener resumen de movimientos
+  const resumenMovimientos = await MovimientoModel.obtenerResumen(usuarioId)
+
+  // Obtener estadisticas de canjes
+  const estadisticasCanjes = await CanjeModel.obtenerEstadisticas(usuarioId)
+
+  // Obtener estadisticas de pedidos
+  const estadisticasPedidosResult = await query(`
+    SELECT
+      COUNT(*) FILTER (WHERE estado IN ('completado', 'entregado')) as total_visitas,
+      COALESCE(SUM(total) FILTER (WHERE estado IN ('completado', 'entregado')), 0) as total_gastado,
+      MAX(fecha_pedido) FILTER (WHERE estado IN ('completado', 'entregado')) as ultima_visita
+    FROM pedidos
+    WHERE usuario_id = $1
+  `, [usuarioId])
+
+  // Obtener producto favorito (mas pedido)
+  const favoritoResult = await query(`
+    SELECT p.nombre, SUM(ip.cantidad) as cantidad_total
+    FROM items_pedido ip
+    JOIN pedidos pe ON pe.id = ip.pedido_id
+    JOIN productos p ON p.id = ip.producto_id
+    WHERE pe.usuario_id = $1 AND pe.estado IN ('completado', 'entregado')
+    GROUP BY p.id, p.nombre
+    ORDER BY cantidad_total DESC
+    LIMIT 1
+  `, [usuarioId])
+
+  const estadisticasPedidos = estadisticasPedidosResult.rows[0] || {}
+  const favorito = favoritoResult.rows[0]
+
+  res.json({
+    success: true,
+    data: {
+      points: {
+        totalEarned: parseInt(resumenMovimientos.total_ganado) || 0,
+        totalRedeemed: parseInt(resumenMovimientos.total_canjeado) || 0
+      },
+      redemptions: {
+        total: parseInt(estadisticasCanjes.total_canjes) || 0,
+        used: parseInt(estadisticasCanjes.usados) || 0,
+        pending: parseInt(estadisticasCanjes.pendientes) || 0
+      },
+      orders: {
+        totalVisits: parseInt(estadisticasPedidos.total_visitas) || 0,
+        totalSpent: parseFloat(estadisticasPedidos.total_gastado) || 0,
+        favoriteItem: favorito?.nombre || '-',
+        lastVisit: estadisticasPedidos.ultima_visita || null
+      }
+    }
+  })
+})
+
+/**
+ * Obtener niveles de membresia
  * GET /api/profile/levels
  */
 const getMembershipLevels = asyncHandler(async (req, res) => {
-  const levels = [
+  const niveles = [
     {
       name: 'bronce',
       displayName: 'Bronce',
       minPoints: 0,
       benefits: [
         '1 punto por cada $1 gastado',
-        'Acceso a recompensas básicas'
+        'Acceso a recompensas basicas'
       ]
     },
     {
@@ -199,7 +198,7 @@ const getMembershipLevels = asyncHandler(async (req, res) => {
       minPoints: 500,
       benefits: [
         '1.5 puntos por cada $1 gastado',
-        '5% de descuento en cumpleaños',
+        '5% de descuento en cumpleanos',
         'Acceso a recompensas exclusivas'
       ]
     },
@@ -209,7 +208,7 @@ const getMembershipLevels = asyncHandler(async (req, res) => {
       minPoints: 1500,
       benefits: [
         '2 puntos por cada $1 gastado',
-        '10% de descuento en cumpleaños',
+        '10% de descuento en cumpleanos',
         'Reserva prioritaria',
         'Acceso a eventos exclusivos'
       ]
@@ -220,7 +219,7 @@ const getMembershipLevels = asyncHandler(async (req, res) => {
       minPoints: 5000,
       benefits: [
         '3 puntos por cada $1 gastado',
-        '20% de descuento en cumpleaños',
+        '20% de descuento en cumpleanos',
         'Acceso VIP permanente',
         'Estacionamiento gratuito',
         'Invitaciones a eventos privados'
@@ -230,7 +229,7 @@ const getMembershipLevels = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: levels
+    data: niveles
   })
 })
 

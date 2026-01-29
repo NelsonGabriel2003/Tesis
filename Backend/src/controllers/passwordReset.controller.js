@@ -4,7 +4,7 @@
  */
 
 import bcrypt from 'bcryptjs'
-import UserModel from '../models/user.model.js'
+import UsuarioModel from '../models/usuario.model.js'
 import telegramService from '../services/telegram.service.js'
 import emailService from '../services/email.service.js'
 import { asyncHandler } from '../middlewares/index.js'
@@ -42,7 +42,7 @@ const solicitarCodigo = asyncHandler(async (req, res) => {
     })
   }
 
-  const usuario = await UserModel.findByEmail(email)
+  const usuario = await UsuarioModel.buscarPorCorreo(email)
   if (!usuario) {
     return res.status(404).json({
       success: false,
@@ -51,7 +51,7 @@ const solicitarCodigo = asyncHandler(async (req, res) => {
   }
 
   const codigo = generarCodigo()
-  await UserModel.guardarCodigoReset(email, codigo, CONFIG_RESET.MINUTOS_EXPIRACION)
+  await UsuarioModel.guardarCodigoRecuperacion(email, codigo, CONFIG_RESET.MINUTOS_EXPIRACION)
 
   if (metodo === 'telegram') {
     if (!usuario.telegram_chat_id) {
@@ -68,8 +68,8 @@ const solicitarCodigo = asyncHandler(async (req, res) => {
     )
   } else if (metodo === 'email') {
     await emailService.enviarCodigoRecuperacion(
-      usuario.email,
-      usuario.name,
+      usuario.correo,
+      usuario.nombre,
       codigo,
       CONFIG_RESET.MINUTOS_EXPIRACION
     )
@@ -79,7 +79,7 @@ const solicitarCodigo = asyncHandler(async (req, res) => {
     success: true,
     message: `Código enviado por ${metodo === 'telegram' ? 'Telegram' : 'correo'}`,
     data: {
-      email: usuario.email,
+      email: usuario.correo,
       metodo,
       tieneTelegram: !!usuario.telegram_chat_id
     }
@@ -100,7 +100,7 @@ const verificarCodigo = asyncHandler(async (req, res) => {
     })
   }
 
-  const usuario = await UserModel.verificarCodigoReset(email, codigo)
+  const usuario = await UsuarioModel.verificarCodigoRecuperacion(email, codigo)
 
   if (!usuario) {
     return res.status(400).json({
@@ -113,7 +113,7 @@ const verificarCodigo = asyncHandler(async (req, res) => {
     success: true,
     message: 'Código verificado correctamente',
     data: {
-      email: usuario.email,
+      email: usuario.correo,
       verificado: true
     }
   })
@@ -140,7 +140,7 @@ const cambiarPassword = asyncHandler(async (req, res) => {
     })
   }
 
-  const usuario = await UserModel.verificarCodigoReset(email, codigo)
+  const usuario = await UsuarioModel.verificarCodigoRecuperacion(email, codigo)
   if (!usuario) {
     return res.status(400).json({
       success: false,
@@ -151,10 +151,15 @@ const cambiarPassword = asyncHandler(async (req, res) => {
   const saltRounds = 10
   const passwordHash = await bcrypt.hash(nuevaPassword, saltRounds)
 
-  await UserModel.cambiarPassword(email, passwordHash)
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  await UsuarioModel.cambiarContrasena(email, passwordHash, infoSolicitud)
 
   // Enviar confirmación por email
-  await emailService.enviarConfirmacionCambio(usuario.email, usuario.name)
+  await emailService.enviarConfirmacionCambio(usuario.correo, usuario.nombre)
 
   res.json({
     success: true,
@@ -176,7 +181,7 @@ const verificarMetodosRecuperacion = asyncHandler(async (req, res) => {
     })
   }
 
-  const usuario = await UserModel.findByEmail(email)
+  const usuario = await UsuarioModel.buscarPorCorreo(email)
   if (!usuario) {
     return res.status(404).json({
       success: false,
@@ -187,7 +192,7 @@ const verificarMetodosRecuperacion = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      email: usuario.email,
+      email: usuario.correo,
       tieneTelegram: !!usuario.telegram_chat_id,
       tieneEmail: true
     }

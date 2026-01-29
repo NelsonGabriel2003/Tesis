@@ -1,251 +1,293 @@
-import { OrderModel, OrderItemModel, ProductModel, UserModel, TransactionModel } from '../models/index.js'
+/**
+ * Order Controller
+ * Maneja operaciones de pedidos
+ */
+
+import PedidoModel from '../models/pedido.model.js'
+import ItemPedidoModel from '../models/itemPedido.model.js'
+import ProductoModel from '../models/producto.model.js'
+import UsuarioModel from '../models/usuario.model.js'
+import MovimientoModel from '../models/movimiento.model.js'
 import { codeGenerator, qrService, telegramService } from '../services/index.js'
+import { asyncHandler } from '../middlewares/index.js'
 
-const OrderController = {
-  create: async (req, res) => {
-    try {
-      const userId = req.user.id
-      const { items, tableNumber, notes } = req.body
+/**
+ * Crear pedido
+ * POST /api/orders
+ */
+const create = asyncHandler(async (req, res) => {
+  const usuarioId = req.user.id
+  const { items, tableNumber, notes } = req.body
 
-      if (!items || items.length === 0) {
-        return res.status(400).json({ success: false, message: 'El pedido debe tener al menos un producto' })
-      }
-
-      const activeOrders = await OrderModel.countByUserAndStatus(userId, ['pending', 'approved', 'preparing'])
-      if (activeOrders >= 3) {
-        return res.status(400).json({ success: false, message: 'Tienes demasiados pedidos activos' })
-      }
-
-      let subtotal = 0
-      let totalPoints = 0
-      const orderItems = []
-
-      for (const item of items) {
-        const product = await ProductModel.findById(item.productId)
-        if (!product || !product.is_available) {
-          return res.status(400).json({ success: false, message: `Producto no disponible: ${item.productId}` })
-        }
-
-        const quantity = Math.min(Math.max(item.quantity, 1), 10)
-        const itemTotal = parseFloat(product.price) * quantity
-        const itemPoints = product.points_earned * quantity
-
-        subtotal += itemTotal
-        totalPoints += itemPoints
-
-        orderItems.push({
-          productId: product.id,
-          productName: product.name,
-          productPrice: parseFloat(product.price),
-          pointsPerItem: product.points_earned,
-          quantity,
-          itemTotal,
-          pointsTotal: itemPoints
-        })
-      }
-
-      const orderCode = codeGenerator.generateOrderCode()
-
-      const order = await OrderModel.create({
-        userId,
-        orderCode,
-        subtotal,
-        discount: 0,
-        total: subtotal,
-        pointsToEarn: totalPoints,
-        tableNumber,
-        notes,
-        qrCodeData: codeGenerator.generateQRData(orderCode, null)
-      })
-
-      const createdItems = []
-      for (const item of orderItems) {
-        const createdItem = await OrderItemModel.create({ orderId: order.id, ...item })
-        createdItems.push(createdItem)
-      }
-
-      const qrCode = await qrService.generateOrderQR(orderCode, order.id)
-
-      const user = await UserModel.findById(userId)
-      const orderWithUser = { ...order, user_name: user.name, user_phone: user.phone }
-
-      const telegramMessageId = await telegramService.sendOrderAlert(orderWithUser, createdItems)
-      if (telegramMessageId) {
-        await OrderModel.setTelegramMessageId(order.id, telegramMessageId.toString())
-      }
-
-      res.status(201).json({
-        success: true,
-        data: {
-          order: { ...order, items: createdItems, qrCode },
-          message: 'Pedido enviado. Esperando confirmación.'
-        }
-      })
-
-    } catch (error) {
-      console.error('Error creando pedido:', error)
-      res.status(500).json({ success: false, message: 'Error al crear el pedido' })
-    }
-  },
-
-  getMyOrders: async (req, res) => {
-    try {
-      const userId = req.user.id
-      const { limit = 20, offset = 0 } = req.query
-      const orders = await OrderModel.findByUserId(userId, parseInt(limit), parseInt(offset))
-
-      for (let order of orders) {
-        order.items = await OrderItemModel.findByOrderId(order.id)
-      }
-
-      res.json({ success: true, data: orders })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al obtener pedidos' })
-    }
-  },
-
-  getActiveOrders: async (req, res) => {
-    try {
-      const userId = req.user.id
-      const orders = await OrderModel.findActiveByUserId(userId)
-
-      for (let order of orders) {
-        order.items = await OrderItemModel.findByOrderId(order.id)
-        order.qrCode = await qrService.generateOrderQR(order.order_code, order.id)
-      }
-
-      res.json({ success: true, data: orders })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al obtener pedidos activos' })
-    }
-  },
-
-  getById: async (req, res) => {
-    try {
-      const { id } = req.params
-      const order = await OrderModel.findById(id)
-
-      if (!order) {
-        return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
-      }
-
-      order.items = await OrderItemModel.findByOrderId(order.id)
-      order.qrCode = await qrService.generateOrderQR(order.order_code, order.id)
-
-      res.json({ success: true, data: order })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al obtener el pedido' })
-    }
-  },
-
-  cancel: async (req, res) => {
-    try {
-      const { id } = req.params
-      const userId = req.user.id
-      const order = await OrderModel.findById(id)
-
-      if (!order) {
-        return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
-      }
-
-      if (order.user_id !== userId) {
-        return res.status(403).json({ success: false, message: 'No autorizado' })
-      }
-
-      if (order.status !== 'pending') {
-        return res.status(400).json({ success: false, message: 'Solo se pueden cancelar pedidos pendientes' })
-      }
-
-      const updatedOrder = await OrderModel.updateStatus(id, 'cancelled')
-      res.json({ success: true, data: updatedOrder, message: 'Pedido cancelado' })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al cancelar el pedido' })
-    }
-  },
-
-  getPending: async (req, res) => {
-    try {
-      const orders = await OrderModel.findPending()
-      for (let order of orders) {
-        order.items = await OrderItemModel.findByOrderId(order.id)
-      }
-      res.json({ success: true, data: orders })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al obtener pedidos' })
-    }
-  },
-
-  approve: async (req, res) => {
-    try {
-      const { id } = req.params
-      const order = await OrderModel.findById(id)
-
-      if (!order || order.status !== 'pending') {
-        return res.status(400).json({ success: false, message: 'El pedido no está pendiente' })
-      }
-
-      const updatedOrder = await OrderModel.updateStatus(id, 'approved')
-      res.json({ success: true, data: updatedOrder, message: 'Pedido aprobado' })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al aprobar' })
-    }
-  },
-
-  reject: async (req, res) => {
-    try {
-      const { id } = req.params
-      const { reason } = req.body
-      const order = await OrderModel.findById(id)
-
-      if (!order || order.status !== 'pending') {
-        return res.status(400).json({ success: false, message: 'El pedido no está pendiente' })
-      }
-
-      const updatedOrder = await OrderModel.updateStatus(id, 'rejected', null, { rejectionReason: reason })
-      res.json({ success: true, data: updatedOrder, message: 'Pedido rechazado' })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al rechazar' })
-    }
-  },
-
-  complete: async (req, res) => {
-    try {
-      const { id } = req.params
-      const order = await OrderModel.findById(id)
-
-      if (!order || order.status !== 'preparing') {
-        return res.status(400).json({ success: false, message: 'El pedido no está en preparación' })
-      }
-
-      const updatedOrder = await OrderModel.updateStatus(id, 'completed', null, {
-        pointsEarned: order.points_to_earn
-      })
-
-      if (order.user_id) {
-        await UserModel.addPoints(order.user_id, order.points_to_earn)
-        await TransactionModel.create({
-          userId: order.user_id,
-          type: 'earned',
-          points: order.points_to_earn,
-          description: `Compra - Pedido #${order.order_code}`,
-          referenceType: 'order',
-          referenceId: order.id
-        })
-      }
-
-      res.json({ success: true, data: updatedOrder, message: `+${order.points_to_earn} puntos acreditados` })
-    } catch (error) {
-      console.error('Error:', error)
-      res.status(500).json({ success: false, message: 'Error al completar' })
-    }
+  if (!items || items.length === 0) {
+    return res.status(400).json({ success: false, message: 'El pedido debe tener al menos un producto' })
   }
-}
 
-export const orderController = OrderController
+  const pedidosActivos = await PedidoModel.contarPorUsuarioYEstado(usuarioId, ['pendiente', 'aprobado', 'preparando'])
+  if (pedidosActivos >= 3) {
+    return res.status(400).json({ success: false, message: 'Tienes demasiados pedidos activos' })
+  }
+
+  let subtotal = 0
+  let puntosTotales = 0
+  const itemsPedido = []
+
+  for (const item of items) {
+    const producto = await ProductoModel.buscarPorId(item.productId)
+    if (!producto || !producto.disponible) {
+      return res.status(400).json({ success: false, message: `Producto no disponible: ${item.productId}` })
+    }
+
+    const cantidad = Math.min(Math.max(item.quantity, 1), 10)
+    const totalItem = parseFloat(producto.precio) * cantidad
+    const puntosItem = producto.puntos_otorgados * cantidad
+
+    subtotal += totalItem
+    puntosTotales += puntosItem
+
+    itemsPedido.push({
+      productoId: producto.id,
+      nombreProducto: producto.nombre,
+      precioProducto: parseFloat(producto.precio),
+      puntosPorItem: producto.puntos_otorgados,
+      cantidad,
+      totalItem,
+      puntosTotales: puntosItem
+    })
+  }
+
+  const codigoPedido = codeGenerator.generateOrderCode()
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const pedido = await PedidoModel.crear({
+    usuario_id: usuarioId,
+    codigo_pedido: codigoPedido,
+    subtotal,
+    descuento: 0,
+    total: subtotal,
+    puntos_a_ganar: puntosTotales,
+    numero_mesa: tableNumber,
+    notas: notes,
+    datos_qr: codeGenerator.generateQRData(codigoPedido, null)
+  }, req.user?.id, infoSolicitud)
+
+  const itemsCreados = []
+  for (const item of itemsPedido) {
+    const itemCreado = await ItemPedidoModel.crear({
+      pedido_id: pedido.id,
+      producto_id: item.productoId,
+      nombre_producto: item.nombreProducto,
+      precio_producto: item.precioProducto,
+      puntos_por_item: item.puntosPorItem,
+      cantidad: item.cantidad,
+      total_item: item.totalItem,
+      puntos_totales: item.puntosTotales
+    })
+    itemsCreados.push(itemCreado)
+  }
+
+  const qrCode = await qrService.generateOrderQR(codigoPedido, pedido.id)
+
+  const usuario = await UsuarioModel.buscarPorId(usuarioId)
+  const pedidoConUsuario = { ...pedido, user_name: usuario.nombre, user_phone: usuario.telefono }
+
+  const telegramMessageId = await telegramService.sendOrderAlert(pedidoConUsuario, itemsCreados)
+  if (telegramMessageId) {
+    await PedidoModel.establecerMensajeTelegram(pedido.id, telegramMessageId.toString())
+  }
+
+  res.status(201).json({
+    success: true,
+    data: {
+      order: { ...pedido, items: itemsCreados, qrCode },
+      message: 'Pedido enviado. Esperando confirmación.'
+    }
+  })
+})
+
+/**
+ * Obtener mis pedidos
+ * GET /api/orders/my
+ */
+const getMyOrders = asyncHandler(async (req, res) => {
+  const usuarioId = req.user.id
+  const { limit = 20, offset = 0 } = req.query
+  const pedidos = await PedidoModel.obtenerPorUsuario(usuarioId, parseInt(limit), parseInt(offset))
+
+  for (let pedido of pedidos) {
+    pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
+  }
+
+  res.json({ success: true, data: pedidos })
+})
+
+/**
+ * Obtener pedidos activos
+ * GET /api/orders/active
+ */
+const getActiveOrders = asyncHandler(async (req, res) => {
+  const usuarioId = req.user.id
+  const pedidos = await PedidoModel.obtenerActivosPorUsuario(usuarioId)
+
+  for (let pedido of pedidos) {
+    pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
+    pedido.qrCode = await qrService.generateOrderQR(pedido.codigo_pedido, pedido.id)
+  }
+
+  res.json({ success: true, data: pedidos })
+})
+
+/**
+ * Obtener pedido por ID
+ * GET /api/orders/:id
+ */
+const getById = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const pedido = await PedidoModel.buscarPorId(id)
+
+  if (!pedido) {
+    return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
+  }
+
+  pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
+  pedido.qrCode = await qrService.generateOrderQR(pedido.codigo_pedido, pedido.id)
+
+  res.json({ success: true, data: pedido })
+})
+
+/**
+ * Cancelar pedido
+ * POST /api/orders/:id/cancel
+ */
+const cancel = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const usuarioId = req.user.id
+  const pedido = await PedidoModel.buscarPorId(id)
+
+  if (!pedido) {
+    return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
+  }
+
+  if (pedido.usuario_id !== usuarioId) {
+    return res.status(403).json({ success: false, message: 'No autorizado' })
+  }
+
+  if (pedido.estado !== 'pendiente') {
+    return res.status(400).json({ success: false, message: 'Solo se pueden cancelar pedidos pendientes' })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'cancelado', req.user?.id, infoSolicitud)
+  res.json({ success: true, data: pedidoActualizado, message: 'Pedido cancelado' })
+})
+
+/**
+ * Obtener pedidos pendientes (Staff)
+ * GET /api/orders/pending
+ */
+const getPending = asyncHandler(async (req, res) => {
+  const pedidos = await PedidoModel.obtenerPendientes()
+  for (let pedido of pedidos) {
+    pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
+  }
+  res.json({ success: true, data: pedidos })
+})
+
+/**
+ * Aprobar pedido (Staff)
+ * POST /api/orders/:id/approve
+ */
+const approve = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const pedido = await PedidoModel.buscarPorId(id)
+
+  if (!pedido || pedido.estado !== 'pendiente') {
+    return res.status(400).json({ success: false, message: 'El pedido no está pendiente' })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'aprobado', req.user?.id, infoSolicitud)
+  res.json({ success: true, data: pedidoActualizado, message: 'Pedido aprobado' })
+})
+
+/**
+ * Rechazar pedido (Staff)
+ * POST /api/orders/:id/reject
+ */
+const reject = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const { reason } = req.body
+  const pedido = await PedidoModel.buscarPorId(id)
+
+  if (!pedido || pedido.estado !== 'pendiente') {
+    return res.status(400).json({ success: false, message: 'El pedido no está pendiente' })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'rechazado', req.user?.id, infoSolicitud, { motivo_rechazo: reason })
+  res.json({ success: true, data: pedidoActualizado, message: 'Pedido rechazado' })
+})
+
+/**
+ * Completar pedido (Staff)
+ * POST /api/orders/:id/complete
+ */
+const complete = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const pedido = await PedidoModel.buscarPorId(id)
+
+  if (!pedido || pedido.estado !== 'preparando') {
+    return res.status(400).json({ success: false, message: 'El pedido no está en preparación' })
+  }
+
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'completado', req.user?.id, infoSolicitud, {
+    puntos_ganados: pedido.puntos_a_ganar
+  })
+
+  if (pedido.usuario_id) {
+    await UsuarioModel.agregarPuntos(pedido.usuario_id, pedido.puntos_a_ganar)
+    await MovimientoModel.crear({
+      usuario_id: pedido.usuario_id,
+      tipo: 'ganado',
+      puntos: pedido.puntos_a_ganar,
+      descripcion: `Compra - Pedido #${pedido.codigo_pedido}`,
+      tipo_referencia: 'pedido',
+      referencia_id: pedido.id
+    })
+  }
+
+  res.json({ success: true, data: pedidoActualizado, message: `+${pedido.puntos_a_ganar} puntos acreditados` })
+})
+
+export const orderController = {
+  create,
+  getMyOrders,
+  getActiveOrders,
+  getById,
+  cancel,
+  getPending,
+  approve,
+  reject,
+  complete
+}

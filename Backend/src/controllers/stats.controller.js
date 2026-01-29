@@ -3,16 +3,16 @@
  * Maneja estadísticas del dashboard para administradores
  */
 
-import StatsModel from '../models/stats.model.js'
-import RedemptionModel from '../models/redemption.model.js'
+import EstadisticasModel from '../models/estadisticas.model.js'
+import CanjeModel from '../models/canje.model.js'
+import UsuarioModel from '../models/usuario.model.js'
 import { asyncHandler } from '../middlewares/index.js'
-import UserModel from '../models/user.model.js'
 /**
  * Obtener resumen completo del dashboard
  * GET /api/stats/dashboard
  */
 const getDashboardStats = asyncHandler(async (req, res) => {
-  const stats = await StatsModel.getDashboardSummary()
+  const stats = await EstadisticasModel.obtenerResumenDashboard()
 
   res.json({
     success: true,
@@ -25,20 +25,20 @@ const getDashboardStats = asyncHandler(async (req, res) => {
  * GET /api/stats/summary
  */
 const getSummary = asyncHandler(async (req, res) => {
-  const [totalUsers, totalProducts, totalRedemptions, pointsIssued] = await Promise.all([
-    StatsModel.getTotalUsers(),
-    StatsModel.getTotalProducts(),
-    StatsModel.getTotalRedemptions(),
-    StatsModel.getTotalPointsIssued()
+  const [totalUsuarios, totalProductos, totalCanjes, puntosEmitidos] = await Promise.all([
+    EstadisticasModel.obtenerTotalUsuarios(),
+    EstadisticasModel.obtenerTotalProductos(),
+    EstadisticasModel.obtenerTotalCanjes(),
+    EstadisticasModel.obtenerTotalPuntosEmitidos()
   ])
 
   res.json({
     success: true,
     data: {
-      totalUsers,
-      totalProducts,
-      totalRedemptions,
-      pointsIssued
+      totalUsers: totalUsuarios,
+      totalProducts: totalProductos,
+      totalRedemptions: totalCanjes,
+      pointsIssued: puntosEmitidos
     }
   })
 })
@@ -48,18 +48,18 @@ const getSummary = asyncHandler(async (req, res) => {
  * GET /api/stats/users
  */
 const getUserStats = asyncHandler(async (req, res) => {
-  const [totalUsers, usersByLevel, recentUsers] = await Promise.all([
-    StatsModel.getTotalUsers(),
-    StatsModel.getUsersByLevel(),
-    StatsModel.getRecentUsers(10)
+  const [totalUsuarios, usuariosPorNivel, usuariosRecientes] = await Promise.all([
+    EstadisticasModel.obtenerTotalUsuarios(),
+    EstadisticasModel.obtenerUsuariosPorNivel(),
+    EstadisticasModel.obtenerUsuariosRecientes(10)
   ])
 
   res.json({
     success: true,
     data: {
-      totalUsers,
-      usersByLevel,
-      recentUsers
+      totalUsers: totalUsuarios,
+      usersByLevel: usuariosPorNivel,
+      recentUsers: usuariosRecientes
     }
   })
 })
@@ -69,17 +69,17 @@ const getUserStats = asyncHandler(async (req, res) => {
  * GET /api/stats/points
  */
 const getPointsStats = asyncHandler(async (req, res) => {
-  const [pointsIssued, pointsRedeemed] = await Promise.all([
-    StatsModel.getTotalPointsIssued(),
-    StatsModel.getTotalPointsRedeemed()
+  const [puntosEmitidos, puntosCanjeados] = await Promise.all([
+    EstadisticasModel.obtenerTotalPuntosEmitidos(),
+    EstadisticasModel.obtenerTotalPuntosCanjeados()
   ])
 
   res.json({
     success: true,
     data: {
-      pointsIssued,
-      pointsRedeemed,
-      pointsBalance: pointsIssued - pointsRedeemed
+      pointsIssued: puntosEmitidos,
+      pointsRedeemed: puntosCanjeados,
+      pointsBalance: puntosEmitidos - puntosCanjeados
     }
   })
 })
@@ -89,18 +89,18 @@ const getPointsStats = asyncHandler(async (req, res) => {
  * GET /api/stats/redemptions
  */
 const getRedemptionStats = asyncHandler(async (req, res) => {
-  const [totalRedemptions, redemptionsByStatus, recentRedemptions] = await Promise.all([
-    StatsModel.getTotalRedemptions(),
-    StatsModel.getRedemptionsByStatus(),
-    StatsModel.getRecentRedemptions(10)
+  const [totalCanjes, canjesPorEstado, canjesRecientes] = await Promise.all([
+    EstadisticasModel.obtenerTotalCanjes(),
+    EstadisticasModel.obtenerCanjesPorEstado(),
+    EstadisticasModel.obtenerCanjesRecientes(10)
   ])
 
   res.json({
     success: true,
     data: {
-      totalRedemptions,
-      redemptionsByStatus,
-      recentRedemptions
+      totalRedemptions: totalCanjes,
+      redemptionsByStatus: canjesPorEstado,
+      recentRedemptions: canjesRecientes
     }
   })
 })
@@ -111,12 +111,12 @@ const getRedemptionStats = asyncHandler(async (req, res) => {
  */
 const getRecentTransactions = asyncHandler(async (req, res) => {
   const { limit = 10 } = req.query
-  
-  const transactions = await StatsModel.getRecentTransactions(parseInt(limit))
+
+  const movimientos = await EstadisticasModel.obtenerMovimientosRecientes(parseInt(limit))
 
   res.json({
     success: true,
-    data: transactions
+    data: movimientos
   })
 })
 
@@ -129,7 +129,7 @@ const obtenerCanjesUsuario = asyncHandler(async (req, res) => {
   const { id } = req.params
 
   // Obtener datos del usuario
-  const usuario = await UserModel.findById(parseInt(id))
+  const usuario = await UsuarioModel.buscarPorId(parseInt(id))
 
   if (!usuario) {
     return res.status(404).json({
@@ -139,26 +139,26 @@ const obtenerCanjesUsuario = asyncHandler(async (req, res) => {
   }
 
   // Obtener canjes con resumen
-  const { canjes, resumen } = await RedemptionModel.obtenerCanjesConResumen(parseInt(id))
+  const { canjes, resumen } = await CanjeModel.obtenerConResumenPorUsuario(parseInt(id))
 
   res.json({
     exito: true,
     usuario: {
       id: usuario.id,
-      nombre: usuario.name,
-      correo: usuario.email,
-      puntosActuales: usuario.current_points,
-      nivelMembresia: usuario.membership_level
+      nombre: usuario.nombre,
+      correo: usuario.correo,
+      puntosActuales: usuario.puntos_actuales,
+      nivelMembresia: usuario.nivel_membresia
     },
     canjes: canjes.map(canje => ({
       id: canje.id,
-      recompensa: canje.reward_name,
-      categoria: canje.reward_category,
-      codigo: canje.redemption_code,
-      puntosGastados: canje.points_spent,
-      estado: canje.status,
-      fechaCanje: canje.created_at,
-      fechaUso: canje.used_at
+      recompensa: canje.nombre_recompensa,
+      categoria: canje.categoria_recompensa,
+      codigo: canje.codigo_canje,
+      puntosGastados: canje.puntos_gastados,
+      estado: canje.estado,
+      fechaCanje: canje.fecha_canje,
+      fechaUso: canje.fecha_uso
     })),
     resumen: {
       totalCanjes: parseInt(resumen.total_canjes),
@@ -174,7 +174,12 @@ const obtenerCanjesUsuario = asyncHandler(async (req, res) => {
 const entregarCanje = asyncHandler(async (req, res) => {
   const { id } = req.params
 
-  const canjeActualizado = await RedemptionModel.markAsUsed(parseInt(id))
+  const infoSolicitud = {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  }
+
+  const canjeActualizado = await CanjeModel.marcarComoUsado(parseInt(id), req.user?.id, infoSolicitud)
 
   if (!canjeActualizado) {
     return res.status(400).json({
@@ -188,8 +193,8 @@ const entregarCanje = asyncHandler(async (req, res) => {
     mensaje: 'Canje procesado exitosamente',
     canje: {
       id: canjeActualizado.id,
-      estado: canjeActualizado.status,
-      fechaUso: canjeActualizado.used_at
+      estado: canjeActualizado.estado,
+      fechaUso: canjeActualizado.fecha_uso
     }
   })
 })
@@ -202,8 +207,8 @@ const obtenerTodosCanjes = asyncHandler(async (req, res) => {
   const { status, limit = 50 } = req.query
 
   const [canjes, resumen] = await Promise.all([
-    RedemptionModel.findAllWithUsers(status || null, parseInt(limit)),
-    RedemptionModel.getAdminSummary()
+    CanjeModel.obtenerTodosConUsuarios(status || null, parseInt(limit)),
+    CanjeModel.obtenerResumenAdmin()
   ])
 
   res.json({
@@ -217,16 +222,16 @@ const obtenerTodosCanjes = asyncHandler(async (req, res) => {
     },
     canjes: canjes.map(canje => ({
       id: canje.id,
-      usuarioId: canje.user_id,
-      usuarioNombre: canje.user_name,
-      usuarioEmail: canje.user_email,
-      recompensa: canje.reward_name,
-      categoria: canje.reward_category,
-      codigo: canje.redemption_code,
-      puntosGastados: canje.points_spent,
-      estado: canje.status,
-      fechaCanje: canje.created_at,
-      fechaUso: canje.used_at
+      usuarioId: canje.usuario_id,
+      usuarioNombre: canje.nombre_usuario,
+      usuarioEmail: canje.correo_usuario,
+      recompensa: canje.nombre_recompensa,
+      categoria: canje.categoria_recompensa,
+      codigo: canje.codigo_canje,
+      puntosGastados: canje.puntos_gastados,
+      estado: canje.estado,
+      fechaCanje: canje.fecha_canje,
+      fechaUso: canje.fecha_uso
     }))
   })
 })
@@ -236,7 +241,7 @@ const obtenerTodosCanjes = asyncHandler(async (req, res) => {
  * GET /api/stats/canjes/pendientes
  */
 const obtenerCanjesPendientes = asyncHandler(async (req, res) => {
-  const canjes = await RedemptionModel.findAllPending()
+  const canjes = await CanjeModel.obtenerPendientes()
 
   res.json({
     exito: true,
@@ -244,14 +249,14 @@ const obtenerCanjesPendientes = asyncHandler(async (req, res) => {
     cantidad: canjes.length,
     canjes: canjes.map(canje => ({
       id: canje.id,
-      usuarioId: canje.user_id,
-      usuarioNombre: canje.user_name,
-      usuarioEmail: canje.user_email,
-      recompensa: canje.reward_name,
-      categoria: canje.reward_category,
-      codigo: canje.redemption_code,
-      puntosGastados: canje.points_spent,
-      fechaCanje: canje.created_at
+      usuarioId: canje.usuario_id,
+      usuarioNombre: canje.nombre_usuario,
+      usuarioEmail: canje.correo_usuario,
+      recompensa: canje.nombre_recompensa,
+      categoria: canje.categoria_recompensa,
+      codigo: canje.codigo_canje,
+      puntosGastados: canje.puntos_gastados,
+      fechaCanje: canje.fecha_canje
     }))
   })
 })

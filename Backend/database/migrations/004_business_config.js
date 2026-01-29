@@ -1,52 +1,63 @@
+/**
+ * Migration: Crear tabla de configuracion del negocio
+ * Ejecutar con: node database/migrations/004_business_config.js
+ */
+
 import 'dotenv/config'
 import { pool } from '../../src/config/database.js'
 
-const createBusinessConfig = async () => {
+const crearConfiguracionNegocio = async () => {
   const client = await pool.connect()
 
   try {
     await client.query('BEGIN')
 
-    console.log('📦 Creando tabla de configuración de negocio...\n')
+    console.log('Creando tabla de configuracion de negocio...\n')
 
-    // 1. CREAR LA TABLA (esto faltaba)
+    // ===================
+    // TABLA: configuracion_negocio (sin fechas - historial las registra)
+    // ===================
     await client.query(`
-      CREATE TABLE IF NOT EXISTS business_config (
+      CREATE TABLE IF NOT EXISTS configuracion_negocio (
         id SERIAL PRIMARY KEY,
-        key VARCHAR(100) UNIQUE NOT NULL,
-        value TEXT NOT NULL,
-        description VARCHAR(255),
-        category VARCHAR(50) DEFAULT 'general'
+        clave VARCHAR(100) UNIQUE NOT NULL,
+        valor TEXT NOT NULL,
+        descripcion VARCHAR(255),
+        categoria VARCHAR(50) DEFAULT 'general'
       )`
     )
-    console.log(' Tabla business_config creada')
+    console.log('Tabla configuracion_negocio creada')
 
-    // 2. INSERTAR CONFIGURACIONES
+    // ===================
+    // INSERTAR CONFIGURACIONES INICIALES
+    // ===================
     await client.query(`
-      INSERT INTO business_config (key, value, description, category) VALUES
-        ('points_per_dollar', '1', 'Puntos base por cada $1 gastado', 'points'),
-        ('threshold_plata', '500', 'Puntos mínimos para nivel Plata', 'membership'),
-        ('threshold_oro', '1500', 'Puntos mínimos para nivel Oro', 'membership'),
-        ('threshold_platino', '5000', 'Puntos mínimos para nivel Platino', 'membership'),
-        ('multiplier_plata', '1.5', 'Multiplicador para Plata', 'membership'),
-        ('multiplier_oro', '2', 'Multiplicador para Oro', 'membership'),
-        ('multiplier_platino', '3', 'Multiplicador para Platino', 'membership')
-      ON CONFLICT (key) DO NOTHING
+      INSERT INTO configuracion_negocio (clave, valor, descripcion, categoria) VALUES
+        ('puntos_por_dolar', '1', 'Puntos base por cada $1 gastado', 'puntos'),
+        ('umbral_plata', '500', 'Puntos minimos para nivel Plata', 'membresia'),
+        ('umbral_oro', '1500', 'Puntos minimos para nivel Oro', 'membresia'),
+        ('umbral_platino', '5000', 'Puntos minimos para nivel Platino', 'membresia'),
+        ('multiplicador_plata', '1.5', 'Multiplicador para Plata', 'membresia'),
+        ('multiplicador_oro', '2', 'Multiplicador para Oro', 'membresia'),
+        ('multiplicador_platino', '3', 'Multiplicador para Platino', 'membresia')
+      ON CONFLICT (clave) DO NOTHING
     `)
-    console.log('✅ Configuraciones insertadas')
+    console.log('Configuraciones insertadas')
 
-    // 3. CREAR ÍNDICE
+    // ===================
+    // INDICE
+    // ===================
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_business_config_category ON business_config(category)
+      CREATE INDEX IF NOT EXISTS idx_configuracion_categoria ON configuracion_negocio(categoria)
     `)
-    console.log('✅ Índice creado')
+    console.log('Indice creado')
 
     await client.query('COMMIT')
-    console.log('\n✅ Migración completada!')
+    console.log('\nMigracion completada!')
 
   } catch (error) {
     await client.query('ROLLBACK')
-    console.error(' Error:', error.message)
+    console.error('Error:', error.message)
     throw error
   } finally {
     client.release()
@@ -54,8 +65,8 @@ const createBusinessConfig = async () => {
   }
 }
 
-createBusinessConfig()
+crearConfiguracionNegocio()
   .then(() => process.exit(0))
   .catch(() => process.exit(1))
 
-export default createBusinessConfig
+export default crearConfiguracionNegocio
