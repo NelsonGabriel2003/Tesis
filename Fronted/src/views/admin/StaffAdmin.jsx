@@ -6,7 +6,6 @@
 import { useState } from 'react'
 import {
   Plus,
-  Search,
   Edit,
   Trash2,
   X,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useStaffController } from '../../controllers/admin'
 import { staffRoles } from '../../models/admin/adminModel'
+import SearchBar from '../../components/ui/SearchBar'
 
 const StaffAdmin = () => {
   const {
@@ -104,17 +104,14 @@ const StaffAdmin = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-        <input
-          type="text"
-          placeholder="Buscar personal..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        />
-      </div>
+      {/* Search con contador */}
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Buscar personal..."
+        resultsCount={filteredStaff.length}
+        totalCount={staff.length}
+      />
 
       {/* Notification */}
       {notification && (

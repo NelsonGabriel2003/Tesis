@@ -6,6 +6,7 @@
 // Estado inicial para productos
 export const initialProductState = {
   products: [],
+  totalProducts: 0,
   loading: false,
   error: null,
   selectedProduct: null,

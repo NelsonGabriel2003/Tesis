@@ -48,38 +48,57 @@ const CanjeList = ({ rewards, loading, onSelectReward, canRedeem, userPoints }) 
           <button
             key={reward.id}
             onClick={() => onSelectReward(reward)}
-            className={`overflow-hidden rounded-2xl bg-surface-primary text-left shadow-md transition-all hover:shadow-lg ${
-              !canRedeemReward ? 'opacity-75' : ''
+            className={`group overflow-hidden rounded-2xl bg-surface-primary text-left shadow-md
+              transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+              !canRedeemReward ? 'opacity-80' : ''
             }`}
           >
-            {/* Imagen placeholder */}
-            <div className="relative h-24 to-purple-500 bg-gradient-to-tr from-blue-400 flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                {reward.category === 'bebidas' && '🍹'}
-                {reward.category === 'comida' && '🍕'}
-                {reward.category === 'descuentos' && '💰'}
-                {reward.category === 'experiencias' && '⭐'}
-              </div>
+            {/* Imagen responsive */}
+            <div className="relative aspect-[4/3] w-full overflow-hidden">
+              {reward.imageUrl ? (
+                <img
+                  src={reward.imageUrl}
+                  alt={reward.name}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-purple-400 via-purple-500 to-indigo-600
+                  flex items-center justify-center">
+                  <span className="text-4xl drop-shadow-lg">
+                    {reward.category?.toLowerCase() === 'bebidas' && '🍹'}
+                    {reward.category?.toLowerCase() === 'comida' && '🍕'}
+                    {reward.category?.toLowerCase() === 'descuentos' && '💰'}
+                    {reward.category?.toLowerCase() === 'experiencias' && '⭐'}
+                    {!['bebidas', 'comida', 'descuentos', 'experiencias'].includes(reward.category?.toLowerCase()) && '🎁'}
+                  </span>
+                </div>
+              )}
+
+              {/* Overlay gradient para mejor legibilidad de badges */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
               {/* Badge popular */}
               {reward.popular && (
-                <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                  <TrendingUp size={10} />
+                <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-red-500 px-2 py-1
+                  text-xs font-bold text-white shadow-lg backdrop-blur-sm">
+                  <TrendingUp size={12} />
                   Popular
                 </div>
               )}
 
               {/* Badge stock bajo */}
               {reward.stock <= 10 && reward.stock > 0 && (
-                <div className="absolute right-2 top-2 rounded-full bg-orange-500 px-2 py-0.5 text-xs font-bold text-white">
+                <div className="absolute right-2 top-2 rounded-full bg-orange-500 px-2 py-1
+                  text-xs font-bold text-white shadow-lg backdrop-blur-sm">
                   ¡Quedan {reward.stock}!
                 </div>
               )}
 
               {/* Agotado */}
               {reward.stock === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <span className="rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <span className="rounded-full bg-red-500 px-4 py-2 text-sm font-bold text-white shadow-lg">
                     Agotado
                   </span>
                 </div>

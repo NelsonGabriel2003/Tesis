@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Clock, CheckCircle, ChefHat, Package, XCircle, RefreshCw, Home, Send, PartyPopper } from 'lucide-react'
+import { Clock, CheckCircle, ChefHat, Package, XCircle, RefreshCw, Home, Send, PartyPopper, FileDown } from 'lucide-react'
 import { getStatusConfig } from '../../models/order/orderModel'
 import { TelegramModal } from '../../components/ui'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotificaciones } from '../../contexts/NotificacionesContext'
+import { orderServices } from '../../services/order/orderServices'
 
 const STEPS = [
   { status: 'pending', label: 'Enviado', icon: Clock },
@@ -17,8 +18,9 @@ const STEPS = [
 const OrderTracking = ({ order, onRefresh, isLoading }) => {
   const navigate = useNavigate()
   const { usuarioActual } = useAuth()
-  const { agregarNotificacionPedido, pedidoYaNotificado } = useNotificaciones()
+  const { agregarNotificacionPedido, agregarNotificacionCancelado, pedidoYaNotificado } = useNotificaciones()
   const [mostrarModalTelegram, setMostrarModalTelegram] = useState(false)
+  const [descargando, setDescargando] = useState(false)
   const estadoAnterior = useRef(order.status)
 
   const statusConfig = getStatusConfig(order.status)
@@ -28,17 +30,38 @@ const OrderTracking = ({ order, onRefresh, isLoading }) => {
   const isCompleted = order.status === 'completed' || order.status === 'delivered'
   const tieneTelegram = usuarioActual?.telegram_chat_id
 
-  // Detectar cuando el pedido se completa y agregar notificación
+  // Detectar cambios de estado y agregar notificaciones
   useEffect(() => {
-    if (order.status === 'completed' && estadoAnterior.current !== 'completed') {
+    const estadoPrevio = estadoAnterior.current
+
+    // Pedido completado
+    if (order.status === 'completed' && estadoPrevio !== 'completed') {
       if (!pedidoYaNotificado(order.id)) {
         agregarNotificacionPedido(order, false)
       }
     }
+
+    // Pedido cancelado o rechazado
+    if ((order.status === 'cancelled' || order.status === 'rejected') &&
+        estadoPrevio !== 'cancelled' && estadoPrevio !== 'rejected') {
+      agregarNotificacionCancelado(order)
+    }
+
     estadoAnterior.current = order.status
-  }, [order, agregarNotificacionPedido, pedidoYaNotificado])
+  }, [order, agregarNotificacionPedido, agregarNotificacionCancelado, pedidoYaNotificado])
 
   const irAMain = () => navigate('/main')
+
+  const descargarComprobante = async () => {
+    try {
+      setDescargando(true)
+      await orderServices.downloadPDF(order.id, order.order_code)
+    } catch (error) {
+      console.error('Error al descargar:', error)
+    } finally {
+      setDescargando(false)
+    }
+  }
 
   const getTimeSince = () => {
     const created = new Date(order.created_at)
@@ -67,6 +90,13 @@ const OrderTracking = ({ order, onRefresh, isLoading }) => {
             </p>
           )}
         </div>
+        <button
+          onClick={irAMain}
+          className="w-full mt-4 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+        >
+          <Home size={20} />
+          Volver al inicio
+        </button>
       </div>
     )
   }
@@ -140,8 +170,17 @@ const OrderTracking = ({ order, onRefresh, isLoading }) => {
 
           <div className="space-y-3">
             <button
+              onClick={descargarComprobante}
+              disabled={descargando}
+              className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              <FileDown size={20} className={descargando ? 'animate-bounce' : ''} />
+              {descargando ? 'Descargando...' : 'Descargar Comprobante'}
+            </button>
+
+            <button
               onClick={irAMain}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-surface-secondary text-text-primary py-3 rounded-xl font-semibold hover:bg-surface-primary transition-colors"
             >
               <Home size={20} />
               Ir al inicio

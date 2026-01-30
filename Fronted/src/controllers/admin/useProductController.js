@@ -19,12 +19,13 @@ export const useProductController = () => {
    */
   const loadProducts = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
-    
+
     try {
       const products = await productService.getAll()
       setState(prev => ({
         ...prev,
         products,
+        totalProducts: products.length,
         loading: false
       }))
     } catch (error) {

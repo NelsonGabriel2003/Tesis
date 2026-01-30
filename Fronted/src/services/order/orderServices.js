@@ -19,6 +19,10 @@ export const orderServices = {
 
   cancel: async (orderId) => {
     return await api.put(`/orders/${orderId}/cancel`)
+  },
+
+  downloadPDF: async (orderId, orderCode) => {
+    return await api.getBlob(`/orders/${orderId}/pdf`, `comprobante-${orderCode}.pdf`)
   }
 }
 

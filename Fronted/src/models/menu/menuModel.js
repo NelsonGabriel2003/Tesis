@@ -6,11 +6,12 @@ export const initialMenuState = {
 }
 
 export const menuCategories = [
-  { id: 'todos', name: 'Todos', icon: '🍽️' },
-  { id: 'bebidas', name: 'Bebidas', icon: '🍺' },
-  { id: 'cocteles', name: 'Cócteles', icon: '🍹' },
-  { id: 'snacks', name: 'Snacks', icon: '🍕' },
-  { id: 'promociones', name: 'Promos', icon: '🔥' }
+  { id: 'todos', name: 'Todos' },
+  { id: 'Bebidas', name: 'Bebidas' },
+  { id: 'Cócteles', name: 'Cócteles' },
+  { id: 'Snacks', name: 'Snacks' },
+  { id: 'Comida', name: 'Comida' },
+  { id: 'Promos', name: 'Promos' }
 ]
 export const menuMessages = {
   LOADING: 'Cargando menú...',
