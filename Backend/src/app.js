@@ -12,6 +12,7 @@ import routes from './routes/index.js'
 import { notFound, errorHandler } from './middlewares/index.js'
 import telegramService from './services/telegram.service.js'
 import emailService from './services/email.service.js'
+import PedidoModel from './models/pedido.model.js'
 // Crear aplicación Express
 const app = express()
 
@@ -75,12 +76,36 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   telegramService.initialize()
   emailService.inicializar()
+
+  // Auto-cancelar pedidos pendientes cada minuto (después de 6 min sin respuesta)
+  const MINUTOS_LIMITE = 6
+  const INTERVALO_CHECK = 60000 // 1 minuto
+
+  setInterval(async () => {
+    try {
+      const cancelados = await PedidoModel.cancelarPendientesExpirados(MINUTOS_LIMITE)
+      if (cancelados.length > 0) {
+        console.log(`⏰ Auto-cancelados ${cancelados.length} pedido(s) por timeout`)
+
+        // Actualizar mensajes de Telegram para cada pedido cancelado
+        for (const pedido of cancelados) {
+          if (pedido.telegram_mensaje_id) {
+            await telegramService.notificarPedidoExpirado(pedido)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error en auto-cancelación:', error.message)
+    }
+  }, INTERVALO_CHECK)
+
   console.log(`
 
-  🍺 Sistema de Bounty - API    
+  🍺 Sistema de Bounty - API
 
-   Puerto: ${PORT}                            
-   Entorno: ${process.env.NODE_ENV || 'development'}                 
+   Puerto: ${PORT}
+   Entorno: ${process.env.NODE_ENV || 'development'}
+   Auto-cancel: ${MINUTOS_LIMITE} min
 
   ║   Endpoints disponibles:                  ║
   ║   • GET  /api/health                      ║
@@ -91,7 +116,7 @@ app.listen(PORT, () => {
   ║   • GET  /api/services                    ║
   ║   • GET  /api/profile                     ║
   ║   • POST /api/transactions               ║
-  ║   • GET  /api/transactions               
+  ║   • GET  /api/transactions
   `)
 })
 

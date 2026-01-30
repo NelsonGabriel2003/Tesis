@@ -98,7 +98,7 @@ const create = asyncHandler(async (req, res) => {
 
   const telegramMessageId = await telegramService.sendOrderAlert(pedidoConUsuario, itemsCreados)
   if (telegramMessageId) {
-    await PedidoModel.establecerMensajeTelegram(pedido.id, telegramMessageId.toString())
+    await PedidoModel.establecerTelegramMensajeId(pedido.id, telegramMessageId.toString())
   }
 
   res.status(201).json({
