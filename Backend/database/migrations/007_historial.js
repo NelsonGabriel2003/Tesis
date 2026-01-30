@@ -30,7 +30,7 @@ const crearTablaHistorial = async () => {
         valores_anteriores TEXT,
         valores_nuevos TEXT,
         campos_modificados TEXT,
-        usuario_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
         direccion_ip VARCHAR(45),
         agente_usuario TEXT,
         descripcion TEXT,

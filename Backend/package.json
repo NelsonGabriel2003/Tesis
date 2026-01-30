@@ -7,7 +7,9 @@
   "scripts": {
     "start": "npm run migrate && npm run seed && node src/app.js",
     "dev": "nodemon src/app.js",
-    "migrate": "node database/migrations/001_initial.js && node database/migrations/002_orders_telegram.js && node database/migrations/003_staff_link_codes.js && node database/migrations/004_business_config.js && node database/migrations/005_photos.js && node database/migrations/006_password_reset.js && node database/migrations/007_historial.js",
+    "migrate": "node database/migrations/001_initial.js && node database/migrations/002_orders_telegram.js && node database/migrations/003_staff_link_codes.js && node database/migrations/004_business_config.js && node database/migrations/005_photos.js && node database/migrations/006_password_reset.js && node database/migrations/007_historial.js && node database/migrations/009_safe_cleanup.js",
+    "migrate:check": "node database/migrations/000_check_tables.js",
+    "migrate:cleanup": "node database/migrations/009_safe_cleanup.js",
     "seed": "node database/seeds/001_initial_data.js && node database/seeds/002_orders_data.js",
     "setup": "npm run migrate && npm run seed && node src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
