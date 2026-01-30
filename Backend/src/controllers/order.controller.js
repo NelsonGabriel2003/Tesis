@@ -8,7 +8,8 @@ import ItemPedidoModel from '../models/itemPedido.model.js'
 import ProductoModel from '../models/producto.model.js'
 import UsuarioModel from '../models/usuario.model.js'
 import MovimientoModel from '../models/movimiento.model.js'
-import { codeGenerator, qrService, telegramService } from '../services/index.js'
+import ConfigModel from '../models/configuracion.model.js'
+import { codeGenerator, qrService, telegramService, pdfService } from '../services/index.js'
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
@@ -280,6 +281,52 @@ const complete = asyncHandler(async (req, res) => {
   res.json({ success: true, data: pedidoActualizado, message: `+${pedido.puntos_a_ganar} puntos acreditados` })
 })
 
+/**
+ * Descargar PDF del pedido
+ * GET /api/orders/:id/pdf
+ */
+const downloadPDF = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const pedido = await PedidoModel.buscarPorId(id)
+
+  if (!pedido) {
+    return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
+  }
+
+  // Solo permite PDF de pedidos completados o entregados
+  if (!['completado', 'entregado'].includes(pedido.estado)) {
+    return res.status(400).json({
+      success: false,
+      message: 'El comprobante solo está disponible para pedidos completados'
+    })
+  }
+
+  // Obtener items del pedido
+  const items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
+
+  // Obtener configuración del negocio
+  let config = {}
+  try {
+    const configData = await ConfigModel.obtenerTodas()
+    config = {
+      nombre_negocio: configData.find(c => c.clave === 'nombre_negocio')?.valor || 'Establecimiento',
+      direccion: configData.find(c => c.clave === 'direccion')?.valor || '',
+      telefono: configData.find(c => c.clave === 'telefono')?.valor || ''
+    }
+  } catch (e) {
+    console.error('Error obteniendo config:', e)
+  }
+
+  // Generar PDF
+  const pdfBuffer = await pdfService.generarPDFPedido(pedido, items, config)
+
+  // Enviar PDF
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Content-Disposition', `attachment; filename=comprobante-${pedido.codigo_pedido}.pdf`)
+  res.setHeader('Content-Length', pdfBuffer.length)
+  res.send(pdfBuffer)
+})
+
 export const orderController = {
   create,
   getMyOrders,
@@ -289,5 +336,6 @@ export const orderController = {
   getPending,
   approve,
   reject,
-  complete
+  complete,
+  downloadPDF
 }

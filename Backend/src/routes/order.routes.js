@@ -8,6 +8,7 @@ router.post('/', verifyToken, orderController.create)
 router.get('/', verifyToken, orderController.getMyOrders)
 router.get('/active', verifyToken, orderController.getActiveOrders)
 router.get('/:id', verifyToken, orderController.getById)
+router.get('/:id/pdf', verifyToken, orderController.downloadPDF)
 router.put('/:id/cancel', verifyToken, orderController.cancel)
 
 export default router
