@@ -56,6 +56,32 @@ export const api = {
   // Búsqueda global
   search: async (query) => {
     return request(`/search?q=${encodeURIComponent(query)}`, { method: 'GET' })
+  },
+
+  // Descarga de archivos (blob)
+  getBlob: async (endpoint, filename) => {
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` })
+      }
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Error en la descarga' }))
+      throw new Error(error.message)
+    }
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
   }
 }
 

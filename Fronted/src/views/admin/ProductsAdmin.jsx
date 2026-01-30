@@ -4,14 +4,16 @@
  */
 
 import { useState } from 'react'
-import { Plus, Search, Edit, Trash2, X, Loader } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Loader } from 'lucide-react'
 import { useProductController } from '../../controllers/admin'
 import { productCategories } from '../../models/admin'
 import ImageUpload from '../../components/ui/ImageUpload'
+import SearchBar from '../../components/ui/SearchBar'
 
 const ProductsAdmin = () => {
   const {
     products,
+    totalProducts,
     loading,
     error,
     formData,
@@ -30,8 +32,7 @@ const ProductsAdmin = () => {
   const [searchQuery, setSearchQuery] = useState('')
 
   // Manejar búsqueda
-  const handleSearch = (e) => {
-    const query = e.target.value
+  const handleSearch = (query) => {
     setSearchQuery(query)
     searchProducts(query)
   }
@@ -54,18 +55,14 @@ const ProductsAdmin = () => {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-        <input
-          type="text"
-          placeholder="Buscar productos..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg
-            focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        />
-      </div>
+      {/* Search con contador */}
+      <SearchBar
+        value={searchQuery}
+        onChange={handleSearch}
+        placeholder="Buscar productos..."
+        resultsCount={products.length}
+        totalCount={totalProducts}
+      />
 
       {/* Notification */}
       {notification && (

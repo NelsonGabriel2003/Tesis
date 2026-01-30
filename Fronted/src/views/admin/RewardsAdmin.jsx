@@ -4,9 +4,11 @@
  */
 
 import { useState } from 'react'
-import { Plus, Search, Edit, Trash2, X, Loader, Star } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Loader, Star } from 'lucide-react'
 import { useRewardController } from '../../controllers/admin'
 import { rewardCategories } from '../../models/admin'
+import SearchBar from '../../components/ui/SearchBar'
+import ImageUpload from '../../components/ui/ImageUpload'
 
 const RewardsAdmin = () => {
   const {
@@ -51,18 +53,14 @@ const RewardsAdmin = () => {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-        <input
-          type="text"
-          placeholder="Buscar recompensas..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg
-            focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        />
-      </div>
+      {/* Search con contador */}
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Buscar recompensas..."
+        resultsCount={filteredRewards.length}
+        totalCount={rewards.length}
+      />
 
       {/* Notification */}
       {notification && (
@@ -97,55 +95,71 @@ const RewardsAdmin = () => {
           {filteredRewards.map((reward) => (
             <div
               key={reward.id}
-              className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
             >
-              {/* Popular badge */}
-              {reward.isPopular && (
-                <div className="flex items-center gap-1 text-yellow-500 text-sm mb-2">
-                  <Star size={14} fill="currentColor" />
-                  <span>Popular</span>
+              {/* Imagen */}
+              {reward.imageUrl ? (
+                <img
+                  src={reward.imageUrl}
+                  alt={reward.name}
+                  className="w-full h-40 object-cover"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gradient-to-br from-purple-100 to-purple-200
+                  flex items-center justify-center">
+                  <span className="text-4xl">🎁</span>
                 </div>
               )}
 
-              {/* Name & Description */}
-              <h3 className="font-bold text-gray-800 text-lg">{reward.name}</h3>
-              <p className="text-gray-500 text-sm mt-1 line-clamp-2">
-                {reward.description}
-              </p>
+              <div className="p-4">
+                {/* Popular badge */}
+                {reward.isPopular && (
+                  <div className="flex items-center gap-1 text-yellow-500 text-sm mb-2">
+                    <Star size={14} fill="currentColor" />
+                    <span>Popular</span>
+                  </div>
+                )}
 
-              {/* Points & Stock */}
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-purple-600 font-bold text-lg">
-                  {reward.pointsCost} pts
+                {/* Name & Description */}
+                <h3 className="font-bold text-gray-800 text-lg">{reward.name}</h3>
+                <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                  {reward.description}
+                </p>
+
+                {/* Points & Stock */}
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-purple-600 font-bold text-lg">
+                    {reward.pointsCost} pts
+                  </span>
+                  <span className="text-gray-500 text-sm">
+                    Stock: {reward.stock}
+                  </span>
+                </div>
+
+                {/* Category */}
+                <span className="inline-block mt-3 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                  {reward.category}
                 </span>
-                <span className="text-gray-500 text-sm">
-                  Stock: {reward.stock}
-                </span>
-              </div>
 
-              {/* Category */}
-              <span className="inline-block mt-3 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                {reward.category}
-              </span>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                <button
-                  onClick={() => openEditModal(reward)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2
-                    text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Edit size={16} />
-                  <span>Editar</span>
-                </button>
-                <button
-                  onClick={() => deleteReward(reward.id)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2
-                    text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={16} />
-                  <span>Eliminar</span>
-                </button>
+                {/* Actions */}
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                  <button
+                    onClick={() => openEditModal(reward)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2
+                      text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit size={16} />
+                    <span>Editar</span>
+                  </button>
+                  <button
+                    onClick={() => deleteReward(reward.id)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2
+                      text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={16} />
+                    <span>Eliminar</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -267,19 +281,23 @@ const RewardsAdmin = () => {
                 </select>
               </div>
 
-              {/* URL de imagen */}
+              {/* Imagen con Cloudinary */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL de imagen
+                  Imagen de la recompensa
                 </label>
-                <input
-                  type="text"
-                  name="image_url"
+                <ImageUpload
                   value={formData.image_url}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="/images/recompensa.jpg"
+                  onChange={(url) => handleInputChange({
+                    target: { name: 'image_url', value: url }
+                  })}
+                  onError={(error) => {
+                    // Mostrar error en notificación
+                    const event = new CustomEvent('showNotification', {
+                      detail: { message: error, type: 'error' }
+                    })
+                    window.dispatchEvent(event)
+                  }}
                 />
               </div>
 

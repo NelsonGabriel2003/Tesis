@@ -1,12 +1,10 @@
 /**
  * UsersAdmin Component
- * Gestión de usuarios del sistema con historial de canjes
- * Incluye polling y persistencia de canjes
+ * Gestión de usuarios del sistema
  */
 
 import { useState, useEffect } from 'react'
 import {
-  Search,
   Users,
   Award,
   Mail,
@@ -17,14 +15,11 @@ import {
   X,
   Gift,
   CheckCircle,
-  Clock,
-  TrendingUp,
-  Star,
-  Bell
+  Clock
 } from 'lucide-react'
 import api from '../../services/api'
 import { statsService } from '../../services/admin/adminServices'
-import { useCanjesAdmin } from '../../contexts/CanjesAdminContext'
+import SearchBar from '../../components/ui/SearchBar'
 
 const UsersAdmin = () => {
   const [usuarios, setUsuarios] = useState([])
@@ -40,18 +35,7 @@ const UsersAdmin = () => {
   const [resumenCanjes, setResumenCanjes] = useState(null)
   const [cargandoCanjes, setCargandoCanjes] = useState(false)
   const [procesandoEntrega, setProcesandoEntrega] = useState(null)
-
-  // Contexto global de canjes
-  const {
-    resumen: resumenGlobal,
-    canjesPendientes,
-    cantidadNuevos,
-    ultimaActualizacion,
-    refrescar: refrescarCanjes,
-    entregarCanje: entregarCanjeGlobal,
-    esCanjeNuevo,
-    marcarCanjeVisto
-  } = useCanjesAdmin()
+  const [mensajeExito, setMensajeExito] = useState(null)
 
   // Cargar usuarios y estadísticas
   const cargarDatos = async () => {
@@ -108,7 +92,8 @@ const UsersAdmin = () => {
     setUsuarioSeleccionado(usuario)
     setModalAbierto(true)
     setCargandoCanjes(true)
-    
+    setMensajeExito(null)
+
     try {
       const response = await statsService.obtenerCanjesUsuario(usuario.id)
       setCanjesUsuario(response.canjes || [])
@@ -128,33 +113,33 @@ const UsersAdmin = () => {
     setUsuarioSeleccionado(null)
     setCanjesUsuario([])
     setResumenCanjes(null)
+    setMensajeExito(null)
   }
 
-  // Entregar canje (marcar como usado) - sincroniza con contexto global
+  // Entregar canje (marcar como usado)
   const entregarCanje = async (canjeId) => {
     setProcesandoEntrega(canjeId)
+    setMensajeExito(null)
     try {
-      // Usar el contexto global para entregar
-      const resultado = await entregarCanjeGlobal(canjeId)
+      await api.put(`/redemptions/${canjeId}/use`)
 
-      if (resultado.exito) {
-        // Actualizar la lista de canjes del modal
-        setCanjesUsuario(canjes =>
-          canjes.map(canje =>
-            canje.id === canjeId
-              ? { ...canje, estado: 'used', fechaUso: new Date().toISOString() }
-              : canje
-          )
+      // Actualizar la lista de canjes del modal
+      setCanjesUsuario(canjes =>
+        canjes.map(canje =>
+          canje.id === canjeId
+            ? { ...canje, estado: 'used', fechaUso: new Date().toISOString() }
+            : canje
         )
+      )
 
-        // Actualizar resumen del modal
-        setResumenCanjes(prev => ({
-          ...prev,
-          canjesUsados: (prev.canjesUsados || 0) + 1
-        }))
-      } else {
-        alert(resultado.mensaje || 'Error al procesar la entrega')
-      }
+      // Actualizar resumen del modal
+      setResumenCanjes(prev => ({
+        ...prev,
+        canjesUsados: (prev.canjesUsados || 0) + 1
+      }))
+
+      setMensajeExito('Canje realizado')
+      setTimeout(() => setMensajeExito(null), 3000)
 
     } catch (err) {
       console.error('Error entregando canje:', err)
@@ -164,147 +149,23 @@ const UsersAdmin = () => {
     }
   }
 
-  // Formatear hora de última actualización
-  const formatearHora = (fecha) => {
-    if (!fecha) return '-'
-    return new Date(fecha).toLocaleTimeString('es-EC', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  }
-
   return (
     <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Usuarios y Canjes</h1>
-          <p className="text-gray-500">
-            Gestion de canjes en tiempo real
-            {ultimaActualizacion && (
-              <span className="ml-2 text-xs text-gray-400">
-                (Actualizado: {formatearHora(ultimaActualizacion)})
-              </span>
-            )}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-800">Usuarios</h1>
+          <p className="text-gray-500">Gestión de usuarios y validación de canjes</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => { cargarDatos(); refrescarCanjes(); }}
-            disabled={cargando}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50"
-          >
-            <RefreshCw size={20} className={cargando ? 'animate-spin' : ''} />
-            Actualizar
-          </button>
-        </div>
+        <button
+          onClick={cargarDatos}
+          disabled={cargando}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+        >
+          <RefreshCw size={20} className={cargando ? 'animate-spin' : ''} />
+          Actualizar
+        </button>
       </div>
-
-      {/* Panel de Resumen de Canjes */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 mb-6 text-white shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold flex items-center gap-2">
-            <Gift size={24} />
-            Total de Canjes Realizados
-          </h2>
-          {cantidadNuevos > 0 && (
-            <span className="flex items-center gap-1 bg-red-500 text-white px-3 py-1 rounded-full text-sm animate-pulse">
-              <Bell size={16} />
-              {cantidadNuevos} nuevos
-            </span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Total Canjes */}
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={18} />
-              <span className="text-sm opacity-80">Total</span>
-            </div>
-            <p className="text-3xl font-bold">{resumenGlobal.total}</p>
-          </div>
-
-          {/* Pendientes */}
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Clock size={18} />
-              <span className="text-sm opacity-80">Pendientes</span>
-            </div>
-            <p className="text-3xl font-bold text-yellow-300">{resumenGlobal.pendientes}</p>
-          </div>
-
-          {/* Completados */}
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <CheckCircle size={18} />
-              <span className="text-sm opacity-80">Entregados</span>
-            </div>
-            <p className="text-3xl font-bold text-green-300">{resumenGlobal.usados}</p>
-          </div>
-
-          {/* Puntos Canjeados */}
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Star size={18} />
-              <span className="text-sm opacity-80">Puntos Canjeados</span>
-            </div>
-            <p className="text-3xl font-bold">{resumenGlobal.puntosTotales.toLocaleString()}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Canjes Pendientes (si hay) */}
-      {canjesPendientes.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-          <h3 className="font-bold text-amber-800 mb-3 flex items-center gap-2">
-            <Clock size={20} />
-            Canjes Pendientes de Entrega ({canjesPendientes.length})
-          </h3>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {canjesPendientes.slice(0, 5).map(canje => (
-              <div
-                key={canje.id}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  esCanjeNuevo(canje.id)
-                    ? 'bg-amber-200 border-2 border-amber-400'
-                    : 'bg-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {esCanjeNuevo(canje.id) && (
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  )}
-                  <div>
-                    <p className="font-medium text-gray-800">{canje.recompensa}</p>
-                    <p className="text-xs text-gray-500">
-                      {canje.usuarioNombre} - Codigo: <code className="bg-gray-100 px-1 rounded">{canje.codigo}</code>
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={async () => {
-                    const resultado = await entregarCanjeGlobal(canje.id)
-                    if (!resultado.exito) {
-                      alert(resultado.mensaje || 'Error al entregar')
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 flex items-center gap-1"
-                >
-                  <CheckCircle size={14} />
-                  Entregar
-                </button>
-              </div>
-            ))}
-            {canjesPendientes.length > 5 && (
-              <p className="text-center text-sm text-amber-700">
-                +{canjesPendientes.length - 5} canjes mas pendientes
-              </p>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Stats Cards de Usuarios */}
       {estadisticas && (
@@ -339,16 +200,13 @@ const UsersAdmin = () => {
 
       {/* Search */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div className="relative">
-          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre o email..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
-        </div>
+        <SearchBar
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder="Buscar por nombre o email..."
+          resultsCount={usuariosFiltrados.length}
+          totalCount={estadisticas?.total || usuarios.length}
+        />
       </div>
 
       {/* Error */}
@@ -382,7 +240,7 @@ const UsersAdmin = () => {
                 {usuariosFiltrados.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                      No se canjearon puntos aun
+                      No hay usuarios registrados
                     </td>
                   </tr>
                 ) : (
@@ -402,11 +260,9 @@ const UsersAdmin = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Mail size={14} />
-                            {usuario.email}
-                          </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Mail size={14} />
+                          {usuario.email}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -468,6 +324,14 @@ const UsersAdmin = () => {
               </button>
             </div>
 
+            {/* Mensaje de éxito */}
+            {mensajeExito && (
+              <div className="mx-6 mt-4 p-3 bg-green-100 text-green-700 rounded-lg flex items-center gap-2">
+                <CheckCircle size={20} />
+                {mensajeExito}
+              </div>
+            )}
+
             {/* Resumen */}
             {resumenCanjes && (
               <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -525,7 +389,7 @@ const UsersAdmin = () => {
                           {canje.estado === 'used' ? (
                             <span className="flex items-center gap-1 text-green-600 text-sm">
                               <CheckCircle size={16} />
-                              Usado
+                              Entregado
                             </span>
                           ) : (
                             <span className="flex items-center gap-1 text-amber-600 text-sm">

@@ -83,11 +83,12 @@ export const menuService = {
     } catch {
       // Devolver categorías por defecto si falla
       return [
-        { id: 'todos', name: 'Todos', icon: '🍽️' },
-        { id: 'bebidas', name: 'Bebidas', icon: '🍺' },
-        { id: 'cocteles', name: 'Cócteles', icon: '🍹' },
-        { id: 'snacks', name: 'Snacks', icon: '🍕' },
-        { id: 'promociones', name: 'Promos', icon: '🔥' }
+        { id: 'todos', name: 'Todos' },
+        { id: 'Bebidas', name: 'Bebidas' },
+        { id: 'Cócteles', name: 'Cócteles' },
+        { id: 'Snacks', name: 'Snacks' },
+        { id: 'Comida', name: 'Comida' },
+        { id: 'Promos', name: 'Promos' }
       ]
     }
   },

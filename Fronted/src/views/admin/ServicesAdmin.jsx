@@ -4,10 +4,11 @@
  */
 
 import { useState } from 'react'
-import { Plus, Search, Edit, Trash2, X, Loader } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Loader } from 'lucide-react'
 import { useServiceController } from '../../controllers/admin'
 import { serviceCategories } from '../../models/admin'
 import ImageUpload from '../../components/ui/ImageUpload'
+import SearchBar from '../../components/ui/SearchBar'
 
 const ServicesAdmin = () => {
   const {
@@ -59,18 +60,14 @@ const ServicesAdmin = () => {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-        <input
-          type="text"
-          placeholder="Buscar servicios..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg
-            focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        />
-      </div>
+      {/* Search con contador */}
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Buscar servicios..."
+        resultsCount={filteredServices.length}
+        totalCount={services.length}
+      />
 
       {/* Notification */}
       {notification && (

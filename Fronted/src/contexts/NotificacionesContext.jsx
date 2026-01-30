@@ -23,8 +23,19 @@ const MENSAJES_REGULARES = [
   'Servido! Que siga la buena vibra'
 ]
 
-const obtenerMensaje = (esPrimeraCompra) => {
-  const mensajes = esPrimeraCompra ? MENSAJES_PRIMERA_COMPRA : MENSAJES_REGULARES
+// Mensajes para pedidos cancelados
+const MENSAJES_CANCELADO = [
+  'Tu pedido no pudo ser procesado',
+  'El pedido fue cancelado',
+  'No se pudo completar tu pedido'
+]
+
+const obtenerMensaje = (tipo) => {
+  let mensajes
+  if (tipo === 'primera') mensajes = MENSAJES_PRIMERA_COMPRA
+  else if (tipo === 'cancelado') mensajes = MENSAJES_CANCELADO
+  else mensajes = MENSAJES_REGULARES
+
   const indice = Math.floor(Math.random() * mensajes.length)
   return mensajes[indice]
 }
@@ -43,7 +54,7 @@ export const NotificacionesProvider = ({ children }) => {
       tipo: 'pedido_completado',
       pedidoId: pedido.id,
       codigo: pedido.order_code,
-      mensaje: obtenerMensaje(esPrimeraCompra),
+      mensaje: obtenerMensaje(esPrimeraCompra ? 'primera' : 'regular'),
       puntos: pedido.points_earned || pedido.points_to_earn,
       total: pedido.total,
       esPrimeraCompra,
@@ -52,6 +63,26 @@ export const NotificacionesProvider = ({ children }) => {
 
     setNotificaciones(prev => [nuevaNotificacion, ...prev])
     setPedidosNotificados(prev => new Set([...prev, pedido.id]))
+  }, [pedidosNotificados])
+
+  // Agregar notificación de pedido cancelado
+  const agregarNotificacionCancelado = useCallback((pedido) => {
+    const key = `cancelado_${pedido.id}`
+    if (pedidosNotificados.has(key)) return
+
+    const nuevaNotificacion = {
+      id: Date.now(),
+      tipo: 'pedido_cancelado',
+      pedidoId: pedido.id,
+      codigo: pedido.order_code,
+      mensaje: obtenerMensaje('cancelado'),
+      motivo: pedido.rejection_reason,
+      total: pedido.total,
+      fecha: new Date()
+    }
+
+    setNotificaciones(prev => [nuevaNotificacion, ...prev])
+    setPedidosNotificados(prev => new Set([...prev, key]))
   }, [pedidosNotificados])
 
   // Agregar notificación genérica
@@ -82,6 +113,7 @@ export const NotificacionesProvider = ({ children }) => {
   const valor = {
     notificaciones,
     agregarNotificacionPedido,
+    agregarNotificacionCancelado,
     agregarNotificacion,
     eliminarNotificacion,
     limpiarNotificaciones,
