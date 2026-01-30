@@ -682,6 +682,47 @@ ${pedido.notas ? `\n📝 ${pedido.notas}` : ''}
       return null
     }
   }
+
+  /**
+   * Notifica a staff que un pedido fue auto-cancelado por timeout
+   */
+  async notificarPedidoExpirado(pedido) {
+    if (!this.isInitialized || !this.bot) return
+
+    const personalEnTurno = await PersonalModel.obtenerEnTurno()
+
+    const mensaje = `
+⏰ *PEDIDO EXPIRADO*
+
+#${pedido.codigo_pedido}
+Mesa: ${pedido.numero_mesa || 'N/A'}
+Total: $${pedido.total}
+
+❌ Cancelado automáticamente por falta de respuesta.
+    `
+
+    // Notificar a todo el personal en turno
+    for (const empleado of personalEnTurno) {
+      try {
+        // Si el empleado tiene el mensaje original, editarlo
+        if (pedido.telegram_mensaje_id) {
+          try {
+            await this.bot.editMessageText(mensaje, {
+              chat_id: empleado.telegram_chat_id,
+              message_id: parseInt(pedido.telegram_mensaje_id),
+              parse_mode: 'Markdown',
+              reply_markup: { inline_keyboard: [] }
+            })
+          } catch (editError) {
+            // Si falla la edición, enviar mensaje nuevo
+            await this.sendMessage(empleado.telegram_chat_id, mensaje, { parse_mode: 'Markdown' })
+          }
+        }
+      } catch (error) {
+        console.error(`Error notificando expiración a ${empleado.nombre}:`, error.message)
+      }
+    }
+  }
 }
 
 const telegramService = new TelegramService()

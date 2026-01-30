@@ -155,6 +155,23 @@ const PedidoModel = {
       [usuarioId, estados]
     )
     return parseInt(result.rows[0].total)
+  },
+
+  /**
+   * Cancelar pedidos pendientes que exceden el tiempo límite
+   * @param {number} minutosLimite - Minutos después de los cuales se cancela
+   * @returns {Array} - Pedidos cancelados
+   */
+  cancelarPendientesExpirados: async (minutosLimite = 6) => {
+    const result = await query(
+      `UPDATE pedidos
+       SET estado = 'cancelado',
+           motivo_rechazo = 'Tiempo de espera excedido - Sin respuesta del staff'
+       WHERE estado = 'pendiente'
+         AND fecha_pedido < NOW() - INTERVAL '${minutosLimite} minutes'
+       RETURNING *`
+    )
+    return result.rows
   }
 }
 
