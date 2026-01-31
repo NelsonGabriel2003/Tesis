@@ -54,6 +54,8 @@ const solicitarCodigo = asyncHandler(async (req, res) => {
   await UsuarioModel.guardarCodigoRecuperacion(email, codigo, CONFIG_RESET.MINUTOS_EXPIRACION)
 
   if (metodo === 'telegram') {
+    console.log(`📱 Recuperación por Telegram - Usuario: ${usuario.correo}, ChatID: ${usuario.telegram_chat_id || 'NO VINCULADO'}`)
+    
     if (!usuario.telegram_chat_id) {
       return res.status(400).json({
         success: false,
@@ -61,11 +63,22 @@ const solicitarCodigo = asyncHandler(async (req, res) => {
       })
     }
 
-    await telegramService.sendMessage(
+    console.log(`📤 Enviando código a Telegram ChatID: ${usuario.telegram_chat_id}`)
+    
+    const mensajeEnviado = await telegramService.sendMessage(
       usuario.telegram_chat_id,
-      `Tu código de recuperación es: *${codigo}*\n\nExpira en ${CONFIG_RESET.MINUTOS_EXPIRACION} minutos.`,
+      `🔐 *Código de Recuperación*\n\nTu código es: *${codigo}*\n\n⏰ Expira en ${CONFIG_RESET.MINUTOS_EXPIRACION} minutos.\n\nSi no solicitaste esto, ignora este mensaje.`,
       { parse_mode: 'Markdown' }
     )
+
+    console.log(`📬 Resultado envío: ${mensajeEnviado ? 'ÉXITO' : 'FALLÓ'}`)
+
+    if (!mensajeEnviado) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al enviar código por Telegram. Intenta con correo electrónico.'
+      })
+    }
   } else if (metodo === 'email') {
     await emailService.enviarCodigoRecuperacion(
       usuario.correo,

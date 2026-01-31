@@ -688,11 +688,18 @@ ${pedido.notas ? `\n📝 ${pedido.notas}` : ''}
   }
 
   async sendMessage(chatId, text, options = {}) {
-    if (!this.bot) return null
+    if (!this.bot) {
+      console.error('❌ Bot de Telegram no inicializado')
+      return null
+    }
+    if (!chatId) {
+      console.error('❌ chat_id vacío o inválido')
+      return null
+    }
     try {
       return await this.bot.sendMessage(chatId, text, options)
     } catch (error) {
-      console.error('Error enviando mensaje:', error.message)
+      console.error(`❌ Error enviando mensaje a ${chatId}:`, error.message)
       return null
     }
   }
