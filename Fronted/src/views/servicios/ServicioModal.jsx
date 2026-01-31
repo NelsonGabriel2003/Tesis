@@ -60,7 +60,7 @@ const ServicioModal = ({ service, onClose }) => {
         {/* Info adicional */}
         <div className="mt-6 rounded-xl bg-amber-50 p-4">
           <p className="text-sm text-amber-800">
-             Para reservar este servicio, contáctanos directamente por WhatsApp. 
+            📞 Para reservar este servicio, contáctanos directamente por WhatsApp. 
             Te responderemos lo más pronto posible.
           </p>
         </div>
