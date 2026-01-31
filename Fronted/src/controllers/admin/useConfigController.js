@@ -138,8 +138,8 @@ export const useConfigController = () => {
    */
   const getCategoryName = (category) => {
     const names = {
-      'points': '💰 Configuración de Puntos',
-      'membership': '🏆 Niveles de Membresía',
+      'puntos': '💰 Configuración de Puntos',
+      'membresia': '🏆 Niveles de Membresía',
       'general': '⚙️ General'
     }
     return names[category] || category
@@ -147,36 +147,43 @@ export const useConfigController = () => {
 
   /**
    * Obtener nombre legible de configuración
+   * Coincide con las claves de la BD (umbral_*, multiplicador_*, etc.)
    */
   const getConfigLabel = (key) => {
     const labels = {
-      'points_per_dollar': 'Puntos por cada $1',
-      'points_expiration_days': 'Días para expiración de puntos',
-      'multiplier_bronce': 'Multiplicador Bronce',
-      'multiplier_plata': 'Multiplicador Plata',
-      'multiplier_oro': 'Multiplicador Oro',
-      'multiplier_platino': 'Multiplicador Platino',
-      'threshold_bronce': 'Puntos mínimos Bronce',
-      'threshold_plata': 'Puntos mínimos Plata',
-      'threshold_oro': 'Puntos mínimos Oro',
-      'threshold_platino': 'Puntos mínimos Platino',
+      // Puntos
+      'puntos_por_dolar': 'Puntos por cada $1',
+      
+      // Umbrales de membresía
+      'umbral_plata': 'Puntos mínimos para Plata',
+      'umbral_oro': 'Puntos mínimos para Oro',
+      'umbral_platino': 'Puntos mínimos para Platino',
+      
+      // Multiplicadores
+      'multiplicador_plata': 'Multiplicador Plata',
+      'multiplicador_oro': 'Multiplicador Oro',
+      'multiplicador_platino': 'Multiplicador Platino',
+      
+      // Iconos (si los agregas después)
       'icon_bronce': 'Ícono Bronce',
       'icon_plata': 'Ícono Plata',
       'icon_oro': 'Ícono Oro',
       'icon_platino': 'Ícono Platino',
+      
+      // Colores (si los agregas después)
       'color_bronce': 'Color Bronce',
       'color_plata': 'Color Plata',
       'color_oro': 'Color Oro',
       'color_platino': 'Color Platino'
     }
-    return labels[key] || key
+    return labels[key] || key.replace(/_/g, ' ')
   }
 
   /**
    * Determinar tipo de input según la key
    */
   const getInputType = (key) => {
-    if (key.includes('multiplier') || key.includes('points') || key.includes('threshold') || key.includes('days')) {
+    if (key.includes('multiplicador') || key.includes('puntos') || key.includes('umbral')) {
       return 'number'
     }
     if (key.includes('icon')) {

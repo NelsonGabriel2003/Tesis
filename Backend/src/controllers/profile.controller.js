@@ -6,6 +6,7 @@
 import UsuarioModel from '../models/usuario.model.js'
 import MovimientoModel from '../models/movimiento.model.js'
 import CanjeModel from '../models/canje.model.js'
+import ConfiguracionModel from '../models/configuracion.model.js'
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
@@ -24,15 +25,26 @@ const getProfile = asyncHandler(async (req, res) => {
     })
   }
 
-  // Calcular nivel y progreso
-  const niveles = [
-    { name: 'bronce', minPoints: 0, maxPoints: 499 },
-    { name: 'plata', minPoints: 500, maxPoints: 1499 },
-    { name: 'oro', minPoints: 1500, maxPoints: 4999 },
-    { name: 'platino', minPoints: 5000, maxPoints: Infinity }
-  ]
+  // Obtener fecha de registro desde historial
+  const { query } = await import('../config/database.js')
+  const fechaRegistroResult = await query(`
+    SELECT fecha_creacion 
+    FROM historial 
+    WHERE tabla_afectada = 'usuarios' 
+      AND registro_id = $1 
+      AND accion = 'INSERTAR'
+    ORDER BY fecha_creacion ASC 
+    LIMIT 1
+  `, [usuarioId])
+  
+  const fechaRegistro = fechaRegistroResult.rows[0]?.fecha_creacion || new Date()
 
-  const nivelActual = niveles.find(n => n.name === usuario.nivel_membresia)
+  // Obtener configuración de membresía desde BD
+  const configMembresia = await ConfiguracionModel.obtenerConfigMembresia()
+  const niveles = configMembresia.levelsArray
+
+  // Calcular nivel y progreso
+  const nivelActual = niveles.find(n => n.name === usuario.nivel_membresia) || niveles[0]
   const indiceSiguienteNivel = niveles.findIndex(n => n.name === usuario.nivel_membresia) + 1
   const siguienteNivel = niveles[indiceSiguienteNivel] || null
 
@@ -54,6 +66,7 @@ const getProfile = asyncHandler(async (req, res) => {
       name: usuario.nombre,
       phone: usuario.telefono,
       role: usuario.rol,
+      memberSince: fechaRegistro,
       membership: {
         level: usuario.nivel_membresia,
         progress: progreso,
@@ -182,54 +195,49 @@ const getStats = asyncHandler(async (req, res) => {
  * GET /api/profile/levels
  */
 const getMembershipLevels = asyncHandler(async (req, res) => {
-  const niveles = [
-    {
-      name: 'bronce',
-      displayName: 'Bronce',
-      minPoints: 0,
-      benefits: [
-        '1 punto por cada $1 gastado',
-        'Acceso a recompensas basicas'
-      ]
-    },
-    {
-      name: 'plata',
-      displayName: 'Plata',
-      minPoints: 500,
-      benefits: [
-        '1.5 puntos por cada $1 gastado',
-        '5% de descuento en cumpleanos',
-        'Acceso a recompensas exclusivas'
-      ]
-    },
-    {
-      name: 'oro',
-      displayName: 'Oro',
-      minPoints: 1500,
-      benefits: [
-        '2 puntos por cada $1 gastado',
-        '10% de descuento en cumpleanos',
-        'Reserva prioritaria',
-        'Acceso a eventos exclusivos'
-      ]
-    },
-    {
-      name: 'platino',
-      displayName: 'Platino',
-      minPoints: 5000,
-      benefits: [
-        '3 puntos por cada $1 gastado',
-        '20% de descuento en cumpleanos',
-        'Acceso VIP permanente',
-        'Estacionamiento gratuito',
-        'Invitaciones a eventos privados'
-      ]
-    }
-  ]
+  // Leer niveles desde la BD
+  const configMembresia = await ConfiguracionModel.obtenerConfigMembresia()
+  const levels = configMembresia.levels
+
+  // Beneficios por nivel (estos podrían también ir en BD en el futuro)
+  const beneficios = {
+    bronce: [
+      '1 punto por cada $1 gastado',
+      'Acceso a recompensas básicas'
+    ],
+    plata: [
+      '1.5 puntos por cada $1 gastado',
+      '5% de descuento en cumpleaños',
+      'Acceso a recompensas exclusivas'
+    ],
+    oro: [
+      '2 puntos por cada $1 gastado',
+      '10% de descuento en cumpleaños',
+      'Reserva prioritaria',
+      'Acceso a eventos exclusivos'
+    ],
+    platino: [
+      '3 puntos por cada $1 gastado',
+      '20% de descuento en cumpleaños',
+      'Acceso VIP permanente',
+      'Estacionamiento gratuito',
+      'Invitaciones a eventos privados'
+    ]
+  }
+
+  const nivelesResponse = Object.keys(levels).map(key => ({
+    name: levels[key].name.toLowerCase(),
+    displayName: levels[key].displayName,
+    minPoints: levels[key].minPoints,
+    multiplier: levels[key].multiplier,
+    icon: levels[key].icon,
+    color: levels[key].color,
+    benefits: beneficios[key] || []
+  }))
 
   res.json({
     success: true,
-    data: niveles
+    data: nivelesResponse
   })
 })
 

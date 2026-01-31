@@ -12,6 +12,7 @@ import {
   validations 
 } from '../../models/auth/authModel'
 import { authService } from '../../services/auth/authServices'
+import { useAuth } from '../../hooks/useAuth'
 
 export const useRegisterController = () => {
   const [formData, setFormData] = useState(initialRegisterState)
@@ -20,6 +21,9 @@ export const useRegisterController = () => {
   const [status, setStatus] = useState(initialStatusState)
   const [fieldErrors, setFieldErrors] = useState({})
   const navigate = useNavigate()
+  
+  // Usar el AuthContext para actualizar el estado global
+  const { iniciarSesion } = useAuth()
 
   /**
    * Maneja cambios en los inputs del formulario
@@ -135,9 +139,9 @@ export const useRegisterController = () => {
 
       const response = await authService.register(userData)
       
-      // Guardar token y usuario en localStorage
-      localStorage.setItem('token', response.token)
-      localStorage.setItem('user', JSON.stringify(response.user))
+      // Usar iniciarSesion del AuthContext
+      // Esto actualiza el estado global inmediatamente
+      await iniciarSesion(response.token, response.user)
 
       setStatus({
         loading: false,
@@ -145,10 +149,8 @@ export const useRegisterController = () => {
         success: true
       })
 
-      // Redirigir al main después del registro exitoso
-      setTimeout(() => {
-        navigate('/main')
-      }, 1000)
+      // Navegar inmediatamente - el estado ya está actualizado
+      navigate('/main')
 
       return response
 
@@ -170,7 +172,7 @@ export const useRegisterController = () => {
       
       return null
     }
-  }, [formData, validateForm, navigate])
+  }, [formData, validateForm, navigate, iniciarSesion])
 
   /**
    * Navegar al login

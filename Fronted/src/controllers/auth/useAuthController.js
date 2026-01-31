@@ -1,20 +1,22 @@
 /**
  * Auth Controller (Custom Hook)
- * Maneja toda la lógica de negocio para autenticación
+ * Maneja toda la lógica de negocio para autenticación (Login)
  */
-
-
 
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { initialAuthState, initialStatusState } from '../../models/auth/authModel'
 import { authService } from '../../services/auth/authServices'
+import { useAuth } from '../../hooks/useAuth'
 
 export const useAuthController = () => {
   const [formData, setFormData] = useState(initialAuthState)
   const [showPassword, setShowPassword] = useState(false)
   const [status, setStatus] = useState(initialStatusState)
   const navigate = useNavigate()
+  
+  // ✅ Usar el AuthContext para actualizar el estado global
+  const { iniciarSesion } = useAuth()
 
   /**
    * Maneja cambios en los inputs del formulario
@@ -58,9 +60,9 @@ export const useAuthController = () => {
     try {
       const response = await authService.login(formData)
 
-      // Guardar token y usuario en localStorage
-      localStorage.setItem('token', response.token)
-      localStorage.setItem('user', JSON.stringify(response.user))
+      // ✅ Usar iniciarSesion del AuthContext en lugar de localStorage directo
+      // Esto actualiza el estado global Y guarda en localStorage
+      await iniciarSesion(response.token, response.user)
 
       setStatus({
         loading: false,
@@ -86,10 +88,9 @@ export const useAuthController = () => {
 
       return null
     }
-  }, [formData, navigate])
+  }, [formData, navigate, iniciarSesion])
 
   return {
-
     formData,
     showPassword,
     status,

@@ -6,6 +6,38 @@
 import { query } from '../config/database.js'
 import { conTransaccion, registrarHistorial, obtenerCamposModificados } from '../utils/transaccion.js'
 
+/**
+ * Calcular nivel de membresía basado en puntos y umbrales de BD
+ * @param {number} puntosTotales - Puntos totales del usuario
+ * @returns {string} - Nivel de membresía (bronce, plata, oro, platino)
+ */
+const calcularNivelMembresia = async (puntosTotales) => {
+  // Obtener umbrales desde la BD
+  const result = await query(
+    `SELECT clave, valor FROM configuracion_negocio 
+     WHERE clave IN ('umbral_plata', 'umbral_oro', 'umbral_platino')`
+  )
+  
+  // Valores por defecto si no existen en BD
+  const umbrales = {
+    plata: 500,
+    oro: 1500,
+    platino: 5000
+  }
+  
+  result.rows.forEach(row => {
+    if (row.clave === 'umbral_plata') umbrales.plata = parseInt(row.valor)
+    if (row.clave === 'umbral_oro') umbrales.oro = parseInt(row.valor)
+    if (row.clave === 'umbral_platino') umbrales.platino = parseInt(row.valor)
+  })
+  
+  // Determinar nivel
+  if (puntosTotales >= umbrales.platino) return 'platino'
+  if (puntosTotales >= umbrales.oro) return 'oro'
+  if (puntosTotales >= umbrales.plata) return 'plata'
+  return 'bronce'
+}
+
 const UsuarioModel = {
   /**
    * Buscar usuario por correo
@@ -113,43 +145,51 @@ const UsuarioModel = {
   },
 
   /**
-   * Actualizar puntos del usuario
+   * Actualizar puntos del usuario (lee umbrales de BD)
    */
   actualizarPuntos: async (id, puntosActuales, puntosTotales) => {
+    // Calcular nivel basado en umbrales de BD
+    const nuevoNivel = await calcularNivelMembresia(puntosTotales)
+    
     const result = await query(
       `UPDATE usuarios
        SET puntos_actuales = $2,
            puntos_totales = $3,
-           nivel_membresia = CASE
-             WHEN $3 >= 5000 THEN 'platino'
-             WHEN $3 >= 1500 THEN 'oro'
-             WHEN $3 >= 500 THEN 'plata'
-             ELSE 'bronce'
-           END
+           nivel_membresia = $4
        WHERE id = $1
        RETURNING id, correo, nombre, rol, nivel_membresia, puntos_actuales, puntos_totales`,
-      [id, puntosActuales, puntosTotales]
+      [id, puntosActuales, puntosTotales, nuevoNivel]
     )
     return result.rows[0]
   },
 
   /**
-   * Agregar puntos al usuario
+   * Agregar puntos al usuario (lee umbrales de BD)
    */
   agregarPuntos: async (id, puntos) => {
+    // Primero obtener puntos actuales
+    const usuarioResult = await query(
+      'SELECT puntos_actuales, puntos_totales FROM usuarios WHERE id = $1',
+      [id]
+    )
+    
+    if (usuarioResult.rows.length === 0) return null
+    
+    const usuario = usuarioResult.rows[0]
+    const nuevosPuntosActuales = usuario.puntos_actuales + puntos
+    const nuevosPuntosTotales = usuario.puntos_totales + puntos
+    
+    // Calcular nuevo nivel basado en umbrales de BD
+    const nuevoNivel = await calcularNivelMembresia(nuevosPuntosTotales)
+    
     const result = await query(
       `UPDATE usuarios
-       SET puntos_actuales = puntos_actuales + $2,
-           puntos_totales = puntos_totales + $2,
-           nivel_membresia = CASE
-             WHEN puntos_totales + $2 >= 5000 THEN 'platino'
-             WHEN puntos_totales + $2 >= 1500 THEN 'oro'
-             WHEN puntos_totales + $2 >= 500 THEN 'plata'
-             ELSE 'bronce'
-           END
+       SET puntos_actuales = $2,
+           puntos_totales = $3,
+           nivel_membresia = $4
        WHERE id = $1
        RETURNING id, correo, nombre, rol, nivel_membresia, puntos_actuales, puntos_totales`,
-      [id, puntos]
+      [id, nuevosPuntosActuales, nuevosPuntosTotales, nuevoNivel]
     )
     return result.rows[0]
   },
@@ -285,15 +325,30 @@ const UsuarioModel = {
    * Vincular Telegram y dar puntos de bonificacion
    */
   vincularTelegramConBono: async (telefono, telegramChatId, puntosBonus) => {
+    // Primero obtener usuario actual
+    const usuarioResult = await query(
+      'SELECT id, puntos_totales FROM usuarios WHERE telefono = $1 AND telegram_chat_id IS NULL',
+      [telefono]
+    )
+    
+    if (usuarioResult.rows.length === 0) return null
+    
+    const usuario = usuarioResult.rows[0]
+    const nuevosPuntosTotales = usuario.puntos_totales + puntosBonus
+    
+    // Calcular nuevo nivel
+    const nuevoNivel = await calcularNivelMembresia(nuevosPuntosTotales)
+    
     const result = await query(
       `UPDATE usuarios
        SET telegram_chat_id = $2,
            puntos_actuales = puntos_actuales + $3,
-           puntos_totales = puntos_totales + $3
+           puntos_totales = puntos_totales + $3,
+           nivel_membresia = $4
        WHERE telefono = $1
          AND telegram_chat_id IS NULL
        RETURNING id, correo, nombre, telefono, telegram_chat_id, puntos_actuales`,
-      [telefono, telegramChatId, puntosBonus]
+      [telefono, telegramChatId, puntosBonus, nuevoNivel]
     )
     return result.rows[0]
   },

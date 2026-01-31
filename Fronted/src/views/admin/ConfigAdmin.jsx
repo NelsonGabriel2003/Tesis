@@ -80,8 +80,8 @@ const COLOR_OPTIONS = [
 ]
 
 const CATEGORY_ICONS = {
-  points: <DollarSign size={24} className="text-green-600" />,
-  membership: <Trophy size={24} className="text-yellow-600" />,
+  puntos: <DollarSign size={24} className="text-green-600" />,
+  membresia: <Trophy size={24} className="text-yellow-600" />,
   general: <Settings size={24} className="text-gray-600" />
 }
 
@@ -121,7 +121,7 @@ const ConfigAdmin = () => {
           <NumberInput 
             value={value} 
             onChange={onChange} 
-            isMultiplier={config.key.includes('multiplier')} 
+            isMultiplier={config.key.includes('multiplicador')} 
           />
         )
       case 'emoji':
@@ -179,7 +179,7 @@ const ConfigAdmin = () => {
       )}
 
       {/* Preview de Membresías */}
-      {!loading && groups['membership'] && (
+      {!loading && groups['membresia'] && (
         <MembershipPreview levels={MEMBERSHIP_LEVELS} editedValues={editedValues} />
       )}
     </div>
@@ -282,27 +282,42 @@ const ConfigItem = ({ config, isModified, label, renderInput }) => (
   </div>
 )
 
-const MembershipPreview = ({ levels, editedValues }) => (
-  <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-    <div className="px-6 py-4 bg-gray-50 border-b">
-      <h2 className="text-lg font-bold text-gray-800">👀 Vista Previa de Niveles</h2>
+const MembershipPreview = ({ levels, editedValues }) => {
+  // Valores por defecto
+  const defaults = {
+    bronce: { color: 'bg-amber-600', icon: '🥉', umbral: 0 },
+    plata: { color: 'bg-gray-400', icon: '🥈', umbral: 500 },
+    oro: { color: 'bg-yellow-500', icon: '🥇', umbral: 1500 },
+    platino: { color: 'bg-purple-500', icon: '💎', umbral: 5000 }
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="px-6 py-4 bg-gray-50 border-b">
+        <h2 className="text-lg font-bold text-gray-800">👀 Vista Previa de Niveles</h2>
+      </div>
+      <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        {levels.map(level => {
+          const umbral = editedValues[`umbral_${level}`] || defaults[level]?.umbral || 0
+          const multiplicador = editedValues[`multiplicador_${level}`] || 1
+          const color = editedValues[`color_${level}`] || defaults[level]?.color || 'bg-gray-400'
+          const icon = editedValues[`icon_${level}`] || defaults[level]?.icon || '🏆'
+          
+          return (
+            <div
+              key={level}
+              className={`p-4 rounded-xl text-white text-center ${color}`}
+            >
+              <div className="text-3xl mb-2">{icon}</div>
+              <div className="font-bold capitalize">{level}</div>
+              <div className="text-sm opacity-80">{umbral}+ pts</div>
+              <div className="text-sm opacity-80">x{multiplicador}</div>
+            </div>
+          )
+        })}
+      </div>
     </div>
-    <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-      {levels.map(level => (
-        <div
-          key={level}
-          className={`p-4 rounded-xl text-white text-center ${
-            editedValues[`color_${level}`] || 'bg-gray-400'
-          }`}
-        >
-          <div className="text-3xl mb-2">{editedValues[`icon_${level}`] || '🏆'}</div>
-          <div className="font-bold capitalize">{level}</div>
-          <div className="text-sm opacity-80">{editedValues[`threshold_${level}`] || 0}+ pts</div>
-          <div className="text-sm opacity-80">x{editedValues[`multiplier_${level}`] || 1}</div>
-        </div>
-      ))}
-    </div>
-  </div>
-)
+  )
+}
 
 export default ConfigAdmin

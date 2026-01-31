@@ -94,19 +94,43 @@ export const AuthProvider = ({ children }) => {
 
   /**
    * iniciarSesion - Guarda el token y datos del usuario
-   * Se llama despues de un login exitoso
+   * Se llama despues de un login/registro exitoso
+   * 
+   * ✅ IMPORTANTE: No llama a cargarUsuario() para evitar mostrar loader
+   * Los datos ya vienen completos del backend (login/register)
    */
   const iniciarSesion = useCallback(async (token, datosUsuario) => {
     // Guardar en localStorage
     localStorage.setItem('token', token)
     localStorage.setItem('user', JSON.stringify(datosUsuario))
 
-    // Actualizar estado
+    // Actualizar estado inmediatamente con los datos recibidos
     setUsuarioActual(datosUsuario)
+    
+    // Marcar como no cargando (los datos ya están listos)
+    setCargando(false)
+    setError(null)
 
-    // Cargar datos completos desde API
-    await cargarUsuario()
-  }, [cargarUsuario])
+    // Opcionalmente, actualizar datos en segundo plano sin bloquear UI
+    // Esto se hace después de que el usuario ya vea la pantalla principal
+    setTimeout(async () => {
+      try {
+        const datosDeAPI = await perfilService.getUserProfile()
+        const usuarioActualizado = {
+          ...datosUsuario,
+          ...datosDeAPI,
+          points: datosDeAPI.points,
+          membershipLevel: datosDeAPI.membership?.level || datosUsuario.membershipLevel || 'bronce'
+        }
+        setUsuarioActual(usuarioActualizado)
+        localStorage.setItem('user', JSON.stringify(usuarioActualizado))
+      } catch (err) {
+        // Si falla la actualización en segundo plano, no es crítico
+        // El usuario ya tiene los datos básicos
+        console.warn('Error actualizando datos en segundo plano:', err)
+      }
+    }, 100)
+  }, [])
 
   /**
    * cerrarSesion - Limpia todos los datos y redirige al login
@@ -115,6 +139,9 @@ export const AuthProvider = ({ children }) => {
     // Limpiar localStorage
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+
+    // Limpiar cache de membresía
+    perfilService.clearConfigCache()
 
     // Limpiar estado
     setUsuarioActual(null)

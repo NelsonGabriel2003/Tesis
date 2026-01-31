@@ -1,11 +1,21 @@
+/**
+ * Perfil Model
+ * Estado inicial y constantes para el módulo de perfil
+ * 
+ * NOTA: Los niveles de membresía se cargan dinámicamente desde la BD
+ * a través de perfilServices.getMembershipConfig()
+ */
+
 // Estado inicial del perfil
 export const initialPerfilState = {
   user: null,
   loading: false,
-  error: null
+  error: null,
+  membershipConfig: null  // Se carga desde la API
 }
 
-export const membershipLevels = {
+// Valores por defecto de membresía (fallback si la API falla)
+export const defaultMembershipLevels = {
   bronce: {
     name: 'Bronce',
     icon: '🥉',
@@ -35,6 +45,7 @@ export const membershipLevels = {
     multiplier: 3
   }
 }
+
 // Mensajes
 export const perfilMessages = {
   LOADING: 'Cargando perfil...',
