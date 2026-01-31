@@ -21,7 +21,7 @@ import adminConfigRoutes from './adminConfig.routes.js'
 import uploadRoutes from './upload.routes.js'
 import photoRoutes from './photo.routes.js'
 import searchRoutes from './search.routes.js'
-
+import comprobanteRoutes from './comprobante.routes.js'
 const router = Router()
 
 // Health check

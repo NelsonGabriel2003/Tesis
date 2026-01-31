@@ -99,7 +99,7 @@ const MisPedidosPage = () => {
               <ClipboardList size={48} className="text-gray-400" />
             </div>
             <h2 className="text-xl font-bold text-gray-700 mb-2">
-              No tienes pedidos aún :C
+              No tienes pedidos aún!! :C
             </h2>
             <p className="text-gray-500 mb-6 max-w-xs">
               Cuando realices tu primer pedido, aparecerá aquí para que puedas darle seguimiento.
