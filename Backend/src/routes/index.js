@@ -33,6 +33,8 @@ router.get('/health', (req, res) => {
   })
 })
 
+router.use('/comprobante', comprobanteRoutes)
+
 // Rutas existentes
 router.use('/auth', authRoutes)
 router.use('/products', productRoutes)

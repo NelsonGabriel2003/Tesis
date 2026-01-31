@@ -374,6 +374,106 @@ const downloadPDF = asyncHandler(async (req, res) => {
   res.send(pdfBuffer)
 })
 
+/**
+ * Verificar QR de pedido (Staff)
+ * POST /api/orders-admin/verify-qr
+ */
+const verifyQR = asyncHandler(async (req, res) => {
+  const { qrData } = req.body
+
+  if (!qrData) {
+    return res.status(400).json({ success: false, message: 'Datos de QR requeridos' })
+  }
+
+  // Parsear datos del QR
+  let parsedData
+  try {
+    parsedData = typeof qrData === 'string' ? JSON.parse(qrData) : qrData
+  } catch (e) {
+    return res.status(400).json({ success: false, message: 'QR inválido' })
+  }
+
+  if (parsedData.type !== 'order') {
+    return res.status(400).json({ success: false, message: 'Este QR no es de un pedido' })
+  }
+
+  // Buscar pedido
+  const pedido = await PedidoModel.buscarPorId(parsedData.id)
+
+  if (!pedido) {
+    return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
+  }
+
+  // Verificar que el código coincide
+  if (pedido.codigo_pedido !== parsedData.code) {
+    return res.status(400).json({ success: false, message: 'Código de pedido no coincide' })
+  }
+
+  // Obtener items del pedido
+  pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
+
+  // Mapear al formato del frontend
+  const orderMapped = mapPedidoToOrder(pedido)
+
+  // Verificar estado
+  const statusInfo = {
+    pending: { canDeliver: false, message: 'Este pedido aún está pendiente de aprobación' },
+    approved: { canDeliver: false, message: 'Este pedido aún no ha sido preparado' },
+    preparing: { canDeliver: false, message: 'Este pedido está en preparación' },
+    completed: { canDeliver: true, message: '¡Pedido listo para entregar!' },
+    delivered: { canDeliver: false, message: 'Este pedido ya fue entregado' },
+    rejected: { canDeliver: false, message: 'Este pedido fue rechazado' },
+    cancelled: { canDeliver: false, message: 'Este pedido fue cancelado' }
+  }
+
+  const info = statusInfo[orderMapped.status] || { canDeliver: false, message: 'Estado desconocido' }
+
+  res.json({
+    success: true,
+    data: {
+      order: orderMapped,
+      canDeliver: info.canDeliver,
+      statusMessage: info.message
+    }
+  })
+})
+
+/**
+ * Entregar pedido (Staff)
+ * PUT /api/orders-admin/:id/deliver
+ */
+const deliver = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const pedido = await PedidoModel.buscarPorId(id)
+
+  if (!pedido) {
+    return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
+  }
+
+  if (pedido.estado !== 'completado') {
+    const mensajes = {
+      'pendiente': 'El pedido aún está pendiente de aprobación',
+      'aprobado': 'El pedido aún no ha sido preparado',
+      'preparando': 'El pedido está en preparación',
+      'entregado': 'Este pedido ya fue entregado',
+      'rechazado': 'Este pedido fue rechazado',
+      'cancelado': 'Este pedido fue cancelado'
+    }
+    return res.status(400).json({ 
+      success: false, 
+      message: mensajes[pedido.estado] || 'El pedido no está listo para entregar' 
+    })
+  }
+
+  const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'entregado', req.user?.id)
+  
+  res.json({ 
+    success: true, 
+    data: mapPedidoToOrder(pedidoActualizado), 
+    message: '¡Pedido entregado exitosamente!' 
+  })
+})
+
 export const orderController = {
   create,
   getMyOrders,
@@ -384,5 +484,7 @@ export const orderController = {
   approve,
   reject,
   complete,
-  downloadPDF
+  downloadPDF,
+  verifyQR,
+  deliver
 }
