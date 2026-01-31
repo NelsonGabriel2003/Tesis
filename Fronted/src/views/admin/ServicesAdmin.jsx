@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { Plus, Edit, Trash2, X, Loader } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Loader, MessageCircle } from 'lucide-react'
 import { useServiceController } from '../../controllers/admin'
 import { serviceCategories } from '../../models/admin'
 import ImageUpload from '../../components/ui/ImageUpload'
@@ -60,6 +60,15 @@ const ServicesAdmin = () => {
         </button>
       </div>
 
+      {/* Info de WhatsApp */}
+      <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+        <MessageCircle className="text-green-600" size={24} />
+        <div>
+          <p className="font-medium text-green-800">Reservas por WhatsApp</p>
+          <p className="text-sm text-green-600">Los clientes contactan directamente para reservar estos servicios</p>
+        </div>
+      </div>
+
       {/* Search con contador */}
       <SearchBar
         value={searchQuery}
@@ -110,10 +119,7 @@ const ServicesAdmin = () => {
                     Categoría
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
-                    Pts Requeridos
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
-                    Pts Ganados
+                    Estado
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase">
                     Acciones
@@ -150,17 +156,12 @@ const ServicesAdmin = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {service.pointsRequired > 0 ? (
-                        <span className="text-red-600 font-medium">
-                          -{service.pointsRequired} pts
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">Gratis</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-green-600 font-medium">
-                        +{service.pointsEarned} pts
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        service.available !== false
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {service.available !== false ? 'Disponible' : 'No disponible'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -256,40 +257,6 @@ const ServicesAdmin = () => {
                 />
               </div>
 
-              {/* Puntos requeridos y ganados */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Puntos requeridos
-                  </label>
-                  <input
-                    type="number"
-                    name="points_required"
-                    value={formData.points_required}
-                    onChange={handleInputChange}
-                    min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                      focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Puntos que otorga
-                  </label>
-                  <input
-                    type="number"
-                    name="points_earned"
-                    value={formData.points_earned}
-                    onChange={handleInputChange}
-                    min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                      focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
               {/* Categoría */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -310,6 +277,28 @@ const ServicesAdmin = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Disponible */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="available"
+                  id="available"
+                  checked={formData.available !== false}
+                  onChange={(e) => handleInputChange({
+                    target: { name: 'available', value: e.target.checked }
+                  })}
+                  className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                />
+                <label htmlFor="available" className="text-sm text-gray-700">
+                  Servicio disponible para reservas
+                </label>
+              </div>
+
+              {/* Info WhatsApp */}
+              <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                📱 Los clientes contactarán por WhatsApp para reservar este servicio
               </div>
 
               {/* Buttons */}

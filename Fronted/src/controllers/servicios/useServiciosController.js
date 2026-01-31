@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { initialServiciosState, serviciosCategorias } from '../../models/servicios/serviciosModel'
 import { serviciosService } from '../../services/servicios/serviciosServices'
-import api from '../../services/api'
 
 export const useServiciosController = () => {
   const [state, setState] = useState(initialServiciosState)
@@ -15,24 +14,8 @@ export const useServiciosController = () => {
   const [selectedCategory, setSelectedCategory] = useState('todos')
   const [selectedService, setSelectedService] = useState(null)
   const [showModal, setShowModal] = useState(false)
-  const [reservationStatus, setReservationStatus] = useState(null)
-
-
-  // Puntos del usuario (desde API)
-  const [userPoints, setUserPoints] = useState(0)
 
   const navigate = useNavigate()
-
-  // Cargar puntos del usuario
-  const loadUserPoints = useCallback(async () => {
-    try {
-      const response = await api.get('/profile')
-      setUserPoints(response.data?.currentPoints || response.data?.current_points || 0)
-    } catch (error) {
-      console.error('Error cargando puntos:', error)
-    }
-  }, [])
-
 
   // Cargar servicios
   const loadServicios = useCallback(async () => {
@@ -85,34 +68,7 @@ export const useServiciosController = () => {
   const closeModal = useCallback(() => {
     setShowModal(false)
     setSelectedService(null)
-    setReservationStatus(null)
   }, [])
-
-  // Reservar servicio
-  const reserveService = useCallback(async (serviceId) => {
-    setReservationStatus({ loading: true, error: null, success: false })
-
-    try {
-      const result = await serviciosService.reservarServicio(serviceId, {})
-      setReservationStatus({
-        loading: false,
-        error: null,
-        success: true,
-        data: result
-      })
-    } catch (error) {
-      setReservationStatus({
-        loading: false,
-        error: error.message,
-        success: false
-      })
-    }
-  }, [])
-
-  // Verificar si puede usar el servicio
-  const canUseService = useCallback((service) => {
-    return serviciosService.canUseService(service, userPoints)
-  }, [userPoints])
 
   // Volver al main
   const goBack = useCallback(() => {
@@ -122,8 +78,7 @@ export const useServiciosController = () => {
   // Cargar servicios al montar
   useEffect(() => {
     loadServicios()
-    loadUserPoints() 
-  }, [loadServicios,loadUserPoints])
+  }, [loadServicios])
 
   return {
     // Estado
@@ -134,15 +89,11 @@ export const useServiciosController = () => {
     selectedCategory,
     selectedService,
     showModal,
-    reservationStatus,
-    userPoints,
 
     // Acciones
     filterByCategory,
     selectService,
     closeModal,
-    reserveService,
-    canUseService,
     goBack,
     loadServicios
   }

@@ -6,7 +6,7 @@
 import { useServiciosController } from '../../controllers/servicios/useServiciosController'
 import ServiciosList from './ServiciosList'
 import ServicioModal from './ServicioModal'
-import { ArrowLeft, Star } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 const ServiciosPage = () => {
   const {
@@ -17,13 +17,9 @@ const ServiciosPage = () => {
     selectedCategory,
     selectedService,
     showModal,
-    reservationStatus,
-    userPoints,
     filterByCategory,
     selectService,
     closeModal,
-    reserveService,
-    canUseService,
     goBack
   } = useServiciosController()
 
@@ -42,10 +38,9 @@ const ServiciosPage = () => {
             <h1 className="text-xl font-bold text-text-primary">Servicios</h1>
           </div>
 
-          {/* Puntos del usuario */}
-          <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-bold text-yellow-700">
-            <Star size={16} fill="currentColor" />
-            {userPoints.toLocaleString()} pts
+          {/* Badge de WhatsApp */}
+          <div className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+            📱 Reserva directa
           </div>
         </div>
 
@@ -80,8 +75,6 @@ const ServiciosPage = () => {
           services={services}
           loading={loading}
           onSelectService={selectService}
-          canUseService={canUseService}
-          userPoints={userPoints}
         />
       </main>
 
@@ -89,10 +82,6 @@ const ServiciosPage = () => {
       {showModal && selectedService && (
         <ServicioModal
           service={selectedService}
-          canUse={canUseService(selectedService)}
-          userPoints={userPoints}
-          reservationStatus={reservationStatus}
-          onReserve={reserveService}
           onClose={closeModal}
         />
       )}

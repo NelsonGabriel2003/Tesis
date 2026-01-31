@@ -59,7 +59,7 @@ const MisPedidosPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-50  from-amber-400 to-orange-400 px-4 py-4 shadow-md">
+      <header className="sticky top-0 z-50 bg-linear-to-r from-amber-400 to-orange-400 px-4 py-4 shadow-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
