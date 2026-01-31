@@ -1,314 +1,304 @@
 /**
- * Usuario Model
- * Consultas a la base de datos para usuarios
+ * Configuracion Model
+ * Consultas a la base de datos para configuracion del negocio
  */
 
 import { query } from '../config/database.js'
-import { conTransaccion, registrarHistorial, obtenerCamposModificados } from '../utils/transaccion.js'
+import { conTransaccion, registrarHistorial } from '../utils/transaccion.js'
 
-const UsuarioModel = {
+const ConfiguracionModel = {
   /**
-   * Buscar usuario por correo
+   * Obtener valor de una configuracion
    */
-  buscarPorCorreo: async (correo) => {
+  obtener: async (clave) => {
     const result = await query(
-      'SELECT * FROM usuarios WHERE correo = $1',
-      [correo]
+      `SELECT valor FROM configuracion_negocio WHERE clave = $1`,
+      [clave]
+    )
+    return result.rows[0]?.valor
+  },
+
+  /**
+   * Buscar configuración por clave (retorna objeto completo)
+   */
+  buscarPorClave: async (clave) => {
+    const result = await query(
+      `SELECT id, clave, valor, descripcion, categoria 
+       FROM configuracion_negocio WHERE clave = $1`,
+      [clave]
     )
     return result.rows[0]
   },
 
   /**
-   * Buscar usuario por ID
+   * Obtener todas las configuraciones
    */
-  buscarPorId: async (id) => {
+  obtenerTodas: async () => {
     const result = await query(
-      `SELECT id, correo, nombre, telefono, rol, nivel_membresia,
-              puntos_actuales, puntos_totales
-       FROM usuarios WHERE id = $1`,
-      [id]
-    )
-    return result.rows[0]
-  },
-
-  /**
-   * Crear nuevo usuario con registro en historial
-   */
-  crear: async (datosUsuario, usuarioCreadorId = null, infoSolicitud = {}) => {
-    const { correo, contrasena, nombre, telefono } = datosUsuario
-
-    return await conTransaccion(async (cliente) => {
-      // Insertar usuario
-      const result = await cliente.query(
-        `INSERT INTO usuarios (correo, contrasena, nombre, telefono, nivel_membresia, puntos_actuales, puntos_totales)
-         VALUES ($1, $2, $3, $4, 'bronce', 0, 0)
-         RETURNING id, correo, nombre, telefono, nivel_membresia, puntos_actuales, puntos_totales`,
-        [correo, contrasena, nombre, telefono]
-      )
-
-      const nuevoUsuario = result.rows[0]
-
-      // Registrar en historial
-      await registrarHistorial(cliente, {
-        tabla_afectada: 'usuarios',
-        registro_id: nuevoUsuario.id,
-        accion: 'INSERTAR',
-        valores_anteriores: null,
-        valores_nuevos: { correo, nombre, telefono, nivel_membresia: 'bronce' },
-        usuario_id: usuarioCreadorId,
-        direccion_ip: infoSolicitud.ip,
-        agente_usuario: infoSolicitud.userAgent,
-        descripcion: `Usuario ${nombre} registrado en el sistema`
-      })
-
-      return nuevoUsuario
-    })
-  },
-
-  /**
-   * Actualizar usuario con registro en historial
-   */
-  actualizar: async (id, datosUsuario, usuarioModificadorId = null, infoSolicitud = {}) => {
-    const { nombre, telefono } = datosUsuario
-
-    return await conTransaccion(async (cliente) => {
-      // Obtener datos anteriores
-      const anteriorResult = await cliente.query(
-        'SELECT nombre, telefono FROM usuarios WHERE id = $1',
-        [id]
-      )
-      const anterior = anteriorResult.rows[0]
-
-      // Actualizar
-      const result = await cliente.query(
-        `UPDATE usuarios
-         SET nombre = COALESCE($2, nombre),
-             telefono = COALESCE($3, telefono)
-         WHERE id = $1
-         RETURNING id, correo, nombre, telefono, rol, nivel_membresia, puntos_actuales, puntos_totales`,
-        [id, nombre, telefono]
-      )
-
-      const usuarioActualizado = result.rows[0]
-
-      // Registrar en historial
-      const camposModificados = obtenerCamposModificados(anterior, { nombre, telefono })
-      if (camposModificados.length > 0) {
-        await registrarHistorial(cliente, {
-          tabla_afectada: 'usuarios',
-          registro_id: id,
-          accion: 'ACTUALIZAR',
-          valores_anteriores: anterior,
-          valores_nuevos: { nombre, telefono },
-          campos_modificados: camposModificados,
-          usuario_id: usuarioModificadorId,
-          direccion_ip: infoSolicitud.ip,
-          agente_usuario: infoSolicitud.userAgent,
-          descripcion: `Datos de usuario actualizados`
-        })
-      }
-
-      return usuarioActualizado
-    })
-  },
-
-  /**
-   * Actualizar puntos del usuario
-   */
-  actualizarPuntos: async (id, puntosActuales, puntosTotales) => {
-    const result = await query(
-      `UPDATE usuarios
-       SET puntos_actuales = $2,
-           puntos_totales = $3,
-           nivel_membresia = CASE
-             WHEN $3 >= 5000 THEN 'platino'
-             WHEN $3 >= 1500 THEN 'oro'
-             WHEN $3 >= 500 THEN 'plata'
-             ELSE 'bronce'
-           END
-       WHERE id = $1
-       RETURNING id, correo, nombre, rol, nivel_membresia, puntos_actuales, puntos_totales`,
-      [id, puntosActuales, puntosTotales]
-    )
-    return result.rows[0]
-  },
-
-  /**
-   * Agregar puntos al usuario
-   */
-  agregarPuntos: async (id, puntos) => {
-    const result = await query(
-      `UPDATE usuarios
-       SET puntos_actuales = puntos_actuales + $2,
-           puntos_totales = puntos_totales + $2,
-           nivel_membresia = CASE
-             WHEN puntos_totales + $2 >= 5000 THEN 'platino'
-             WHEN puntos_totales + $2 >= 1500 THEN 'oro'
-             WHEN puntos_totales + $2 >= 500 THEN 'plata'
-             ELSE 'bronce'
-           END
-       WHERE id = $1
-       RETURNING id, correo, nombre, rol, nivel_membresia, puntos_actuales, puntos_totales`,
-      [id, puntos]
-    )
-    return result.rows[0]
-  },
-
-  /**
-   * Restar puntos al usuario (para canjes)
-   */
-  restarPuntos: async (id, puntos) => {
-    const result = await query(
-      `UPDATE usuarios
-       SET puntos_actuales = puntos_actuales - $2
-       WHERE id = $1 AND puntos_actuales >= $2
-       RETURNING id, correo, nombre, rol, nivel_membresia, puntos_actuales, puntos_totales`,
-      [id, puntos]
-    )
-    return result.rows[0]
-  },
-
-  /**
-   * Obtener todos los usuarios (admin)
-   */
-  obtenerTodos: async (limite = 50, offset = 0) => {
-    const result = await query(
-      `SELECT id, correo, nombre, telefono, rol, nivel_membresia, puntos_actuales, puntos_totales
-       FROM usuarios
-       ORDER BY id DESC
-       LIMIT $1 OFFSET $2`,
-      [limite, offset]
+      `SELECT id, clave, valor, descripcion, categoria
+       FROM configuracion_negocio
+       ORDER BY categoria, clave`
     )
     return result.rows
   },
 
   /**
-   * Guardar codigo de recuperacion de contrasena
+   * Obtener configuraciones por categoria
    */
-  guardarCodigoRecuperacion: async (correo, codigo, minutosExpiracion = 15) => {
+  obtenerPorCategoria: async (categoria) => {
     const result = await query(
-      `UPDATE usuarios
-       SET codigo_recuperacion = $2,
-           codigo_recuperacion_expira = NOW() + INTERVAL '${minutosExpiracion} minutes'
-       WHERE correo = $1
-       RETURNING id, correo, nombre, telefono, telegram_chat_id`,
-      [correo, codigo]
+      `SELECT id, clave, valor, descripcion
+       FROM configuracion_negocio
+       WHERE categoria = $1
+       ORDER BY clave`,
+      [categoria]
     )
-    return result.rows[0]
+    return result.rows
   },
 
   /**
-   * Verificar codigo de recuperacion
+   * Obtener configuración de puntos
    */
-  verificarCodigoRecuperacion: async (correo, codigo) => {
+  obtenerConfigPuntos: async () => {
     const result = await query(
-      `SELECT id, correo, nombre
-       FROM usuarios
-       WHERE correo = $1
-         AND codigo_recuperacion = $2
-         AND codigo_recuperacion_expira > NOW()`,
-      [correo, codigo]
+      `SELECT clave, valor FROM configuracion_negocio WHERE categoria = 'puntos'`
     )
-    return result.rows[0]
+    
+    const config = {}
+    result.rows.forEach(row => {
+      config[row.clave] = row.valor
+    })
+    
+    return {
+      pointsPerDollar: parseFloat(config.puntos_por_dolar) || 1
+    }
   },
 
   /**
-   * Cambiar contrasena y limpiar codigo de recuperacion
+   * Obtener configuración de membresías (para el frontend y cálculos)
    */
-  cambiarContrasena: async (correo, nuevaContrasenaHash) => {
+  obtenerConfigMembresia: async () => {
     const result = await query(
-      `UPDATE usuarios
-       SET contrasena = $2,
-           codigo_recuperacion = NULL,
-           codigo_recuperacion_expira = NULL
-       WHERE correo = $1
-       RETURNING id, correo, nombre`,
-      [correo, nuevaContrasenaHash]
+      `SELECT clave, valor FROM configuracion_negocio WHERE categoria = 'membresia'`
     )
-    return result.rows[0]
+    
+    const config = {}
+    result.rows.forEach(row => {
+      config[row.clave] = row.valor
+    })
+    
+    return {
+      levels: {
+        bronce: {
+          name: 'Bronce',
+          displayName: 'Bronce',
+          minPoints: 0,
+          multiplier: 1,
+          icon: config.icon_bronce || '🥉',
+          color: config.color_bronce || 'bg-amber-600'
+        },
+        plata: {
+          name: 'Plata',
+          displayName: 'Plata',
+          minPoints: parseInt(config.umbral_plata) || 500,
+          multiplier: parseFloat(config.multiplicador_plata) || 1.5,
+          icon: config.icon_plata || '🥈',
+          color: config.color_plata || 'bg-gray-400'
+        },
+        oro: {
+          name: 'Oro',
+          displayName: 'Oro',
+          minPoints: parseInt(config.umbral_oro) || 1500,
+          multiplier: parseFloat(config.multiplicador_oro) || 2,
+          icon: config.icon_oro || '🥇',
+          color: config.color_oro || 'bg-yellow-500'
+        },
+        platino: {
+          name: 'Platino',
+          displayName: 'Platino',
+          minPoints: parseInt(config.umbral_platino) || 5000,
+          multiplier: parseFloat(config.multiplicador_platino) || 3,
+          icon: config.icon_platino || '💎',
+          color: config.color_platino || 'bg-purple-500'
+        }
+      },
+      // Array ordenado para cálculos
+      levelsArray: [
+        { name: 'bronce', minPoints: 0 },
+        { name: 'plata', minPoints: parseInt(config.umbral_plata) || 500 },
+        { name: 'oro', minPoints: parseInt(config.umbral_oro) || 1500 },
+        { name: 'platino', minPoints: parseInt(config.umbral_platino) || 5000 }
+      ]
+    }
   },
 
   /**
-   * Limpiar codigo de recuperacion
+   * Obtener solo los umbrales de membresía (para usuario.model.js)
    */
-  limpiarCodigoRecuperacion: async (correo) => {
-    await query(
-      `UPDATE usuarios
-       SET codigo_recuperacion = NULL,
-           codigo_recuperacion_expira = NULL
-       WHERE correo = $1`,
-      [correo]
+  obtenerUmbrales: async () => {
+    const result = await query(
+      `SELECT clave, valor FROM configuracion_negocio 
+       WHERE clave IN ('umbral_plata', 'umbral_oro', 'umbral_platino')`
     )
+    
+    const umbrales = {
+      plata: 500,
+      oro: 1500,
+      platino: 5000
+    }
+    
+    result.rows.forEach(row => {
+      if (row.clave === 'umbral_plata') umbrales.plata = parseInt(row.valor)
+      if (row.clave === 'umbral_oro') umbrales.oro = parseInt(row.valor)
+      if (row.clave === 'umbral_platino') umbrales.platino = parseInt(row.valor)
+    })
+    
+    return umbrales
   },
 
   /**
-   * Vincular Telegram chat ID al usuario
+   * Crear nueva configuración
    */
-  vincularTelegram: async (usuarioId, telegramChatId) => {
-    const result = await query(
-      `UPDATE usuarios
-       SET telegram_chat_id = $2
-       WHERE id = $1
-       RETURNING id, correo, nombre, telegram_chat_id`,
-      [usuarioId, telegramChatId]
-    )
-    return result.rows[0]
+  crear: async (datos, usuarioId = null, infoSolicitud = {}) => {
+    const { clave, valor, descripcion, categoria } = datos
+
+    return await conTransaccion(async (cliente) => {
+      const result = await cliente.query(
+        `INSERT INTO configuracion_negocio (clave, valor, descripcion, categoria)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [clave, valor, descripcion, categoria || 'general']
+      )
+
+      const configuracion = result.rows[0]
+
+      await registrarHistorial(cliente, {
+        tabla_afectada: 'configuracion_negocio',
+        registro_id: configuracion.id,
+        accion: 'INSERTAR',
+        valores_anteriores: null,
+        valores_nuevos: { clave, valor, descripcion, categoria },
+        usuario_id: usuarioId,
+        direccion_ip: infoSolicitud.ip,
+        agente_usuario: infoSolicitud.userAgent,
+        descripcion: `Configuración ${clave} creada con valor ${valor}`
+      })
+
+      return configuracion
+    })
   },
 
   /**
-   * Buscar usuario por Telegram chat ID
+   * Actualizar configuración por clave
    */
-  buscarPorTelegramChatId: async (telegramChatId) => {
-    const result = await query(
-      `SELECT id, correo, nombre, telefono, telegram_chat_id
-       FROM usuarios
-       WHERE telegram_chat_id = $1`,
-      [telegramChatId]
-    )
-    return result.rows[0]
+  actualizar: async (clave, valor, usuarioId = null, infoSolicitud = {}) => {
+    return await conTransaccion(async (cliente) => {
+      // Obtener valor anterior
+      const anteriorResult = await cliente.query(
+        `SELECT id, valor FROM configuracion_negocio WHERE clave = $1`,
+        [clave]
+      )
+      
+      if (anteriorResult.rows.length === 0) {
+        return null
+      }
+
+      const anterior = anteriorResult.rows[0]
+
+      // Actualizar
+      const result = await cliente.query(
+        `UPDATE configuracion_negocio 
+         SET valor = $2
+         WHERE clave = $1
+         RETURNING *`,
+        [clave, valor]
+      )
+
+      const configuracion = result.rows[0]
+
+      // Registrar en historial si cambió el valor
+      if (anterior.valor !== valor) {
+        await registrarHistorial(cliente, {
+          tabla_afectada: 'configuracion_negocio',
+          registro_id: configuracion.id,
+          accion: 'ACTUALIZAR',
+          valores_anteriores: { [clave]: anterior.valor },
+          valores_nuevos: { [clave]: valor },
+          campos_modificados: ['valor'],
+          usuario_id: usuarioId,
+          direccion_ip: infoSolicitud.ip,
+          agente_usuario: infoSolicitud.userAgent,
+          descripcion: `Configuración ${clave} actualizada de ${anterior.valor} a ${valor}`
+        })
+      }
+
+      return configuracion
+    })
   },
 
   /**
-   * Buscar usuario por telefono
+   * Actualizar múltiples configuraciones
    */
-  buscarPorTelefono: async (telefono) => {
-    const result = await query(
-      `SELECT id, correo, nombre, telefono, telegram_chat_id, puntos_actuales
-       FROM usuarios
-       WHERE telefono = $1`,
-      [telefono]
-    )
-    return result.rows[0]
+  actualizarVarias: async (configs, usuarioId = null, infoSolicitud = {}) => {
+    const actualizadas = []
+
+    for (const config of configs) {
+      const actualizada = await ConfiguracionModel.actualizar(
+        config.key || config.clave,
+        config.value || config.valor,
+        usuarioId,
+        infoSolicitud
+      )
+      if (actualizada) {
+        actualizadas.push(actualizada)
+      }
+    }
+
+    return actualizadas
   },
 
   /**
-   * Vincular Telegram y dar puntos de bonificacion
+   * Establecer valor de configuracion (upsert)
    */
-  vincularTelegramConBono: async (telefono, telegramChatId, puntosBonus) => {
-    const result = await query(
-      `UPDATE usuarios
-       SET telegram_chat_id = $2,
-           puntos_actuales = puntos_actuales + $3,
-           puntos_totales = puntos_totales + $3
-       WHERE telefono = $1
-         AND telegram_chat_id IS NULL
-       RETURNING id, correo, nombre, telefono, telegram_chat_id, puntos_actuales`,
-      [telefono, telegramChatId, puntosBonus]
-    )
-    return result.rows[0]
-  },
+  establecer: async (clave, valor, usuarioId = null, infoSolicitud = {}) => {
+    return await conTransaccion(async (cliente) => {
+      // Obtener valor anterior
+      const anteriorResult = await cliente.query(
+        `SELECT id, valor FROM configuracion_negocio WHERE clave = $1`,
+        [clave]
+      )
+      const valorAnterior = anteriorResult.rows[0]?.valor
 
-  /**
-   * Verificar si es primer inicio de sesion
-   */
-  esPrimerLogin: async (usuarioId) => {
-    const result = await query(
-      `SELECT COUNT(*) as total FROM movimientos_puntos
-       WHERE usuario_id = $1 AND tipo = 'ganado'`,
-      [usuarioId]
-    )
-    return parseInt(result.rows[0].total) === 0
+      // Actualizar o insertar
+      const result = await cliente.query(
+        `INSERT INTO configuracion_negocio (clave, valor)
+         VALUES ($1, $2)
+         ON CONFLICT (clave) DO UPDATE SET valor = $2
+         RETURNING *`,
+        [clave, valor]
+      )
+
+      const configuracion = result.rows[0]
+
+      // Registrar en historial si cambio el valor
+      if (valorAnterior !== valor) {
+        await registrarHistorial(cliente, {
+          tabla_afectada: 'configuracion_negocio',
+          registro_id: configuracion.id,
+          accion: valorAnterior ? 'ACTUALIZAR' : 'INSERTAR',
+          valores_anteriores: valorAnterior ? { [clave]: valorAnterior } : null,
+          valores_nuevos: { [clave]: valor },
+          campos_modificados: ['valor'],
+          usuario_id: usuarioId,
+          direccion_ip: infoSolicitud.ip,
+          agente_usuario: infoSolicitud.userAgent,
+          descripcion: `Configuracion ${clave} actualizada de ${valorAnterior} a ${valor}`
+        })
+      }
+
+      return configuracion
+    })
   }
 }
 
-export default UsuarioModel
+export default ConfiguracionModel
