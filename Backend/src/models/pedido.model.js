@@ -99,6 +99,9 @@ const PedidoModel = {
    * Actualizar estado del pedido
    */
   actualizarEstado: async (id, estado, personalId = null, datosAdicionales = {}) => {
+    // Asegurar que datosAdicionales sea un objeto
+    datosAdicionales = datosAdicionales || {}
+    
     const campoTimestamp = {
       aprobado: 'fecha_aprobacion',
       preparando: 'fecha_preparacion',
