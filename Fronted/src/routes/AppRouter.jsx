@@ -10,7 +10,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage, RegisterPage, RecuperarPassword } from '../views/auth'
 import { MainPage } from '../views/main'
 import { MenuPage } from '../views/menu'
-import { OrderPage } from '../views/order'
+import { OrderPage, MisPedidosPage } from '../views/order'
 import { ServiciosPage } from '../views/servicios'
 import { PerfilPage } from '../views/perfil'
 import { CanjePage } from '../views/canje'
@@ -145,6 +145,16 @@ const AppRouter = () => {
             element={
               <RutaProtegida>
                 <OrderPage />
+              </RutaProtegida>
+            }
+          />
+
+          {/* Historial de pedidos del usuario */}
+          <Route
+            path="/mis-pedidos"
+            element={
+              <RutaProtegida>
+                <MisPedidosPage />
               </RutaProtegida>
             }
           />

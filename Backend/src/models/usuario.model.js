@@ -56,7 +56,7 @@ const UsuarioModel = {
   buscarPorId: async (id) => {
     const result = await query(
       `SELECT id, correo, nombre, telefono, rol, nivel_membresia,
-              puntos_actuales, puntos_totales
+              puntos_actuales, puntos_totales, telegram_chat_id
        FROM usuarios WHERE id = $1`,
       [id]
     )

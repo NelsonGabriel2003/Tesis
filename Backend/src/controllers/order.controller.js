@@ -13,6 +13,53 @@ import { codeGenerator, qrService, telegramService, pdfService } from '../servic
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
+ * Mapeo de estados español → inglés
+ */
+const STATUS_MAP = {
+  'pendiente': 'pending',
+  'aprobado': 'approved',
+  'preparando': 'preparing',
+  'completado': 'completed',
+  'entregado': 'delivered',
+  'rechazado': 'rejected',
+  'cancelado': 'cancelled'
+}
+
+/**
+ * Transforma un pedido de BD al formato esperado por el frontend
+ */
+const mapPedidoToOrder = (pedido) => {
+  if (!pedido) return null
+  
+  return {
+    id: pedido.id,
+    order_code: pedido.codigo_pedido,
+    status: STATUS_MAP[pedido.estado] || pedido.estado,
+    subtotal: pedido.subtotal,
+    discount: pedido.descuento,
+    total: pedido.total,
+    points_to_earn: pedido.puntos_a_ganar,
+    points_earned: pedido.puntos_ganados,
+    table_number: pedido.numero_mesa,
+    notes: pedido.notas,
+    rejection_reason: pedido.motivo_rechazo,
+    qr_data: pedido.datos_qr,
+    created_at: pedido.fecha_pedido,
+    approved_at: pedido.fecha_aprobacion,
+    preparing_at: pedido.fecha_preparacion,
+    completed_at: pedido.fecha_completado,
+    delivered_at: pedido.fecha_entrega,
+    user_id: pedido.usuario_id,
+    user_name: pedido.nombre_usuario,
+    user_email: pedido.correo_usuario,
+    user_phone: pedido.telefono_usuario,
+    staff_name: pedido.nombre_personal,
+    items: pedido.items,
+    qrCode: pedido.qrCode
+  }
+}
+
+/**
  * Crear pedido
  * POST /api/orders
  */
@@ -86,7 +133,7 @@ const create = asyncHandler(async (req, res) => {
       puntos_por_item: item.puntosPorItem,
       cantidad: item.cantidad,
       total_item: item.totalItem,
-      puntos_total: item.puntosTotales
+      puntos_totales: item.puntosTotales
     })
     itemsCreados.push(itemCreado)
   }
@@ -104,7 +151,7 @@ const create = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     data: {
-      order: { ...pedido, items: itemsCreados, qrCode },
+      order: mapPedidoToOrder({ ...pedido, items: itemsCreados, qrCode }),
       message: 'Pedido enviado. Esperando confirmación.'
     }
   })
@@ -123,7 +170,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
     pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
   }
 
-  res.json({ success: true, data: pedidos })
+  res.json({ success: true, data: pedidos.map(mapPedidoToOrder) })
 })
 
 /**
@@ -139,7 +186,7 @@ const getActiveOrders = asyncHandler(async (req, res) => {
     pedido.qrCode = await qrService.generateOrderQR(pedido.codigo_pedido, pedido.id)
   }
 
-  res.json({ success: true, data: pedidos })
+  res.json({ success: true, data: pedidos.map(mapPedidoToOrder) })
 })
 
 /**
@@ -157,7 +204,7 @@ const getById = asyncHandler(async (req, res) => {
   pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
   pedido.qrCode = await qrService.generateOrderQR(pedido.codigo_pedido, pedido.id)
 
-  res.json({ success: true, data: pedido })
+  res.json({ success: true, data: mapPedidoToOrder(pedido) })
 })
 
 /**
@@ -187,7 +234,7 @@ const cancel = asyncHandler(async (req, res) => {
   }
 
   const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'cancelado', req.user?.id, infoSolicitud)
-  res.json({ success: true, data: pedidoActualizado, message: 'Pedido cancelado' })
+  res.json({ success: true, data: mapPedidoToOrder(pedidoActualizado), message: 'Pedido cancelado' })
 })
 
 /**
@@ -199,7 +246,7 @@ const getPending = asyncHandler(async (req, res) => {
   for (let pedido of pedidos) {
     pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
   }
-  res.json({ success: true, data: pedidos })
+  res.json({ success: true, data: pedidos.map(mapPedidoToOrder) })
 })
 
 /**
@@ -220,7 +267,7 @@ const approve = asyncHandler(async (req, res) => {
   }
 
   const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'aprobado', req.user?.id, infoSolicitud)
-  res.json({ success: true, data: pedidoActualizado, message: 'Pedido aprobado' })
+  res.json({ success: true, data: mapPedidoToOrder(pedidoActualizado), message: 'Pedido aprobado' })
 })
 
 /**
@@ -242,7 +289,7 @@ const reject = asyncHandler(async (req, res) => {
   }
 
   const pedidoActualizado = await PedidoModel.actualizarEstado(id, 'rechazado', req.user?.id, infoSolicitud, { motivo_rechazo: reason })
-  res.json({ success: true, data: pedidoActualizado, message: 'Pedido rechazado' })
+  res.json({ success: true, data: mapPedidoToOrder(pedidoActualizado), message: 'Pedido rechazado' })
 })
 
 /**
@@ -278,7 +325,7 @@ const complete = asyncHandler(async (req, res) => {
     })
   }
 
-  res.json({ success: true, data: pedidoActualizado, message: `+${pedido.puntos_a_ganar} puntos acreditados` })
+  res.json({ success: true, data: mapPedidoToOrder(pedidoActualizado), message: `+${pedido.puntos_a_ganar} puntos acreditados` })
 })
 
 /**

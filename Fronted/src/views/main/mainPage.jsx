@@ -17,7 +17,7 @@ import {
   Menu,
   HelpCircle,
   User,
-  Settings
+  ClipboardList
 } from 'lucide-react'
 import { userModules } from '../../config/modulesConfig'
 import { useAuth } from '../../hooks/useAuth'
@@ -243,12 +243,13 @@ const MainPage = () => {
             <li>
               <button
                 onClick={() => {
+                  navegarHacia('/mis-pedidos')
                   alternarMenuLateral()
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
               >
-                <Settings size={20} className="text-primary" />
-                <span>Configuracion</span>
+                <ClipboardList size={20} className="text-primary" />
+                <span>Mis Pedidos</span>
               </button>
             </li>
             <li>
