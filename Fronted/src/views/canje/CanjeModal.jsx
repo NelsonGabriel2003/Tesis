@@ -3,7 +3,7 @@
  * Modal de confirmación de canje
  */
 
-import { X, Star, Lock, CheckCircle, AlertCircle, Loader, Copy } from 'lucide-react'
+import { X, Star, Lock, CheckCircle, AlertCircle, Loader, Copy, Clock } from 'lucide-react'
 import { useState } from 'react'
 
 const CanjeModal = ({
@@ -133,18 +133,18 @@ const CanjeModal = ({
             </div>
           )}
 
-          {/* Estado de canje exitoso */}
+          {/* Estado de canje - Código generado */}
           {redeemStatus?.success && (
             <div className="mt-6 space-y-4">
-              <div className="rounded-xl bg-green-50 p-6 text-center border border-green-200">
-                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle size={32} className="text-green-600" />
+              <div className="rounded-xl bg-amber-50 p-6 text-center border border-amber-200">
+                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+                  <Clock size={32} className="text-amber-600" />
                 </div>
-                <h3 className="text-lg font-bold text-green-700">
-                  ¡Canje Exitoso!
+                <h3 className="text-lg font-bold text-amber-700">
+                  Código Generado
                 </h3>
-                <p className="mt-1 text-sm text-green-600">
-                  Tu recompensa está lista para usar
+                <p className="mt-1 text-sm text-amber-600">
+                  Muestra este código al personal para validar tu canje
                 </p>
               </div>
 
@@ -165,7 +165,7 @@ const CanjeModal = ({
                   </button>
                 </div>
                 <p className="mt-2 text-center text-xs text-gray-500">
-                  Muestra este código al personal del bar
+                  El personal validará este código y te entregará tu recompensa
                 </p>
               </div>
 
@@ -176,6 +176,13 @@ const CanjeModal = ({
                   <Star size={16} fill="currentColor" />
                   {redeemStatus.data.newBalance.toLocaleString()} pts
                 </div>
+              </div>
+
+              {/* Info adicional */}
+              <div className="rounded-xl bg-blue-50 p-4 border border-blue-200">
+                <p className="text-sm text-blue-700">
+                  📱 <strong>Tip:</strong> Guarda una captura de pantalla de este código por si lo necesitas
+                </p>
               </div>
             </div>
           )}

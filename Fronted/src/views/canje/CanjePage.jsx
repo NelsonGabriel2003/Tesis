@@ -6,7 +6,7 @@
 import { useCanjeController } from '../../controllers/canje/useCanjeController'
 import CanjeList from './CanjeList'
 import CanjeModal from './CanjeModal'
-import { ArrowLeft, Search, Star, Gift } from 'lucide-react'
+import { ArrowLeft, Search, Star } from 'lucide-react'
 
 const CanjePage = () => {
   const {
@@ -83,21 +83,6 @@ const CanjePage = () => {
           ))}
         </div>
       </header>
-
-      {/* Banner informativo */}
-      <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary to-purple-600 p-4 text-white shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20">
-            <Gift size={28} />
-          </div>
-          <div>
-            <h3 className="font-bold">¡Canjea tus puntos!</h3>
-            <p className="text-sm opacity-90">
-              Tienes {userPoints.toLocaleString()} puntos disponibles para canjear
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Contenido */}
       <main className="px-4 py-4">

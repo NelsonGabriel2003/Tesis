@@ -324,6 +324,31 @@ const updateReward = asyncHandler(async (req, res) => {
   })
 })
 
+/**
+ * Obtener canjes pendientes (Admin)
+ * GET /api/redemptions/pending
+ */
+const getPendingRedemptions = asyncHandler(async (req, res) => {
+  const canjes = await CanjeModel.obtenerPendientes()
+
+  res.json({
+    success: true,
+    count: canjes.length,
+    data: canjes.map(c => ({
+      id: c.id,
+      usuarioId: c.usuario_id,
+      usuario: c.nombre_usuario,
+      email: c.correo_usuario,
+      recompensa: c.nombre_recompensa,
+      categoria: c.categoria_recompensa,
+      puntosGastados: c.puntos_gastados,
+      codigo: c.codigo_canje,
+      estado: c.estado,
+      fechaCanje: c.fecha_canje
+    }))
+  })
+})
+
 export {
   getRewards,
   getRewardById,
@@ -333,5 +358,6 @@ export {
   useRedemptionCode,
   getCategories,
   createReward,
-  updateReward
+  updateReward,
+  getPendingRedemptions
 }

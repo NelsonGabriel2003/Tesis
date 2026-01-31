@@ -13,7 +13,8 @@ import {
   useRedemptionCode,
   getCategories,
   createReward,
-  updateReward
+  updateReward,
+  getPendingRedemptions
 } from '../controllers/reward.controller.js'
 import { verifyToken, requireRole } from '../middlewares/index.js'
 
@@ -22,6 +23,10 @@ const router = Router()
 // Rutas públicas
 router.get('/', getRewards)
 router.get('/categories', getCategories)
+
+// Canjes pendientes (Admin) - ANTES de /:id para evitar conflictos
+router.get('/pending', verifyToken, requireRole('admin'), getPendingRedemptions)
+
 router.get('/:id', getRewardById)
 
 // Rutas protegidas (Usuario autenticado)

@@ -27,6 +27,9 @@ const UsersAdmin = () => {
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [estadisticas, setEstadisticas] = useState(null)
+  
+  // Canjes pendientes globales
+  const [canjesPendientes, setCanjesPendientes] = useState([])
 
   // Estado del modal de canjes
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -48,6 +51,15 @@ const UsersAdmin = () => {
         total: response.totalUsers,
         porNivel: response.usersByLevel
       })
+      
+      // Cargar canjes pendientes
+      try {
+        const canjesResponse = await api.get('/rewards/pending')
+        setCanjesPendientes(canjesResponse.data || [])
+      } catch (err) {
+        console.error('Error cargando canjes pendientes:', err)
+        setCanjesPendientes([])
+      }
     } catch (err) {
       console.error('Error cargando usuarios:', err)
       setError('Error al cargar usuarios')
@@ -169,7 +181,7 @@ const UsersAdmin = () => {
 
       {/* Stats Cards de Usuarios */}
       {estadisticas && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -178,6 +190,19 @@ const UsersAdmin = () => {
               <div>
                 <p className="text-2xl font-bold text-gray-800">{estadisticas.total}</p>
                 <p className="text-xs text-gray-500">Total Usuarios</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Canjes Pendientes */}
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Gift size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-amber-600">{canjesPendientes.length}</p>
+                <p className="text-xs text-gray-500">Canjes Pendientes</p>
               </div>
             </div>
           </div>
