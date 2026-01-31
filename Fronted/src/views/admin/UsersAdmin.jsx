@@ -8,7 +8,6 @@ import {
   Users,
   Award,
   Mail,
-  Calendar,
   Loader,
   RefreshCw,
   Eye,
@@ -257,14 +256,13 @@ const UsersAdmin = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contacto</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nivel</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Puntos</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registro</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Canjes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {usuariosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
                       No hay usuarios registrados
                     </td>
                   </tr>
@@ -299,12 +297,6 @@ const UsersAdmin = () => {
                         <p className="font-medium text-gray-800">
                           {usuario.current_points?.toLocaleString() || 0}
                         </p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Calendar size={14} />
-                          {formatearFecha(usuario.created_at)}
-                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <button

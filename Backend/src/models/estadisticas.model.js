@@ -136,6 +136,19 @@ const EstadisticasModel = {
   },
 
   /**
+   * Obtener todos los usuarios (para panel admin)
+   */
+  obtenerTodosUsuarios: async () => {
+    const result = await query(
+      `SELECT id, nombre, correo, nivel_membresia, puntos_actuales, puntos_totales
+       FROM usuarios
+       WHERE rol = 'usuario'
+       ORDER BY id DESC`
+    )
+    return result.rows
+  },
+
+  /**
    * Obtener canjes recientes
    */
   obtenerCanjesRecientes: async (limite = 5) => {

@@ -48,18 +48,28 @@ const getSummary = asyncHandler(async (req, res) => {
  * GET /api/stats/users
  */
 const getUserStats = asyncHandler(async (req, res) => {
-  const [totalUsuarios, usuariosPorNivel, usuariosRecientes] = await Promise.all([
+  const [totalUsuarios, usuariosPorNivel, todosUsuarios] = await Promise.all([
     EstadisticasModel.obtenerTotalUsuarios(),
     EstadisticasModel.obtenerUsuariosPorNivel(),
-    EstadisticasModel.obtenerUsuariosRecientes(10)
+    EstadisticasModel.obtenerTodosUsuarios()
   ])
+
+  // Mapear campos al formato que espera el frontend
+  const usuariosMapeados = todosUsuarios.map(usuario => ({
+    id: usuario.id,
+    name: usuario.nombre,
+    email: usuario.correo,
+    membership_level: usuario.nivel_membresia,
+    current_points: usuario.puntos_actuales,
+    total_points: usuario.puntos_totales
+  }))
 
   res.json({
     success: true,
     data: {
       totalUsers: totalUsuarios,
       usersByLevel: usuariosPorNivel,
-      recentUsers: usuariosRecientes
+      recentUsers: usuariosMapeados
     }
   })
 })
