@@ -100,7 +100,7 @@ const create = asyncHandler(async (req, res) => {
       puntosPorItem: producto.puntos_otorgados,
       cantidad,
       totalItem,
-      puntosTotales: puntosItem
+      puntosTotal: puntosItem
     })
   }
 
@@ -133,7 +133,7 @@ const create = asyncHandler(async (req, res) => {
       puntos_por_item: item.puntosPorItem,
       cantidad: item.cantidad,
       total_item: item.totalItem,
-      puntos_totales: item.puntosTotales
+      puntos_total: item.puntosTotal
     })
     itemsCreados.push(itemCreado)
   }
