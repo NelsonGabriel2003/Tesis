@@ -193,11 +193,25 @@ Debe ser el mismo número que registraste en la app.
     // Normalizar número (quitar + y espacios)
     let phone = contact.phone_number.replace(/[\s+\-]/g, '')
 
-    // Si empieza con código de país, intentar también sin él
+    // Generar variantes para Ecuador (números empiezan con 09)
     const variantes = [phone]
-    if (phone.startsWith('593')) variantes.push(phone.substring(3))
-    if (phone.startsWith('0')) variantes.push(phone.substring(1))
-    if (!phone.startsWith('0')) variantes.push('0' + phone)
+    
+    // Si viene con código de país 593, generar variante sin él
+    let sinCodigo = phone
+    if (phone.startsWith('593')) {
+      sinCodigo = phone.substring(3)  // 593987654321 → 987654321
+      variantes.push(sinCodigo)
+    }
+    
+    // Variante con 0 al inicio (formato local Ecuador: 09XXXXXXXX)
+    if (!sinCodigo.startsWith('0')) {
+      variantes.push('0' + sinCodigo)  // 987654321 → 0987654321
+    }
+    
+    // Variante sin 0 al inicio (por si en BD no tiene el 0)
+    if (sinCodigo.startsWith('0')) {
+      variantes.push(sinCodigo.substring(1))  // 0987654321 → 987654321
+    }
 
     let usuario = null
     for (const variante of variantes) {
