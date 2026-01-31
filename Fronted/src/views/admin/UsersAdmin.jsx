@@ -46,10 +46,10 @@ const UsersAdmin = () => {
     setError(null)
     try {
       const response = await api.get('/stats/users')
-      setUsuarios(response.recentUsers || [])
+      setUsuarios(response.data?.recentUsers || [])
       setEstadisticas({
-        total: response.totalUsers,
-        porNivel: response.usersByLevel
+        total: response.data?.totalUsers || 0,
+        porNivel: response.data?.usersByLevel || []
       })
       
       // Cargar canjes pendientes
