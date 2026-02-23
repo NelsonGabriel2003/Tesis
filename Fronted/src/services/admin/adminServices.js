@@ -258,13 +258,13 @@ export const configService = {
 
   // Actualizar una configuración
   update: async (key, value) => {
-    const response = await api.put(`/config/${key}`, { value })
+    const response = await api.put(`/admin/config/${key}`, { value })
     return response.data
   },
 
   // Actualizar múltiples configuraciones
   updateMany: async (configs) => {
-    const response = await api.put('/config', { configs })
+    const response = await api.put('/admin/config/batch', { configs })
     return response.data
   }
 }

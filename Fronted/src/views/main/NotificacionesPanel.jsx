@@ -74,7 +74,7 @@ const NotificacionesPanel = () => {
       </div>
 
       {notificaciones.length > 0 ? (
-        <div className="mt-2 space-y-2 px-2">
+        <div className="mt-2 space-y-2 px-2 max-h-60 overflow-y-auto">
           {notificaciones.map(notif => {
             const styles = getNotifStyles(notif)
             const Icon = styles.Icon

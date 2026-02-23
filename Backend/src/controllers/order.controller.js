@@ -9,7 +9,7 @@ import ProductoModel from '../models/producto.model.js'
 import UsuarioModel from '../models/usuario.model.js'
 import MovimientoModel from '../models/movimiento.model.js'
 import ConfigModel from '../models/configuracion.model.js'
-import { codeGenerator, qrService, telegramService, pdfService } from '../services/index.js'
+import { codeGenerator, telegramService, pdfService } from '../services/index.js'
 import { asyncHandler } from '../middlewares/index.js'
 
 /**
@@ -43,7 +43,6 @@ const mapPedidoToOrder = (pedido) => {
     table_number: pedido.numero_mesa,
     notes: pedido.notas,
     rejection_reason: pedido.motivo_rechazo,
-    qr_data: pedido.datos_qr,
     created_at: pedido.fecha_pedido,
     approved_at: pedido.fecha_aprobacion,
     preparing_at: pedido.fecha_preparacion,
@@ -55,7 +54,6 @@ const mapPedidoToOrder = (pedido) => {
     user_phone: pedido.telefono_usuario,
     staff_name: pedido.nombre_personal,
     items: pedido.items,
-    qrCode: pedido.qrCode
   }
 }
 
@@ -120,7 +118,6 @@ const create = asyncHandler(async (req, res) => {
     puntos_a_ganar: puntosTotales,
     numero_mesa: tableNumber,
     notas: notes,
-    datos_qr: codeGenerator.generateQRData(codigoPedido, null)
   }, req.user?.id, infoSolicitud)
 
   const itemsCreados = []
@@ -138,8 +135,6 @@ const create = asyncHandler(async (req, res) => {
     itemsCreados.push(itemCreado)
   }
 
-  const qrCode = await qrService.generateOrderQR(codigoPedido, pedido.id)
-
   const usuario = await UsuarioModel.buscarPorId(usuarioId)
   const pedidoConUsuario = { ...pedido, user_name: usuario.nombre, user_phone: usuario.telefono }
 
@@ -151,7 +146,7 @@ const create = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     data: {
-      order: mapPedidoToOrder({ ...pedido, items: itemsCreados, qrCode }),
+      order: mapPedidoToOrder({ ...pedido, items: itemsCreados }),
       message: 'Pedido enviado. Esperando confirmación.'
     }
   })
@@ -183,7 +178,6 @@ const getActiveOrders = asyncHandler(async (req, res) => {
 
   for (let pedido of pedidos) {
     pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
-    pedido.qrCode = await qrService.generateOrderQR(pedido.codigo_pedido, pedido.id)
   }
 
   res.json({ success: true, data: pedidos.map(mapPedidoToOrder) })
@@ -202,7 +196,6 @@ const getById = asyncHandler(async (req, res) => {
   }
 
   pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
-  pedido.qrCode = await qrService.generateOrderQR(pedido.codigo_pedido, pedido.id)
 
   res.json({ success: true, data: mapPedidoToOrder(pedido) })
 })
@@ -375,70 +368,6 @@ const downloadPDF = asyncHandler(async (req, res) => {
 })
 
 /**
- * Verificar QR de pedido (Staff)
- * POST /api/orders-admin/verify-qr
- */
-const verifyQR = asyncHandler(async (req, res) => {
-  const { qrData } = req.body
-
-  if (!qrData) {
-    return res.status(400).json({ success: false, message: 'Datos de QR requeridos' })
-  }
-
-  // Parsear datos del QR
-  let parsedData
-  try {
-    parsedData = typeof qrData === 'string' ? JSON.parse(qrData) : qrData
-  } catch (e) {
-    return res.status(400).json({ success: false, message: 'QR inválido' })
-  }
-
-  if (parsedData.type !== 'order') {
-    return res.status(400).json({ success: false, message: 'Este QR no es de un pedido' })
-  }
-
-  // Buscar pedido
-  const pedido = await PedidoModel.buscarPorId(parsedData.id)
-
-  if (!pedido) {
-    return res.status(404).json({ success: false, message: 'Pedido no encontrado' })
-  }
-
-  // Verificar que el código coincide
-  if (pedido.codigo_pedido !== parsedData.code) {
-    return res.status(400).json({ success: false, message: 'Código de pedido no coincide' })
-  }
-
-  // Obtener items del pedido
-  pedido.items = await ItemPedidoModel.obtenerPorPedido(pedido.id)
-
-  // Mapear al formato del frontend
-  const orderMapped = mapPedidoToOrder(pedido)
-
-  // Verificar estado
-  const statusInfo = {
-    pending: { canDeliver: false, message: 'Este pedido aún está pendiente de aprobación' },
-    approved: { canDeliver: false, message: 'Este pedido aún no ha sido preparado' },
-    preparing: { canDeliver: false, message: 'Este pedido está en preparación' },
-    completed: { canDeliver: true, message: '¡Pedido listo para entregar!' },
-    delivered: { canDeliver: false, message: 'Este pedido ya fue entregado' },
-    rejected: { canDeliver: false, message: 'Este pedido fue rechazado' },
-    cancelled: { canDeliver: false, message: 'Este pedido fue cancelado' }
-  }
-
-  const info = statusInfo[orderMapped.status] || { canDeliver: false, message: 'Estado desconocido' }
-
-  res.json({
-    success: true,
-    data: {
-      order: orderMapped,
-      canDeliver: info.canDeliver,
-      statusMessage: info.message
-    }
-  })
-})
-
-/**
  * Entregar pedido (Staff)
  * PUT /api/orders-admin/:id/deliver
  */
@@ -485,6 +414,5 @@ export const orderController = {
   reject,
   complete,
   downloadPDF,
-  verifyQR,
   deliver
 }

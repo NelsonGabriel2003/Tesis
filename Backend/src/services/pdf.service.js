@@ -93,22 +93,6 @@ export const generarPDFPedido = async (pedido, items = [], config = {}) => {
       dibujarLinea(doc, lineColor)
       doc.moveDown(1)
 
-      // === CÓDIGO QR ===
-      if (pedido.datos_qr) {
-        try {
-          const qrBase64 = pedido.datos_qr.replace(/^data:image\/\w+;base64,/, '')
-          const qrBuffer = Buffer.from(qrBase64, 'base64')
-
-          const qrX = (doc.page.width - 120) / 2
-          doc.image(qrBuffer, qrX, doc.y, { width: 120, height: 120 })
-          doc.y += 130
-        } catch (qrError) {
-          console.error('Error al insertar QR:', qrError)
-        }
-      }
-
-      doc.moveDown(0.5)
-
       // === INFORMACIÓN GENERAL ===
       doc
         .fontSize(12)

@@ -1,6 +1,6 @@
 /**
  * Rutas públicas para comprobantes de pedidos
- * No requieren autenticación - accesibles via QR
+ * No requieren autenticación
  */
 
 import { Router } from 'express'

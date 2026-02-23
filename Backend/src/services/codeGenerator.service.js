@@ -4,11 +4,3 @@ export const generateOrderCode = () => {
   return `ORD-${year}-${random}`
 }
 
-export const generateQRData = (orderCode, orderId) => {
-  return JSON.stringify({
-    type: 'order',
-    code: orderCode,
-    id: orderId,
-    timestamp: Date.now()
-  })
-}

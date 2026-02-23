@@ -354,6 +354,19 @@ const UsuarioModel = {
   },
 
   /**
+   * Reiniciar puntos_actuales de todos los usuarios (reinicio mensual)
+   */
+  reiniciarPuntosActualesMensual: async () => {
+    const usuarios = await query(
+      `SELECT id, puntos_actuales FROM usuarios WHERE puntos_actuales > 0`
+    )
+
+    await query(`UPDATE usuarios SET puntos_actuales = 0 WHERE puntos_actuales > 0`)
+
+    return usuarios.rows
+  },
+
+  /**
    * Verificar si es primer inicio de sesion
    */
   esPrimerLogin: async (usuarioId) => {

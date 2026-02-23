@@ -13,6 +13,8 @@ import { notFound, errorHandler } from './middlewares/index.js'
 import telegramService from './services/telegram.service.js'
 import emailService from './services/email.service.js'
 import PedidoModel from './models/pedido.model.js'
+import UsuarioModel from './models/usuario.model.js'
+import MovimientoModel from './models/movimiento.model.js'
 // Crear aplicación Express
 const app = express()
 
@@ -98,6 +100,38 @@ app.listen(PORT, () => {
       console.error('Error en auto-cancelación:', error.message)
     }
   }, INTERVALO_CHECK)
+
+  // --- Reinicio mensual de puntos ---
+  let ultimoMesReiniciado = null
+
+  setInterval(async () => {
+    const ahora = new Date()
+    const mesActual = `${ahora.getFullYear()}-${ahora.getMonth()}`
+
+    if (ahora.getDate() === 1 && ultimoMesReiniciado !== mesActual) {
+      try {
+        const afectados = await UsuarioModel.reiniciarPuntosActualesMensual()
+
+        for (const usuario of afectados) {
+          if (usuario.puntos_actuales > 0) {
+            await MovimientoModel.crear({
+              usuario_id: usuario.id,
+              tipo: 'expirado',
+              puntos: usuario.puntos_actuales,
+              descripcion: `Reinicio mensual de puntos - ${ahora.toLocaleDateString('es-EC', { month: 'long', year: 'numeric' })}`,
+              tipo_referencia: 'sistema',
+              referencia_id: null
+            })
+          }
+        }
+
+        ultimoMesReiniciado = mesActual
+        console.log(`Reinicio mensual: ${afectados.length} usuario(s) con puntos expirados`)
+      } catch (error) {
+        console.error('Error en reinicio mensual:', error.message)
+      }
+    }
+  }, 60000)
 
   console.log(`
 

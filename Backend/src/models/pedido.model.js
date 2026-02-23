@@ -12,15 +12,15 @@ const PedidoModel = {
   crear: async (datosPedido) => {
     const {
       usuario_id, codigo_pedido, subtotal, descuento, total,
-      puntos_a_ganar, numero_mesa, notas, datos_qr
+      puntos_a_ganar, numero_mesa, notas
     } = datosPedido
 
     const result = await query(
       `INSERT INTO pedidos
-        (usuario_id, codigo_pedido, subtotal, descuento, total, puntos_a_ganar, numero_mesa, notas, datos_qr)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (usuario_id, codigo_pedido, subtotal, descuento, total, puntos_a_ganar, numero_mesa, notas)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [usuario_id, codigo_pedido, subtotal, descuento || 0, total, puntos_a_ganar, numero_mesa, notas, datos_qr]
+      [usuario_id, codigo_pedido, subtotal, descuento || 0, total, puntos_a_ganar, numero_mesa, notas]
     )
     return result.rows[0]
   },

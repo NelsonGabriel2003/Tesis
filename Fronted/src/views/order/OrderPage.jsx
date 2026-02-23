@@ -5,7 +5,6 @@ import { useOrderController } from '../../controllers/order/useOrderController'
 import OrderCart from './OrderCart'
 import OrderSummary from './OrderSummary'
 import OrderTracking from './OrderTracking'
-import OrderQRCode from './OrderQRCode'
 
 const VIEWS = { CART: 'cart', SUMMARY: 'summary', TRACKING: 'tracking' }
 const POLLING_INTERVAL = 5000
@@ -137,16 +136,11 @@ const OrderPage = () => {
         )}
 
         {currentView === VIEWS.TRACKING && currentOrder && (
-          <>
             <OrderTracking
               order={currentOrder}
               onRefresh={handleRefresh}
               isLoading={isLoading}
             />
-            {(currentOrder.status === 'completed' || currentOrder.status === 'approved' || currentOrder.status === 'preparing') && (
-              <OrderQRCode order={currentOrder} />
-            )}
-          </>
         )}
       </main>
     </div>
