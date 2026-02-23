@@ -26,6 +26,8 @@ const guardarIdsProcesados = (ids) => {
 const useDetectarCambiosAdmin = () => {
   const { agregarNotificacion } = useNotificaciones()
   const idsYaProcesados = useRef(cargarIdsProcesados())
+  const agregarRef = useRef(agregarNotificacion)
+  agregarRef.current = agregarNotificacion
 
   useEffect(() => {
     const consultarNotificaciones = async () => {
@@ -34,42 +36,35 @@ const useDetectarCambiosAdmin = () => {
         const respuesta = await api.get(`/notifications/global?since=${encodeURIComponent(since)}`)
 
         if (respuesta.success && respuesta.data?.length > 0) {
-          let huboNuevas = false
+          // Solo tomar la mas reciente
+          const notif = respuesta.data[0]
 
-          respuesta.data.forEach(notif => {
-            if (!idsYaProcesados.current.has(notif.id)) {
-              idsYaProcesados.current.add(notif.id)
-              huboNuevas = true
-              agregarNotificacion({
-                tipo: notif.tipo,
-                titulo: notif.titulo,
-                mensaje: notif.mensaje,
-                fecha: notif.fecha_creacion
-              })
-            }
-          })
-
-          if (huboNuevas) {
+          if (!idsYaProcesados.current.has(notif.id)) {
+            idsYaProcesados.current.add(notif.id)
             guardarIdsProcesados(idsYaProcesados.current)
+            agregarRef.current({
+              globalId: notif.id,
+              tipo: notif.tipo,
+              titulo: notif.titulo,
+              mensaje: notif.mensaje,
+              fecha: notif.fecha_creacion
+            })
           }
 
-          // Actualizar marca de tiempo a la mas reciente
-          const masReciente = respuesta.data[0].fecha_creacion
-          localStorage.setItem(STORAGE_KEY, masReciente)
+          // Siempre avanzar marca de tiempo para no re-traer viejas
+          localStorage.setItem(STORAGE_KEY, notif.fecha_creacion)
         }
       } catch (error) {
-        // Silenciar errores de polling para no molestar al usuario
+        // Silenciar errores de polling
       }
     }
 
-    // Primera consulta inmediata
     consultarNotificaciones()
 
-    // Polling cada 60s
     const intervalo = setInterval(consultarNotificaciones, INTERVALO_POLLING)
 
     return () => clearInterval(intervalo)
-  }, [agregarNotificacion])
+  }, []) // sin dependencias - usa ref para agregarNotificacion
 }
 
 export default useDetectarCambiosAdmin

@@ -120,7 +120,13 @@ export const NotificacionesProvider = ({ children }) => {
       fecha: new Date(),
       ...notificacion
     }
-    actualizarNotificaciones(prev => [nueva, ...prev])
+    actualizarNotificaciones(prev => {
+      // Si tiene globalId, no duplicar
+      if (nueva.globalId && prev.some(n => n.globalId === nueva.globalId)) {
+        return prev
+      }
+      return [nueva, ...prev]
+    })
   }, [actualizarNotificaciones])
 
   // Eliminar notificación
