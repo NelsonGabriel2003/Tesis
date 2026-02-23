@@ -5,6 +5,7 @@
 
 import ConfiguracionModel from '../models/configuracion.model.js'
 import { asyncHandler } from '../middlewares/index.js'
+import { notificarGlobal } from '../utils/notificacionGlobal.js'
 
 /**
  * Obtener todas las configuraciones
@@ -89,6 +90,8 @@ const update = asyncHandler(async (req, res) => {
     message: 'Configuración actualizada',
     data: updated
   })
+
+  notificarGlobal('config_actualizada', 'Configuracion actualizada', `Se actualizo la configuracion "${key}"`)
 })
 
 /**
@@ -117,6 +120,8 @@ const updateMany = asyncHandler(async (req, res) => {
     message: `${updated.length} configuraciones actualizadas`,
     data: updated
   })
+
+  notificarGlobal('config_actualizada', 'Configuracion actualizada', `Se actualizaron ${updated.length} configuraciones`)
 })
 
 const adminConfigController = {

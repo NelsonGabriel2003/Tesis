@@ -30,11 +30,11 @@ const OrderTracking = ({ order, onRefresh, isLoading }) => {
   const isCompleted = order.status === 'completed' || order.status === 'delivered'
   const tieneTelegram = usuarioActual?.telegram_chat_id
 
-  // Detectar cambios de estado y agregar notificaciones
+  // las  notificaciones vienen despues de cada accion
   useEffect(() => {
     const estadoPrevio = estadoAnterior.current
 
-    // Pedido completado
+
     if (order.status === 'completed' && estadoPrevio !== 'completed') {
       if (!pedidoYaNotificado(order.id)) {
         agregarNotificacionPedido(order, false)

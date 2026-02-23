@@ -3,12 +3,13 @@
  * Gestión de servicios del bar
  */
 
-import { useState } from 'react'
-import { Plus, Edit, Trash2, X, Loader, MessageCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Edit, Trash2, X, Loader, MessageCircle, Save, Check } from 'lucide-react'
 import { useServiceController } from '../../controllers/admin'
 import { serviceCategories } from '../../models/admin'
 import ImageUpload from '../../components/ui/ImageUpload'
 import SearchBar from '../../components/ui/SearchBar'
+import api from '../../services/api'
 
 const ServicesAdmin = () => {
   const {
@@ -24,10 +25,62 @@ const ServicesAdmin = () => {
     openEditModal,
     closeModal,
     saveService,
-    deleteService
+    deleteService,
+    fieldErrors,
+    tieneErrores
   } = useServiceController()
 
   const [searchQuery, setSearchQuery] = useState('')
+  const [whatsappNumero, setWhatsappNumero] = useState('')
+  const [whatsappError, setWhatsappError] = useState('')
+  const [guardandoWhatsapp, setGuardandoWhatsapp] = useState(false)
+  const [whatsappGuardado, setWhatsappGuardado] = useState(false)
+
+  useEffect(() => {
+    const cargarWhatsapp = async () => {
+      try {
+        const response = await api.get('/config/whatsapp')
+        setWhatsappNumero(response.data?.numero || '')
+      } catch (err) {
+        console.error('Error cargando WhatsApp:', err)
+      }
+    }
+    cargarWhatsapp()
+  }, [])
+
+  const validarWhatsapp = (valor) => {
+    if (!valor) return ''
+    if (valor.length < 10) return 'Debe tener 10 digitos'
+    if (!/^09[0-9]{8}$/.test(valor)) return 'Formato invalido. Debe ser 09XXXXXXXX'
+    return ''
+  }
+
+  const manejarCambioWhatsapp = (e) => {
+    const valor = e.target.value.replace(/\D/g, '')
+    if (valor.length <= 10) {
+      setWhatsappNumero(valor)
+      setWhatsappError(valor.length === 10 ? validarWhatsapp(valor) : '')
+      setWhatsappGuardado(false)
+    }
+  }
+
+  const guardarWhatsapp = async () => {
+    const errorValidacion = validarWhatsapp(whatsappNumero)
+    if (errorValidacion) {
+      setWhatsappError(errorValidacion)
+      return
+    }
+    setGuardandoWhatsapp(true)
+    try {
+      await api.put('/config/whatsapp_reservas', { value: whatsappNumero })
+      setWhatsappGuardado(true)
+      setTimeout(() => setWhatsappGuardado(false), 3000)
+    } catch (err) {
+      console.error('Error guardando WhatsApp:', err)
+    } finally {
+      setGuardandoWhatsapp(false)
+    }
+  }
 
   // Filtrar servicios
   const filteredServices = services.filter(service =>
@@ -60,13 +113,41 @@ const ServicesAdmin = () => {
         </button>
       </div>
 
-      {/* Info de WhatsApp */}
-      <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
-        <MessageCircle className="text-green-600" size={24} />
-        <div>
-          <p className="font-medium text-green-800">Reservas por WhatsApp</p>
-          <p className="text-sm text-green-600">Los clientes contactan directamente para reservar estos servicios</p>
+      {/* WhatsApp Config */}
+      <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+        <div className="flex items-center gap-2 mb-3">
+          <MessageCircle className="text-green-600" size={20} />
+          <p className="font-medium text-green-800">Numero de WhatsApp para reservas</p>
         </div>
+        <div className="flex gap-2">
+          <input
+            type="tel"
+            value={whatsappNumero}
+            onChange={manejarCambioWhatsapp}
+            placeholder="0999999999"
+            maxLength={10}
+            className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+              whatsappError ? 'border-red-400' : 'border-green-300'
+            }`}
+          />
+          <button
+            onClick={guardarWhatsapp}
+            disabled={guardandoWhatsapp || !!whatsappError}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+          >
+            {guardandoWhatsapp ? (
+              <Loader size={18} className="animate-spin" />
+            ) : whatsappGuardado ? (
+              <Check size={18} />
+            ) : (
+              <Save size={18} />
+            )}
+            {whatsappGuardado ? 'Guardado' : 'Guardar'}
+          </button>
+        </div>
+        {whatsappError && (
+          <p className="mt-2 text-xs text-red-500">{whatsappError}</p>
+        )}
       </div>
 
       {/* Search con contador */}
@@ -234,11 +315,12 @@ const ServicesAdmin = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg
+                    focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                    ${fieldErrors.name ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Ej: Reserva de Mesa"
-                  required
                 />
+                {fieldErrors.name && <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>}
               </div>
 
               {/* Descripción */}
@@ -266,9 +348,9 @@ const ServicesAdmin = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  required
+                  className={`w-full px-4 py-2 border rounded-lg
+                    focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                    ${fieldErrors.category ? 'border-red-500' : 'border-gray-300'}`}
                 >
                   <option value="">Seleccionar categoría</option>
                   {serviceCategories.map((cat) => (
@@ -277,6 +359,7 @@ const ServicesAdmin = () => {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.category && <p className="mt-1 text-sm text-red-500">{fieldErrors.category}</p>}
               </div>
 
               {/* Disponible */}
@@ -296,11 +379,6 @@ const ServicesAdmin = () => {
                 </label>
               </div>
 
-              {/* Info WhatsApp */}
-              <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                📱 Los clientes contactarán por WhatsApp para reservar este servicio
-              </div>
-
               {/* Buttons */}
               <div className="flex gap-3 pt-4">
                 <button
@@ -313,7 +391,7 @@ const ServicesAdmin = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || tieneErrores}
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg
                     hover:bg-purple-700 transition-colors disabled:opacity-50
                     flex items-center justify-center gap-2"

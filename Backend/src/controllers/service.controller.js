@@ -7,6 +7,7 @@ import ServicioModel from '../models/servicio.model.js'
 import UsuarioModel from '../models/usuario.model.js'
 import MovimientoModel from '../models/movimiento.model.js'
 import { asyncHandler } from '../middlewares/index.js'
+import { notificarGlobal } from '../utils/notificacionGlobal.js'
 
 /**
  * Obtener todos los servicios
@@ -191,6 +192,8 @@ const createService = asyncHandler(async (req, res) => {
     message: 'Servicio creado exitosamente',
     data: servicio
   })
+
+  notificarGlobal('servicio_creado', 'Nuevo servicio', `Se agrego "${name}" a los servicios`)
 })
 
 /**
@@ -228,6 +231,8 @@ const updateService = asyncHandler(async (req, res) => {
     message: 'Servicio actualizado',
     data: servicio
   })
+
+  notificarGlobal('servicio_actualizado', 'Servicio actualizado', `Se actualizo "${name || servicio.nombre}" en servicios`)
 })
 
 export {

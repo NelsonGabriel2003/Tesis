@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  ArrowLeft,
   Settings,
   Camera
 } from 'lucide-react'
@@ -29,7 +28,7 @@ import StaffAdmin from './StaffAdmin'
 import ConfigAdmin from './ConfigAdmin'
 import PhotosAdmin from './PhotosAdmin'
 
-// Contexto de canjes para el admin
+
 import { CanjesAdminProvider } from '../../contexts/CanjesAdminContext'
 
 const AdminPage = () => {
@@ -63,11 +62,6 @@ const AdminPage = () => {
     navigate('/login')
   }
 
-  // Volver al dashboard
-  const handleBack = () => {
-    navigate('/main')
-  }
-
   // Renderizar contenido según tab activo
   const renderContent = () => {
     switch (activeTab) {
@@ -93,7 +87,6 @@ const AdminPage = () => {
   return (
     <CanjesAdminProvider>
     <div className="min-h-screen bg-gray-100">
-      {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-white shadow-md">
         <div className="flex items-center justify-between px-4 py-3">
           <button
@@ -113,7 +106,6 @@ const AdminPage = () => {
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
         <aside
           className={`
             fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-white shadow-lg
@@ -122,27 +114,14 @@ const AdminPage = () => {
             lg:translate-x-0
           `}
         >
-          {/* Logo */}
           <div className="flex items-center gap-3 px-6 py-5 border-b">
             <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
               <LayoutDashboard className="text-white" size={24} />
             </div>
             <div>
               <h2 className="font-bold text-gray-800">Admin Panel</h2>
-              <p className="text-xs text-gray-500">Sistema de Fidelización</p>
+              <p className="text-xs text-gray-500">Sistema</p>
             </div>
-          </div>
-
-          {/* Botón Volver */}
-          <div className="p-4 border-b">
-            <button
-              onClick={handleBack}
-              className="w-full flex items-center gap-3 px-4 py-2 rounded-lg
-                text-gray-600 hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Volver al Inicio</span>
-            </button>
           </div>
 
           {/* Navigation */}

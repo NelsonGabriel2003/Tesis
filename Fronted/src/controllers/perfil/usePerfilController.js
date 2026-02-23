@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { initialPerfilState, defaultMembershipLevels } from '../../models/perfil/perfilModel'
 import { perfilService } from '../../services/perfil/perfilServices'
+import { validaciones, mensajesRegistro, limiteCampos } from '../../models/auth/authModel'
 
 export const usePerfilController = () => {
   const [state, setState] = useState(initialPerfilState)
@@ -14,6 +15,7 @@ export const usePerfilController = () => {
   const [activeTab, setActiveTab] = useState('info')
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState({})
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const navigate = useNavigate()
 
@@ -85,9 +87,67 @@ export const usePerfilController = () => {
     }
   }, [])
 
+  // Validar un campo individual
+  const validarCampo = useCallback((name, value) => {
+    switch (name) {
+      case 'name':
+        if (!value || !value.trim()) return 'El nombre es requerido'
+        if (!validaciones.nombre.test(value)) return mensajesRegistro.NOMBRE_INVALIDO
+        if (value.trim().length < validaciones.nombreMinimo) return mensajesRegistro.NOMBRE_CORTO
+        if (value.trim().split(/\s+/).length < 2) return mensajesRegistro.NOMBRE_INCOMPLETO
+        return null
+      case 'phone':
+        if (value && value.length > 0 && !/^[0-9]*$/.test(value)) return 'Solo se permiten numeros'
+        if (value && value.length >= 1 && value[0] !== '0') return 'Debe comenzar con 09'
+        if (value && value.length >= 2 && value[1] !== '9') return 'Debe comenzar con 09'
+        if (value && value.length > 0 && value.length < 10) return 'El telefono debe tener 10 digitos'
+        if (value && value.length === 10 && !validaciones.telefono.test(value)) return mensajesRegistro.TELEFONO_INVALIDO
+        return null
+      default:
+        return null
+    }
+  }, [])
+
+  // Validar todo el formulario antes de guardar
+  const validarFormulario = useCallback(() => {
+    const errores = {}
+
+    const errorName = validarCampo('name', editData.name)
+    if (errorName) errores.name = errorName
+
+    const errorPhone = validarCampo('phone', editData.phone)
+    if (errorPhone) errores.phone = errorPhone
+
+    setFieldErrors(errores)
+    return Object.keys(errores).length === 0
+  }, [editData, validarCampo])
+
+  // Manejar cambios en el formulario con validacion en tiempo real
+  const handleEditChange = useCallback((field, value) => {
+    // Aplicar limite de caracteres
+    if (field === 'name' && value.length > limiteCampos.nombre) return
+    if (field === 'phone' && value.length > limiteCampos.telefono) return
+
+    // Capitalizar cada palabra del nombre
+    let valorFinal = value
+    if (field === 'name') {
+      valorFinal = value.replace(/\b[a-záéíóúñü]/g, c => c.toUpperCase())
+    }
+
+    setEditData(prev => ({
+      ...prev,
+      [field]: valorFinal
+    }))
+
+    const error = validarCampo(field, valorFinal)
+    setFieldErrors(prev => ({ ...prev, [field]: error }))
+  }, [validarCampo])
+
   // Actualizar perfil
   const updateProfile = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true }))
+    if (!validarFormulario()) return
+
+    setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
       const datosActualizados = await perfilService.updateUserProfile(editData)
@@ -100,22 +160,21 @@ export const usePerfilController = () => {
         loading: false
       }))
       setIsEditing(false)
+      setFieldErrors({})
     } catch (error) {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: error.message
-      }))
+      const msg = error.message || ''
+      if (error.field === 'phone' || msg.includes('telefono') || msg.includes('numero')) {
+        setFieldErrors(prev => ({ ...prev, phone: msg }))
+        setState(prev => ({ ...prev, loading: false }))
+      } else {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: msg
+        }))
+      }
     }
-  }, [editData])
-
-  // Manejar cambios en el formulario
-  const handleEditChange = useCallback((field, value) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }, [])
+  }, [editData, validarFormulario])
 
   // Cancelar edición
   const cancelEdit = useCallback(() => {
@@ -127,6 +186,7 @@ export const usePerfilController = () => {
       })
     }
     setIsEditing(false)
+    setFieldErrors({})
   }, [state.user])
 
   // Calcular membershipInfo de forma síncrona usando los niveles cargados
@@ -211,6 +271,7 @@ export const usePerfilController = () => {
     activeTab,
     isEditing,
     editData,
+    fieldErrors,
     membershipLevels,
 
     // Datos calculados (ahora son síncronos)

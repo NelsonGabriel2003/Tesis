@@ -18,15 +18,18 @@ import { useConfigController } from '../../controllers/admin/useConfigController
 
 const inputBaseClass = "px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
 
-const NumberInput = ({ value, onChange, isMultiplier }) => (
-  <input
-    type="number"
-    step={isMultiplier ? '0.1' : '1'}
-    min="0"
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className={`w-full ${inputBaseClass}`}
-  />
+const NumberInput = ({ value, onChange, isMultiplier, error }) => (
+  <div>
+    <input
+      type="number"
+      step={isMultiplier ? '0.1' : '1'}
+      min="0"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${error ? 'border-red-500' : 'border-gray-300'}`}
+    />
+    {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+  </div>
 )
 
 const EmojiInput = ({ value, onChange }) => (
@@ -98,6 +101,8 @@ const ConfigAdmin = () => {
     error,
     notification,
     editedValues,
+    fieldErrors,
+    tieneErrores,
     loadConfigs,
     handleValueChange,
     saveChanges,
@@ -118,10 +123,11 @@ const ConfigAdmin = () => {
     switch (type) {
       case 'number':
         return (
-          <NumberInput 
-            value={value} 
-            onChange={onChange} 
-            isMultiplier={config.key.includes('multiplicador')} 
+          <NumberInput
+            value={value}
+            onChange={onChange}
+            isMultiplier={config.key.includes('multiplicador')}
+            error={fieldErrors[config.key]}
           />
         )
       case 'emoji':
@@ -138,10 +144,11 @@ const ConfigAdmin = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Header 
+      <Header
         loading={loading}
         saving={saving}
         hasChanges={hasChanges()}
+        tieneErrores={tieneErrores}
         onRefresh={loadConfigs}
         onDiscard={discardChanges}
         onSave={saveChanges}
@@ -190,7 +197,7 @@ const ConfigAdmin = () => {
 // SUBCOMPONENTES
 // ============================================
 
-const Header = ({ loading, saving, hasChanges, onRefresh, onDiscard, onSave }) => (
+const Header = ({ loading, saving, hasChanges, tieneErrores, onRefresh, onDiscard, onSave }) => (
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 className="text-2xl font-bold text-gray-800">Configuración</h1>
@@ -216,7 +223,7 @@ const Header = ({ loading, saving, hasChanges, onRefresh, onDiscard, onSave }) =
           </button>
           <button
             onClick={onSave}
-            disabled={saving}
+            disabled={saving || tieneErrores}
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
           >
             {saving ? <Loader size={20} className="animate-spin" /> : <Save size={20} />}

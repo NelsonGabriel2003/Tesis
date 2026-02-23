@@ -5,7 +5,6 @@
 
 import { Plus, Minus, Star } from 'lucide-react'
 
-// Iconos por categoría (fallback si no hay imagen)
 const CATEGORY_ICONS = {
   'bebidas': '🍺',
   'cocteles': '🍹',
@@ -67,7 +66,7 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
               !item.available ? 'opacity-60' : ''
             }`}
           >
-            {/* Imagen o placeholder */}
+            {/* Imagen que debe venir de admin */}
             <div className="relative h-32 bg-gradient-to-br from-primary/20 to-purple-500/20 overflow-hidden">
               {item.imageUrl ? (
                 <img 
@@ -81,13 +80,11 @@ const MenuList = ({ items, loading, onAddItem, onRemoveItem, getItemQuantity }) 
                 </div>
               )}
 
-              {/* Badge de puntos */}
               <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-1 text-xs font-bold text-yellow-900">
                 <Star size={12} fill="currentColor" />
                 +{item.points} pts
               </div>
 
-              {/* Badge no disponible */}
               {!item.available && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                   <span className="rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white">

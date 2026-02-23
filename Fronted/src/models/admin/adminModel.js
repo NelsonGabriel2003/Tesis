@@ -133,6 +133,170 @@ export const serviceCategories = [
   { id: 'Delivery', name: 'Delivery', icon: '🚗' }
 ]
 
+// Reglas de validación para productos
+export const reglasProducto = {
+  name: {
+    requerido: true,
+    min: 2,
+    mensajes: {
+      requerido: 'El nombre es requerido',
+      min: 'El nombre debe tener al menos 2 caracteres'
+    }
+  },
+  price: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El precio es requerido',
+      tipo: 'Ingresa un precio válido',
+      mayorQue: 'El precio debe ser mayor a 0'
+    }
+  },
+  points_earned: {
+    tipo: 'numero',
+    minValor: 0,
+    mensajes: {
+      tipo: 'Ingresa un número válido',
+      minValor: 'Los puntos no pueden ser negativos'
+    }
+  },
+  category: {
+    requerido: true,
+    mensajes: {
+      requerido: 'Selecciona una categoría'
+    }
+  }
+}
+
+// Reglas de validación para recompensas
+export const reglasRecompensa = {
+  name: {
+    requerido: true,
+    min: 2,
+    mensajes: {
+      requerido: 'El nombre es requerido',
+      min: 'El nombre debe tener al menos 2 caracteres'
+    }
+  },
+  points_cost: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El costo en puntos es requerido',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'El costo debe ser mayor a 0'
+    }
+  },
+  stock: {
+    tipo: 'numero',
+    minValor: 0,
+    mensajes: {
+      tipo: 'Ingresa un número válido',
+      minValor: 'El stock no puede ser negativo'
+    }
+  },
+  category: {
+    requerido: true,
+    mensajes: {
+      requerido: 'Selecciona una categoría'
+    }
+  }
+}
+
+// Reglas de validación para configuración
+export const reglasConfig = {
+  puntos_por_dolar: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'Los puntos por dólar son requeridos',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'Debe ser mayor a 0'
+    }
+  },
+  umbral_plata: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El umbral es requerido',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'Debe ser mayor a 0'
+    }
+  },
+  umbral_oro: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El umbral es requerido',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'Debe ser mayor a 0'
+    }
+  },
+  umbral_platino: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El umbral es requerido',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'Debe ser mayor a 0'
+    }
+  },
+  multiplicador_plata: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El multiplicador es requerido',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'Debe ser mayor a 0'
+    }
+  },
+  multiplicador_oro: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El multiplicador es requerido',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'Debe ser mayor a 0'
+    }
+  },
+  multiplicador_platino: {
+    requerido: true,
+    tipo: 'numero',
+    mayorQue: 0,
+    mensajes: {
+      requerido: 'El multiplicador es requerido',
+      tipo: 'Ingresa un número válido',
+      mayorQue: 'Debe ser mayor a 0'
+    }
+  }
+}
+
+// Reglas de validación para servicios
+export const reglasServicio = {
+  name: {
+    requerido: true,
+    min: 2,
+    mensajes: {
+      requerido: 'El nombre es requerido',
+      min: 'El nombre debe tener al menos 2 caracteres'
+    }
+  },
+  category: {
+    requerido: true,
+    mensajes: {
+      requerido: 'Selecciona una categoría'
+    }
+  }
+}
+
 // Mensajes del sistema
 export const adminMessages = {
   // Productos

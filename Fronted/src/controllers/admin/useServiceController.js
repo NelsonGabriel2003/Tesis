@@ -5,7 +5,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { serviceService } from '../../services/admin/adminServices'
-import { initialServiceState, initialServiceForm, adminMessages } from '../../models/admin/adminModel'
+import { initialServiceState, initialServiceForm, adminMessages, reglasServicio } from '../../models/admin/adminModel'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 export const useServiceController = () => {
   const [state, setState] = useState(initialServiceState)
@@ -13,6 +14,7 @@ export const useServiceController = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [notification, setNotification] = useState(null)
+  const { fieldErrors, tieneErrores, validarCampo, validarFormulario, limpiarErrores } = useFormValidation(reglasServicio)
 
   /**
    * Cargar todos los servicios
@@ -61,20 +63,23 @@ export const useServiceController = () => {
    */
   const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target
+    const newValue = type === 'checkbox' ? checked : value
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }))
-  }, [])
+    validarCampo(name, newValue)
+  }, [validarCampo])
 
   /**
    * Abrir modal para crear
    */
   const openCreateModal = useCallback(() => {
     setFormData(initialServiceForm)
+    limpiarErrores()
     setIsEditing(false)
     setIsModalOpen(true)
-  }, [])
+  }, [limpiarErrores])
 
   /**
    * Abrir modal para editar
@@ -88,10 +93,11 @@ export const useServiceController = () => {
       category: service.category || '',
       image_url: service.imageUrl || ''
     })
+    limpiarErrores()
     setState(prev => ({ ...prev, selectedService: service }))
     setIsEditing(true)
     setIsModalOpen(true)
-  }, [])
+  }, [limpiarErrores])
 
   /**
    * Cerrar modal
@@ -115,10 +121,9 @@ export const useServiceController = () => {
    */
   const saveService = useCallback(async (e) => {
     e.preventDefault()
-    
-    // Validar campos requeridos
-    if (!formData.name || !formData.category) {
-      showNotification(adminMessages.REQUIRED_FIELDS, 'error')
+
+    // Validar formulario completo
+    if (!validarFormulario(formData)) {
       return
     }
 
@@ -177,6 +182,8 @@ export const useServiceController = () => {
     isModalOpen,
     isEditing,
     notification,
+    fieldErrors,
+    tieneErrores,
 
     // Acciones
     loadServices,

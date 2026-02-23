@@ -6,6 +6,7 @@
 import FotoModel from '../models/foto.model.js'
 import cloudinary from '../config/cloudinary.js'
 import { asyncHandler } from '../middlewares/index.js'
+import { notificarGlobal } from '../utils/notificacionGlobal.js'
 
 /**
  * Obtener todas las fotos activas (publico)
@@ -42,7 +43,7 @@ const getPhotosAdmin = asyncHandler(async (req, res) => {
       description: foto.descripcion,
       imageUrl: foto.imagen_url,
       cloudinaryPublicId: foto.cloudinary_public_id,
-      isActive: foto.activa
+      isActive: foto.activo
     }))
   })
 })
@@ -70,7 +71,7 @@ const getPhotoById = asyncHandler(async (req, res) => {
       title: foto.titulo,
       description: foto.descripcion,
       imageUrl: foto.imagen_url,
-      isActive: foto.activa
+      isActive: foto.activo
     }
   })
 })
@@ -106,6 +107,8 @@ const createPhoto = asyncHandler(async (req, res) => {
     message: 'Foto creada exitosamente',
     data: foto
   })
+
+  notificarGlobal('foto_creada', 'Nueva foto', `Se publico "${title}"`)
 })
 
 /**
@@ -126,7 +129,7 @@ const updatePhoto = asyncHandler(async (req, res) => {
     descripcion: description,
     imagen_url: image_url,
     cloudinary_public_id,
-    activa: is_active
+    activo: is_active
   }, req.user?.id, infoSolicitud)
 
   if (!foto) {
@@ -181,6 +184,8 @@ const deletePhoto = asyncHandler(async (req, res) => {
     success: true,
     message: 'Foto eliminada'
   })
+
+  notificarGlobal('foto_eliminada', 'Foto eliminada', `Se retiro "${foto.titulo}"`)
 })
 
 export {

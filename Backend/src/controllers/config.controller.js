@@ -60,6 +60,19 @@ const getMembershipConfig = asyncHandler(async (req, res) => {
 })
 
 /**
+ * Obtener número de WhatsApp para reservas
+ * GET /api/config/whatsapp
+ */
+const getWhatsappConfig = asyncHandler(async (req, res) => {
+  const numero = await ConfiguracionModel.obtener('whatsapp_reservas')
+
+  res.json({
+    success: true,
+    data: { numero: numero || '' }
+  })
+})
+
+/**
  * Obtener una configuración por key
  * GET /api/config/:key
  */
@@ -194,6 +207,7 @@ export {
   getAllConfig,
   getPointsConfig,
   getMembershipConfig,
+  getWhatsappConfig,
   getConfigByKey,
   updateConfig,
   updateManyConfig,

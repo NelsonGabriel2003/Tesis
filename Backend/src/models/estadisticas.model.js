@@ -165,6 +165,59 @@ const EstadisticasModel = {
   },
 
   /**
+   * Obtener top productos mas vendidos
+   */
+  obtenerTopProductos: async (limite = 10) => {
+    const result = await query(
+      `SELECT ip.nombre_producto, SUM(ip.cantidad) as total_vendido,
+              SUM(ip.total_item) as ingresos
+       FROM items_pedido ip
+       JOIN pedidos p ON ip.pedido_id = p.id
+       WHERE p.estado IN ('completado', 'entregado')
+       GROUP BY ip.nombre_producto
+       ORDER BY total_vendido DESC
+       LIMIT $1`,
+      [limite]
+    )
+    return result.rows
+  },
+
+  /**
+   * Obtener ventas por categoria
+   */
+  obtenerVentasPorCategoria: async () => {
+    const result = await query(
+      `SELECT pr.categoria, SUM(ip.cantidad) as total_vendido,
+              SUM(ip.total_item) as ingresos
+       FROM items_pedido ip
+       JOIN pedidos p ON ip.pedido_id = p.id
+       JOIN productos pr ON ip.producto_id = pr.id
+       WHERE p.estado IN ('completado', 'entregado')
+       GROUP BY pr.categoria
+       ORDER BY ingresos DESC`
+    )
+    return result.rows
+  },
+
+  /**
+   * Obtener ingresos por periodo
+   */
+  obtenerIngresosPorPeriodo: async (dias = 30) => {
+    const result = await query(
+      `SELECT DATE(p.fecha_pedido) as fecha,
+              COUNT(DISTINCT p.id) as total_pedidos,
+              SUM(p.total) as ingresos
+       FROM pedidos p
+       WHERE p.estado IN ('completado', 'entregado')
+         AND p.fecha_pedido >= CURRENT_DATE - INTERVAL '1 day' * $1
+       GROUP BY DATE(p.fecha_pedido)
+       ORDER BY fecha ASC`,
+      [dias]
+    )
+    return result.rows
+  },
+
+  /**
    * Obtener resumen completo del dashboard
    */
   obtenerResumenDashboard: async () => {

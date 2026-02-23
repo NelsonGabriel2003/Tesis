@@ -7,7 +7,7 @@
  * los datos del usuario y evitar duplicacion de logica.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search,
@@ -17,13 +17,17 @@ import {
   Menu,
   HelpCircle,
   User,
-  ClipboardList
+  ClipboardList,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { userModules } from '../../config/modulesConfig'
 import { useAuth } from '../../hooks/useAuth'
 import { photoService } from '../../services/admin/adminServices'
-import { TelegramModal } from '../../components/ui'
+import { TelegramModal, Logo } from '../../components/ui'
 import NotificacionesPanel from './NotificacionesPanel'
+import useDetectarCambiosAdmin from '../../hooks/useDetectarCambiosAdmin'
 import api from '../../services/api'
 
 const MainPage = () => {
@@ -35,11 +39,45 @@ const MainPage = () => {
   const [fotos, setFotos] = useState([])
   const [cargandoFotos, setCargandoFotos] = useState(true)
   const [mostrarModalTelegram, setMostrarModalTelegram] = useState(false)
+  const [brilloActivo, setBrilloActivo] = useState(true)
+  const [visorAbierto, setVisorAbierto] = useState(false)
+  const [fotoActualIdx, setFotoActualIdx] = useState(0)
+  const timerVisorRef = useRef(null)
+
+  // Visor fullscreen de fotos
+  const abrirVisor = useCallback((idx) => {
+    setFotoActualIdx(idx)
+    setVisorAbierto(true)
+  }, [])
+
+  const cerrarVisor = useCallback(() => {
+    setVisorAbierto(false)
+    if (timerVisorRef.current) clearInterval(timerVisorRef.current)
+  }, [])
+
+  const fotoSiguiente = useCallback(() => {
+    setFotoActualIdx(prev => (prev + 1) % fotos.length)
+  }, [fotos.length])
+
+  const fotoAnterior = useCallback(() => {
+    setFotoActualIdx(prev => (prev - 1 + fotos.length) % fotos.length)
+  }, [fotos.length])
+
+  // Auto-avance cada 12s cuando el visor está abierto
+  useEffect(() => {
+    if (visorAbierto && fotos.length > 1) {
+      timerVisorRef.current = setInterval(fotoSiguiente, 12000)
+      return () => clearInterval(timerVisorRef.current)
+    }
+  }, [visorAbierto, fotoActualIdx, fotos.length, fotoSiguiente])
 
   // Alternar menu lateral
   const alternarMenuLateral = () => {
     setMenuLateralAbierto(!menuLateralAbierto)
   }
+
+  // Polling de notificaciones admin
+  useDetectarCambiosAdmin()
 
   // Hook de navegacion
   const navegarHacia = useNavigate()
@@ -89,6 +127,15 @@ const MainPage = () => {
       localStorage.setItem('telegramModalVisto', 'true')
     }
   }, [usuarioActual, cargando])
+
+  useEffect(() => {
+    const ciclo = setInterval(() => {
+      setBrilloActivo(true)
+      setTimeout(() => setBrilloActivo(false), 5000)
+    }, 600000)
+    const apagar = setTimeout(() => setBrilloActivo(false), 5000)
+    return () => { clearInterval(ciclo); clearTimeout(apagar) }
+  }, [])
 
   const cerrarModalTelegram = () => {
     setMostrarModalTelegram(false)
@@ -163,8 +210,8 @@ const MainPage = () => {
     <div className="min-h-screen bg-surface-secondary">
 
       {/* ============ HEADER ============ */}
-      <header className="sticky top-0 z-50 bg-amber-100 shadow-md">
-        <div className="flex items-center justify-between px-4 py-3">
+      <header className="sticky top-0 z-50 bg-amber-100 shadow-md overflow-visible">
+        <div className="flex h-14 items-center justify-between px-4 overflow-visible">
 
           {/* Boton menu hamburguesa */}
           <button
@@ -176,11 +223,7 @@ const MainPage = () => {
           </button>
 
           {/* Logo a la derecha */}
-          <img
-            src="/images/Logo.svg"
-            alt="Logo"
-            className="h-10 w-10"
-          />
+          <Logo variant="icon" imgSize="h-28 w-28" />
         </div>
       </header>
 
@@ -252,17 +295,7 @@ const MainPage = () => {
                 <span>Mis Pedidos</span>
               </button>
             </li>
-            <li>
-              <button
-                onClick={() => {
-                  alternarMenuLateral()
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-primary/10 transition-colors"
-              >
-                <HelpCircle size={20} className="text-primary" />
-                <span>Ayuda </span>
-              </button>
-            </li>
+
           </ul>
 
           {/* Separador */}
@@ -285,15 +318,16 @@ const MainPage = () => {
       {/* ============ CONTENIDO PRINCIPAL ============ */}
       <main className="px-4 py-6">
 
-        {/* ==================== VISTA USUARIO ==================== */}
-        {/* Saludo y Puntos en linea horizontal */}
             <div className="mb-8 flex items-center gap-6">
               <div>
-                <h1 className="text-2xl font-bold text-text-primary">
-                  Hola{usuarioActual?.name ? `, ${usuarioActual.name.split(' ')[0]}` : ''}!
+                <h1 className="flex items-center gap-2 text-2xl font-bold capitalize">
+                  <span className={brilloActivo ? 'bg-gradient-to-r from-primary via-amber-500 to-primary bg-[length:200%_auto] bg-clip-text text-transparent animate-[shimmer_3s_linear_infinite]' : 'text-text-primary'}>
+                    {usuarioActual?.name ? usuarioActual.name.split(' ')[0].toLowerCase() : 'Usuario'}
+                  </span>
+                  {brilloActivo && <Sparkles size={22} className="text-amber-500 animate-pulse" />}
                 </h1>
                 <p className="text-text-secondary">
-                  Estas listo para la fiesta?
+                  Tu mejor noche empieza aqui
                 </p>
               </div>
               <div className="rounded-xl bg-primary px-4 py-2 text-white shadow-md">
@@ -304,7 +338,6 @@ const MainPage = () => {
               </div>
             </div>
 
-            {/* Barra de busqueda con resultados desplegables */}
             <div className="relative mb-8">
               <div className="relative">
                 <input
@@ -314,7 +347,7 @@ const MainPage = () => {
                   onChange={manejarCambioBusqueda}
                   onFocus={() => textoBusqueda.length >= 2 && setMostrarResultados(true)}
                   onBlur={() => setTimeout(cerrarResultados, 200)}
-                  className="w-full rounded-full border border-white/30 bg-white/10 backdrop-blur-sm py-3 pl-12 pr-4 text-text-primary placeholder-text-muted focus:border-primary focus:bg-white/20 focus:outline-none transition-all"
+                  className="w-full rounded-full border border-slate-300 bg-white py-3 pl-12 pr-4 text-text-primary placeholder-text-muted shadow-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition-all"
                 />
                 <Search
                   size={20}
@@ -352,7 +385,7 @@ const MainPage = () => {
             </div>
 
             {/* Modulos en linea horizontal */}
-            <div className="flex justify-center gap-4 overflow-x-auto pb-4 mt-2">
+            <div className="flex justify-center gap-4 overflow-x-auto pt-2 pb-4 mt-2">
               {userModules.map((modulo) => {
                 const IconoDelModulo = modulo.icon
                 return (
@@ -375,37 +408,35 @@ const MainPage = () => {
             {/* ============ SECCION LO ULTIMO ============ */}
             <div className="mt-10">
               <h2 className="font-formal text-2xl text-text-primary mb-4">
-                Lo ultimo que ha pasado?
+                Lo Ultimo Que Ha Pasado?
               </h2>
 
-              {/* Carrusel de fotos */}
-              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+              {/* Cards compactas de fotos */}
+              <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
                 {cargandoFotos ? (
                   <div className="flex items-center justify-center w-full py-8">
                     <Loader className="animate-spin text-primary" size={32} />
                   </div>
                 ) : fotos.length > 0 ? (
-                  fotos.map((foto) => (
-                    <div
+                  fotos.map((foto, idx) => (
+                    <button
                       key={foto.id}
-                      className="flex-shrink-0 w-64 snap-start"
+                      onClick={() => abrirVisor(idx)}
+                      className="flex-shrink-0 w-32 snap-start"
                     >
-                      <div className="relative h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-purple-500/20 shadow-md">
+                      <div className="relative h-44 rounded-2xl overflow-hidden shadow-md active:scale-95 transition-transform">
                         <img
                           src={foto.imageUrl}
                           alt={foto.title}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none'
-                          }}
+                          onError={(e) => { e.target.style.display = 'none' }}
                         />
-                        {/* Overlay con titulo */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        <p className="absolute bottom-3 left-3 right-3 text-white font-grueso text-sm">
+                        <p className="absolute bottom-2 left-2 right-2 text-white font-grueso text-xs line-clamp-2">
                           {foto.title}
                         </p>
                       </div>
-                    </div>
+                    </button>
                   ))
                 ) : (
                   <div className="flex items-center justify-center w-full py-8">
@@ -416,6 +447,75 @@ const MainPage = () => {
             </div>
 
       </main>
+
+      {/* Visor fullscreen de fotos */}
+      {visorAbierto && fotos.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          {/* Barra de progreso */}
+          <div className="flex gap-1 px-3 pt-3">
+            {fotos.map((_, idx) => (
+              <div key={idx} className="flex-1 h-1 rounded-full overflow-hidden bg-white/30">
+                {idx === fotoActualIdx && (
+                  <div className="h-full bg-white rounded-full animate-[progreso_12s_linear]" />
+                )}
+                {idx < fotoActualIdx && (
+                  <div className="h-full bg-white rounded-full w-full" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Boton cerrar */}
+          <button
+            onClick={cerrarVisor}
+            className="absolute top-6 right-4 z-10 p-2 text-white/80 hover:text-white"
+          >
+            <X size={28} />
+          </button>
+
+          {/* Foto en formato 9:16 */}
+          <div className="flex-1 flex items-center justify-center relative px-4">
+            <div className="relative w-full max-w-sm aspect-[9/16] rounded-xl overflow-hidden">
+              <img
+                src={fotos[fotoActualIdx]?.imageUrl}
+                alt={fotos[fotoActualIdx]?.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Zonas de tap para navegar */}
+            {fotos.length > 1 && (
+              <>
+                <button
+                  onClick={fotoAnterior}
+                  className="absolute left-0 top-0 w-1/3 h-full"
+                  aria-label="Anterior"
+                />
+                <button
+                  onClick={fotoSiguiente}
+                  className="absolute right-0 top-0 w-1/3 h-full"
+                  aria-label="Siguiente"
+                />
+              </>
+            )}
+          </div>
+
+          {/* Info de la foto */}
+          <div className="px-4 pb-6 pt-3">
+            <p className="text-white font-grueso text-lg">
+              {fotos[fotoActualIdx]?.title}
+            </p>
+            {fotos[fotoActualIdx]?.description && (
+              <p className="text-white/60 text-sm mt-1">
+                {fotos[fotoActualIdx]?.description}
+              </p>
+            )}
+            <p className="text-white/40 text-xs mt-2">
+              {fotoActualIdx + 1} / {fotos.length}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Modal de vinculación Telegram */}
       <TelegramModal

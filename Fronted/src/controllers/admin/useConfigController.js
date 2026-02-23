@@ -5,6 +5,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { configService } from '../../services/admin/adminServices'
+import { reglasConfig } from '../../models/admin/adminModel'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 export const useConfigController = () => {
   const [configs, setConfigs] = useState([])
@@ -13,6 +15,7 @@ export const useConfigController = () => {
   const [error, setError] = useState(null)
   const [notification, setNotification] = useState(null)
   const [editedValues, setEditedValues] = useState({})
+  const { fieldErrors, tieneErrores, validarCampo, validarFormulario, limpiarErrores } = useFormValidation(reglasConfig)
 
   /**
    * Cargar todas las configuraciones
@@ -61,7 +64,8 @@ export const useConfigController = () => {
       ...prev,
       [key]: value
     }))
-  }, [])
+    validarCampo(key, value)
+  }, [validarCampo])
 
   /**
    * Verificar si hay cambios sin guardar
@@ -86,8 +90,13 @@ export const useConfigController = () => {
    * Guardar cambios
    */
   const saveChanges = useCallback(async () => {
+    // Validar campos numéricos antes de guardar
+    if (!validarFormulario(editedValues)) {
+      return
+    }
+
     const modified = getModifiedConfigs()
-    
+
     if (modified.length === 0) {
       showNotification('No hay cambios para guardar', 'info')
       return
@@ -115,8 +124,9 @@ export const useConfigController = () => {
       initial[config.key] = config.value
     })
     setEditedValues(initial)
+    limpiarErrores()
     showNotification('Cambios descartados', 'info')
-  }, [configs, showNotification])
+  }, [configs, showNotification, limpiarErrores])
 
   /**
    * Agrupar configuraciones por categoría
@@ -203,6 +213,8 @@ export const useConfigController = () => {
     error,
     notification,
     editedValues,
+    fieldErrors,
+    tieneErrores,
 
     // Acciones
     loadConfigs,

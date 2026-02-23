@@ -149,7 +149,7 @@ const obtenerCanjesUsuario = asyncHandler(async (req, res) => {
   }
 
   // Obtener canjes con resumen
-  const { canjes, resumen } = await CanjeModel.obtenerConResumenPorUsuario(parseInt(id))
+  const { canjes, resumen } = await CanjeModel.obtenerConResumen(parseInt(id))
 
   res.json({
     exito: true,
@@ -271,6 +271,29 @@ const obtenerCanjesPendientes = asyncHandler(async (req, res) => {
   })
 })
 
+/**
+ * Obtener metricas de consumo (graficos)
+ * GET /api/stats/metricas
+ */
+const getMetricas = asyncHandler(async (req, res) => {
+  const [topProductos, ventasPorCategoria, ingresosPorPeriodo, usuariosPorNivel] = await Promise.all([
+    EstadisticasModel.obtenerTopProductos(),
+    EstadisticasModel.obtenerVentasPorCategoria(),
+    EstadisticasModel.obtenerIngresosPorPeriodo(),
+    EstadisticasModel.obtenerUsuariosPorNivel()
+  ])
+
+  res.json({
+    success: true,
+    data: {
+      topProductos,
+      ventasPorCategoria,
+      ingresosPorPeriodo,
+      usuariosPorNivel
+    }
+  })
+})
+
 export {
   getDashboardStats,
   getSummary,
@@ -281,5 +304,6 @@ export {
   obtenerCanjesUsuario,
   entregarCanje,
   obtenerTodosCanjes,
-  obtenerCanjesPendientes
+  obtenerCanjesPendientes,
+  getMetricas
 }

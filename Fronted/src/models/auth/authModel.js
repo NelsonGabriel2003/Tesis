@@ -33,21 +33,41 @@ export const statusMessages = {
   NETWORK_ERROR: 'Error de conexión. Intenta nuevamente.'
 }
 
-// Mensajes de estado para registro
-export const registerMessages = {
-  SUCCESS: '¡Registro exitoso! Bienvenido.',
+export const mensajesRegistro = {
+  EXITO: '¡Registro exitoso! Bienvenido.',
   ERROR: 'Error al registrar. Intenta nuevamente.',
-  EMAIL_EXISTS: 'Este email ya está registrado.',
-  PASSWORD_MISMATCH: 'Las contraseñas no coinciden.',
-  PASSWORD_SHORT: 'La contraseña debe tener al menos 6 caracteres.',
-  INVALID_EMAIL: 'El formato del email no es válido.',
-  REQUIRED_FIELDS: 'Todos los campos son requeridos.',
-  LOADING: 'Registrando...'
+  CORREO_EXISTE: 'Este email ya está registrado.',
+  CONTRASENA_NO_COINCIDE: 'Las contraseñas no coinciden.',
+  CONTRASENA_CORTA: 'La contraseña debe tener al menos 6 caracteres.',
+  CONTRASENA_DEBIL: 'Debe incluir mayúscula, minúscula, número y carácter especial.',
+  CONTRASENA_ESPACIOS: 'La contraseña no puede contener espacios.',
+  CORREO_INVALIDO: 'El formato del email no es válido.',
+  NOMBRE_INVALIDO: 'El nombre solo puede contener letras y espacios.',
+  NOMBRE_CORTO: 'El nombre debe tener al menos 3 caracteres.',
+  NOMBRE_INCOMPLETO: 'Ingresa nombre y apellido.',
+  TELEFONO_INVALIDO: 'Número inválido. Formato: 09XXXXXXXX.',
+  CAMPOS_REQUERIDOS: 'Todos los campos son requeridos.',
+  TERMINOS_REQUERIDOS: 'Debes aceptar los términos y condiciones.',
+  CARGANDO: 'Registrando...'
 }
 
-// Validaciones
-export const validations = {
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  phone: /^[0-9]{10}$/,
-  minPasswordLength: 6
+export const registerMessages = mensajesRegistro
+
+export const limiteCampos = {
+  nombre: 255,
+  correo: 255,
+  telefono: 10,
+  contrasena: 100
 }
+
+export const validaciones = {
+  correo: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  telefono: /^09[0-9]{8}$/,
+  nombre: /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/,
+  nombreMinimo: 3,
+  fuerzaContrasena: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/,
+  sinEspacios: /^\S+$/,
+  largoMinimoContrasena: 6
+}
+
+export const validations = validaciones

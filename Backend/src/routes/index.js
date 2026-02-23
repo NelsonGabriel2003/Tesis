@@ -22,6 +22,7 @@ import uploadRoutes from './upload.routes.js'
 import photoRoutes from './photo.routes.js'
 import searchRoutes from './search.routes.js'
 import comprobanteRoutes from './comprobante.routes.js'
+import notificacionGlobalRoutes from './notificacionGlobal.routes.js'
 const router = Router()
 
 // Health check
@@ -65,5 +66,8 @@ router.use('/photos', photoRoutes)
 
 // Ruta de búsqueda global
 router.use('/search', searchRoutes)
+
+// Notificaciones globales (polling)
+router.use('/notifications', notificacionGlobalRoutes)
 
 export default router

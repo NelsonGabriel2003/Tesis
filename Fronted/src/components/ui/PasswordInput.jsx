@@ -1,8 +1,4 @@
-/**
- * PasswordInput Component
- * Input de password con toggle de visibilidad
- */
-
+import { useState, useEffect } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 const PasswordInput = ({
@@ -13,10 +9,24 @@ const PasswordInput = ({
   onChange,
   showPassword,
   onTogglePassword,
-  required = false
+  required = false,
+  maxLength,
+  error,
+  onPaste
 }) => {
+  const [bordeRojo, setBordeRojo] = useState(false)
+
+  useEffect(() => {
+    if (error) {
+      setBordeRojo(true)
+      const timer = setTimeout(() => setBordeRojo(false), 5000)
+      return () => clearTimeout(timer)
+    }
+    setBordeRojo(false)
+  }, [error])
+
   return (
-    <div className="mb-[28px]">
+    <div>
       {label && (
         <label className="mb-1 block font-medium text-input-label">
           {label}
@@ -31,7 +41,9 @@ const PasswordInput = ({
           onChange={onChange}
           required={required}
           autoComplete="current-password"
-          className="w-full rounded-md border border-input-border px-4 py-3 pr-12 placeholder-input-placeholder focus:border-input-focus focus:ring-2 focus:ring-input-focus"
+          maxLength={maxLength}
+          onPaste={onPaste}
+          className={`w-full rounded-md border bg-white px-4 py-3 pr-12 placeholder-input-placeholder shadow-sm transition-colors duration-300 ${bordeRojo ? 'border-red-500 ring-2 ring-red-200' : 'border-slate-300 focus:border-input-focus focus:ring-2 focus:ring-input-focus'}`}
         />
         <button
           type="button"
@@ -42,6 +54,9 @@ const PasswordInput = ({
           {showPassword ? <Eye size={24} /> : <EyeOff size={24} />}
         </button>
       </div>
+      {error && (
+        <p className="mt-1 text-sm text-red-500">{error}</p>
+      )}
     </div>
   )
 }

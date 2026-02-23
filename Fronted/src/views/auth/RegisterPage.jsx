@@ -5,6 +5,7 @@
 
 import RegisterForm from './RegisterForm'
 import { useRegisterController } from '../../controllers/auth/useRegisterController'
+import { ParticlesBanner } from '../../components/ui'
 
 const RegisterPage = () => {
   const {
@@ -13,37 +14,25 @@ const RegisterPage = () => {
     showConfirmPassword,
     status,
     fieldErrors,
+    limiteCampos,
+    aceptaTerminos,
     handleInputChange,
     togglePassword,
     toggleConfirmPassword,
+    toggleTerminos,
     handleSubmit,
     goToLogin
   } = useRegisterController()
 
   return (
-    <div className="grid min-h-screen place-content-center bg-surface-secondary px-4 py-5 md:px-8 md:py-10">
-      <div className="container max-h-[1000px] w-full max-w-[1200px] rounded-[20px] bg-surface-primary md:grid md:grid-cols-2">
-        
-        {/* Banner (lado izquierdo en registro) */}
-        <div className="relative hidden bg-primary md:block">
-          <img
-            src="/images/form-banner.png"
-            alt="form banner"
-            width={720}
-            height={720}
-            className="h-full w-full object-cover"
-          />
+    <div className="relative grid min-h-screen place-content-center bg-surface-secondary px-4 py-5 md:px-8 md:py-10">
+      {/* Partículas de fondo en móvil */}
+      <ParticlesBanner soloFondo className="bg-cyan-600 md:hidden" />
 
-          <div className="absolute left-0 top-1/2 mx-10 -translate-y-1/2 bg-white/20 px-11 py-[60px] text-white backdrop-blur-[30px]">
-            <h2 className="mb-5 text-3xl font-semibold">
-              ¡Únete a nuestra comunidad! 🎊
-            </h2>
-            <p>
-              Regístrate y comienza a acumular puntos con cada visita. 
-              Canjea por increíbles recompensas y disfruta de beneficios exclusivos.
-            </p>
-          </div>
-        </div>
+      <div className="relative z-10 container w-full max-w-[1200px] overflow-hidden rounded-[20px] bg-slate-50/95 backdrop-blur-sm md:bg-slate-50 md:grid md:grid-cols-2">
+
+        {/* Banner con partículas - solo desktop */}
+        <ParticlesBanner className="hidden bg-cyan-600 md:flex" />
 
         {/* Formulario */}
         <RegisterForm
@@ -52,9 +41,12 @@ const RegisterPage = () => {
           showConfirmPassword={showConfirmPassword}
           status={status}
           fieldErrors={fieldErrors}
+          limiteCampos={limiteCampos}
+          aceptaTerminos={aceptaTerminos}
           onInputChange={handleInputChange}
           onTogglePassword={togglePassword}
           onToggleConfirmPassword={toggleConfirmPassword}
+          onToggleTerminos={toggleTerminos}
           onSubmit={handleSubmit}
           onGoToLogin={goToLogin}
         />

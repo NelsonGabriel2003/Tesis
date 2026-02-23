@@ -14,8 +14,10 @@ import {
   X,
   Gift,
   CheckCircle,
-  Clock
+  Clock,
+  BarChart3
 } from 'lucide-react'
+import ReactECharts from 'echarts-for-react'
 import api from '../../services/api'
 import { statsService } from '../../services/admin/adminServices'
 import SearchBar from '../../components/ui/SearchBar'
@@ -27,6 +29,9 @@ const UsersAdmin = () => {
   const [busqueda, setBusqueda] = useState('')
   const [estadisticas, setEstadisticas] = useState(null)
   
+  // Metricas para graficos
+  const [metricas, setMetricas] = useState(null)
+
   // Canjes pendientes globales
   const [canjesPendientes, setCanjesPendientes] = useState([])
 
@@ -58,6 +63,15 @@ const UsersAdmin = () => {
       } catch (err) {
         console.error('Error cargando canjes pendientes:', err)
         setCanjesPendientes([])
+      }
+
+      // Cargar metricas para graficos
+      try {
+        const metricasResponse = await api.get('/stats/metricas')
+        setMetricas(metricasResponse.data || null)
+      } catch (err) {
+        console.error('Error cargando metricas:', err)
+        setMetricas(null)
       }
     } catch (err) {
       console.error('Error cargando usuarios:', err)
@@ -132,22 +146,19 @@ const UsersAdmin = () => {
     setProcesandoEntrega(canjeId)
     setMensajeExito(null)
     try {
-      await api.put(`/redemptions/${canjeId}/use`)
+      await api.post(`/stats/canjes/${canjeId}/entregar`)
 
       // Actualizar la lista de canjes del modal
       setCanjesUsuario(canjes =>
         canjes.map(canje =>
           canje.id === canjeId
-            ? { ...canje, estado: 'used', fechaUso: new Date().toISOString() }
+            ? { ...canje, estado: 'usado', fechaUso: new Date().toISOString() }
             : canje
         )
       )
 
-      // Actualizar resumen del modal
-      setResumenCanjes(prev => ({
-        ...prev,
-        canjesUsados: (prev.canjesUsados || 0) + 1
-      }))
+      // Actualizar canjes pendientes globales (Stats Card)
+      setCanjesPendientes(prev => prev.filter(c => c.id !== canjeId))
 
       setMensajeExito('Canje realizado')
       setTimeout(() => setMensajeExito(null), 3000)
@@ -207,18 +218,170 @@ const UsersAdmin = () => {
           </div>
 
           {estadisticas.porNivel?.map((nivel) => (
-            <div key={nivel.membership_level} className="bg-white rounded-xl p-4 shadow-sm">
+            <div key={nivel.nivel_membresia} className="bg-white rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${obtenerColorNivel(nivel.membership_level)}`}>
+                <div className={`p-2 rounded-lg ${obtenerColorNivel(nivel.nivel_membresia)}`}>
                   <Award size={20} />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-800">{nivel.total}</p>
-                  <p className="text-xs text-gray-500 capitalize">{nivel.membership_level || 'Sin nivel'}</p>
+                  <p className="text-xs text-gray-500 capitalize">{nivel.nivel_membresia || 'Sin nivel'}</p>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Graficos de Metricas */}
+      {metricas && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Bar Chart - Top Productos */}
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 size={18} className="text-purple-600" />
+              <h3 className="font-semibold text-gray-800">Top Productos Vendidos</h3>
+            </div>
+            {metricas.topProductos?.length > 0 ? (
+              <ReactECharts
+                option={{
+                  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                  grid: { left: '3%', right: '6%', bottom: '3%', containLabel: true },
+                  xAxis: { type: 'value' },
+                  yAxis: {
+                    type: 'category',
+                    data: metricas.topProductos.map(p => p.nombre_producto).reverse(),
+                    axisLabel: { width: 100, overflow: 'truncate' }
+                  },
+                  series: [{
+                    name: 'Vendidos',
+                    type: 'bar',
+                    data: metricas.topProductos.map(p => parseInt(p.total_vendido)).reverse(),
+                    itemStyle: { color: '#8b5cf6', borderRadius: [0, 4, 4, 0] }
+                  }]
+                }}
+                style={{ height: 300 }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-400">
+                Sin datos de productos vendidos
+              </div>
+            )}
+          </div>
+
+          {/* Pie Chart - Ventas por Categoria */}
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 size={18} className="text-blue-600" />
+              <h3 className="font-semibold text-gray-800">Ventas por Categoria</h3>
+            </div>
+            {metricas.ventasPorCategoria?.length > 0 ? (
+              <ReactECharts
+                option={{
+                  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                  legend: { bottom: 0, type: 'scroll' },
+                  series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false },
+                    emphasis: { label: { show: true, fontWeight: 'bold' } },
+                    data: metricas.ventasPorCategoria.map(c => ({
+                      name: c.categoria || 'Sin categoria',
+                      value: parseFloat(c.ingresos)
+                    }))
+                  }]
+                }}
+                style={{ height: 300 }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-400">
+                Sin datos de categorias
+              </div>
+            )}
+          </div>
+
+          {/* Line Chart - Ingresos por Periodo */}
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 size={18} className="text-green-600" />
+              <h3 className="font-semibold text-gray-800">Ingresos Ultimos 30 Dias</h3>
+            </div>
+            {metricas.ingresosPorPeriodo?.length > 0 ? (
+              <ReactECharts
+                option={{
+                  tooltip: { trigger: 'axis' },
+                  grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                  xAxis: {
+                    type: 'category',
+                    data: metricas.ingresosPorPeriodo.map(d =>
+                      new Date(d.fecha).toLocaleDateString('es-EC', { day: '2-digit', month: 'short' })
+                    ),
+                    axisLabel: { rotate: 45 }
+                  },
+                  yAxis: { type: 'value', axisLabel: { formatter: '${value}' } },
+                  series: [
+                    {
+                      name: 'Ingresos',
+                      type: 'line',
+                      smooth: true,
+                      areaStyle: { color: 'rgba(16, 185, 129, 0.1)' },
+                      lineStyle: { color: '#10b981', width: 2 },
+                      itemStyle: { color: '#10b981' },
+                      data: metricas.ingresosPorPeriodo.map(d => parseFloat(d.ingresos))
+                    },
+                    {
+                      name: 'Pedidos',
+                      type: 'bar',
+                      yAxisIndex: 0,
+                      itemStyle: { color: 'rgba(16, 185, 129, 0.2)', borderRadius: [4, 4, 0, 0] },
+                      data: metricas.ingresosPorPeriodo.map(d => parseInt(d.total_pedidos))
+                    }
+                  ]
+                }}
+                style={{ height: 300 }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-400">
+                Sin datos de ingresos recientes
+              </div>
+            )}
+          </div>
+
+          {/* Pie Chart - Usuarios por Nivel */}
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Users size={18} className="text-amber-600" />
+              <h3 className="font-semibold text-gray-800">Distribucion de Usuarios</h3>
+            </div>
+            {metricas.usuariosPorNivel?.length > 0 ? (
+              <ReactECharts
+                option={{
+                  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                  legend: { bottom: 0, type: 'scroll' },
+                  color: ['#d97706', '#9ca3af', '#eab308', '#8b5cf6'],
+                  series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false },
+                    emphasis: { label: { show: true, fontWeight: 'bold' } },
+                    data: metricas.usuariosPorNivel.map(n => ({
+                      name: n.nivel_membresia || 'Sin nivel',
+                      value: parseInt(n.total)
+                    }))
+                  }]
+                }}
+                style={{ height: 300 }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-400">
+                Sin datos de usuarios
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -403,7 +566,7 @@ const UsersAdmin = () => {
                           </code>
                         </td>
                         <td className="py-3">
-                          {canje.estado === 'used' ? (
+                          {canje.estado === 'usado' ? (
                             <span className="flex items-center gap-1 text-green-600 text-sm">
                               <CheckCircle size={16} />
                               Entregado
@@ -416,7 +579,7 @@ const UsersAdmin = () => {
                           )}
                         </td>
                         <td className="py-3">
-                          {canje.estado === 'pending' ? (
+                          {canje.estado === 'pendiente' ? (
                             <button
                               onClick={() => entregarCanje(canje.id)}
                               disabled={procesandoEntrega === canje.id}

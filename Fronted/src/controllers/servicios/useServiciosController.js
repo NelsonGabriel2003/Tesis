@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { initialServiciosState, serviciosCategorias } from '../../models/servicios/serviciosModel'
 import { serviciosService } from '../../services/servicios/serviciosServices'
+import api from '../../services/api'
 
 export const useServiciosController = () => {
   const [state, setState] = useState(initialServiciosState)
@@ -14,6 +15,7 @@ export const useServiciosController = () => {
   const [selectedCategory, setSelectedCategory] = useState('todos')
   const [selectedService, setSelectedService] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [whatsappNumero, setWhatsappNumero] = useState('')
 
   const navigate = useNavigate()
 
@@ -22,12 +24,16 @@ export const useServiciosController = () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
-      const services = await serviciosService.getServicios()
+      const [services, whatsappResponse] = await Promise.all([
+        serviciosService.getServicios(),
+        api.get('/config/whatsapp').catch(() => ({ data: { numero: '' } }))
+      ])
       setState(prev => ({
         ...prev,
         services,
         loading: false
       }))
+      setWhatsappNumero(whatsappResponse.data?.numero || '')
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -89,6 +95,7 @@ export const useServiciosController = () => {
     selectedCategory,
     selectedService,
     showModal,
+    whatsappNumero,
 
     // Acciones
     filterByCategory,

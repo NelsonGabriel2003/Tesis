@@ -17,6 +17,7 @@ const ServiciosPage = () => {
     selectedCategory,
     selectedService,
     showModal,
+    whatsappNumero,
     filterByCategory,
     selectService,
     closeModal,
@@ -82,6 +83,7 @@ const ServiciosPage = () => {
       {showModal && selectedService && (
         <ServicioModal
           service={selectedService}
+          whatsappNumero={whatsappNumero}
           onClose={closeModal}
         />
       )}

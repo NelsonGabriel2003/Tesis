@@ -77,7 +77,6 @@ const AppRouter = () => {
         <Routes>
           {/* ============ RUTAS PUBLICAS ============ */}
 
-          {/* Login - Inicio de sesion */}
           <Route
             path="/login"
             element={
@@ -87,7 +86,6 @@ const AppRouter = () => {
             }
           />
 
-          {/* Registro - Crear cuenta nueva */}
           <Route
             path="/register"
             element={
@@ -97,7 +95,6 @@ const AppRouter = () => {
             }
           />
 
-          {/* Recuperar contraseña */}
           <Route
             path="/recuperar-password"
             element={

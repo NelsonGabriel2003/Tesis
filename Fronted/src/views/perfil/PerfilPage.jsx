@@ -20,6 +20,7 @@ const PerfilPage = () => {
     editData,
     membershipInfo,
     progress,
+    fieldErrors,
     setActiveTab,
     setIsEditing,
     handleEditChange,
@@ -117,6 +118,7 @@ const PerfilPage = () => {
             usuario={user}
             estaEditando={isEditing}
             datosFormulario={editData}
+            erroresCampos={fieldErrors}
             estaCargando={loading}
             alEditar={() => setIsEditing(true)}
             alCancelar={cancelEdit}

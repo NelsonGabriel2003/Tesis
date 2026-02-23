@@ -3,11 +3,24 @@
  * Panel de notificaciones usando contexto global
  */
 
-import { Bell, X, PartyPopper, Sparkles, XCircle } from 'lucide-react'
+import { Bell, X, PartyPopper, Sparkles, XCircle, ShoppingBag, Gift, Wrench, Camera, Settings } from 'lucide-react'
 import { useNotificaciones } from '../../contexts/NotificacionesContext'
 
 const NotificacionesPanel = () => {
   const { notificaciones, eliminarNotificacion } = useNotificaciones()
+
+  const ADMIN_ICONS = {
+    producto_creado: ShoppingBag,
+    producto_actualizado: ShoppingBag,
+    producto_eliminado: ShoppingBag,
+    recompensa_creada: Gift,
+    recompensa_actualizada: Gift,
+    servicio_creado: Wrench,
+    servicio_actualizado: Wrench,
+    foto_creada: Camera,
+    foto_eliminada: Camera,
+    config_actualizada: Settings
+  }
 
   const getNotifStyles = (notif) => {
     if (notif.tipo === 'pedido_cancelado') {
@@ -26,6 +39,15 @@ const NotificacionesPanel = () => {
         iconColor: 'text-purple-600',
         textColor: 'text-purple-800',
         Icon: Sparkles
+      }
+    }
+    if (ADMIN_ICONS[notif.tipo]) {
+      return {
+        bg: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200',
+        iconBg: 'bg-blue-100',
+        iconColor: 'text-blue-600',
+        textColor: 'text-blue-800',
+        Icon: ADMIN_ICONS[notif.tipo]
       }
     }
     return {
@@ -83,12 +105,19 @@ const NotificacionesPanel = () => {
                         Cancelado
                       </span>
                     )}
+                    {ADMIN_ICONS[notif.tipo] && notif.titulo && (
+                      <span className="text-xs bg-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                        {notif.titulo}
+                      </span>
+                    )}
                     <p className={`font-semibold text-sm mt-1 ${styles.textColor}`}>
                       {notif.mensaje}
                     </p>
-                    <p className="text-gray-500 text-xs mt-1">
-                      Pedido #{notif.codigo} • ${notif.total}
-                    </p>
+                    {notif.codigo && (
+                      <p className="text-gray-500 text-xs mt-1">
+                        Pedido #{notif.codigo} • ${notif.total}
+                      </p>
+                    )}
                     {notif.tipo === 'pedido_cancelado' && notif.motivo && (
                       <p className="text-red-600 text-xs mt-2">
                         {notif.motivo}

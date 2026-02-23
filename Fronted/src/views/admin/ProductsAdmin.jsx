@@ -26,7 +26,9 @@ const ProductsAdmin = () => {
     closeModal,
     saveProduct,
     deleteProduct,
-    searchProducts
+    searchProducts,
+    fieldErrors,
+    tieneErrores
   } = useProductController()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -196,11 +198,12 @@ const ProductsAdmin = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg
+                    focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                    ${fieldErrors.name ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Ej: Cerveza Nacional"
-                  required
                 />
+                {fieldErrors.name && <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>}
               </div>
 
               {/* Descripción */}
@@ -232,11 +235,12 @@ const ProductsAdmin = () => {
                     onChange={handleInputChange}
                     step="0.01"
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                      focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className={`w-full px-4 py-2 border rounded-lg
+                      focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                      ${fieldErrors.price ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="0.00"
-                    required
                   />
+                  {fieldErrors.price && <p className="mt-1 text-sm text-red-500">{fieldErrors.price}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -248,10 +252,12 @@ const ProductsAdmin = () => {
                     value={formData.points_earned}
                     onChange={handleInputChange}
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                      focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className={`w-full px-4 py-2 border rounded-lg
+                      focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                      ${fieldErrors.points_earned ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Auto"
                   />
+                  {fieldErrors.points_earned && <p className="mt-1 text-sm text-red-500">{fieldErrors.points_earned}</p>}
                 </div>
               </div>
 
@@ -264,9 +270,9 @@ const ProductsAdmin = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  required
+                  className={`w-full px-4 py-2 border rounded-lg
+                    focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                    ${fieldErrors.category ? 'border-red-500' : 'border-gray-300'}`}
                 >
                   <option value="">Seleccionar categoría</option>
                   {productCategories.map((cat) => (
@@ -275,6 +281,7 @@ const ProductsAdmin = () => {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.category && <p className="mt-1 text-sm text-red-500">{fieldErrors.category}</p>}
               </div>
 
               {/* Imagen */}
@@ -309,7 +316,7 @@ const ProductsAdmin = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || tieneErrores}
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg
                     hover:bg-purple-700 transition-colors disabled:opacity-50
                     flex items-center justify-center gap-2"

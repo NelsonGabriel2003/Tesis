@@ -24,7 +24,9 @@ const RewardsAdmin = () => {
     openEditModal,
     closeModal,
     saveReward,
-    deleteReward
+    deleteReward,
+    fieldErrors,
+    tieneErrores
   } = useRewardController()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -201,11 +203,12 @@ const RewardsAdmin = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg
+                    focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                    ${fieldErrors.name ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Ej: Cerveza Gratis"
-                  required
                 />
+                {fieldErrors.name && <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>}
               </div>
 
               {/* Descripción */}
@@ -236,11 +239,12 @@ const RewardsAdmin = () => {
                     value={formData.points_cost}
                     onChange={handleInputChange}
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                      focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className={`w-full px-4 py-2 border rounded-lg
+                      focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                      ${fieldErrors.points_cost ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="100"
-                    required
                   />
+                  {fieldErrors.points_cost && <p className="mt-1 text-sm text-red-500">{fieldErrors.points_cost}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -252,10 +256,12 @@ const RewardsAdmin = () => {
                     value={formData.stock}
                     onChange={handleInputChange}
                     min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                      focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className={`w-full px-4 py-2 border rounded-lg
+                      focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                      ${fieldErrors.stock ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="100"
                   />
+                  {fieldErrors.stock && <p className="mt-1 text-sm text-red-500">{fieldErrors.stock}</p>}
                 </div>
               </div>
 
@@ -268,9 +274,9 @@ const RewardsAdmin = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  required
+                  className={`w-full px-4 py-2 border rounded-lg
+                    focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                    ${fieldErrors.category ? 'border-red-500' : 'border-gray-300'}`}
                 >
                   <option value="">Seleccionar categoría</option>
                   {rewardCategories.map((cat) => (
@@ -279,6 +285,7 @@ const RewardsAdmin = () => {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.category && <p className="mt-1 text-sm text-red-500">{fieldErrors.category}</p>}
               </div>
 
               {/* Imagen con Cloudinary */}
@@ -328,7 +335,7 @@ const RewardsAdmin = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || tieneErrores}
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg
                     hover:bg-purple-700 transition-colors disabled:opacity-50
                     flex items-center justify-center gap-2"

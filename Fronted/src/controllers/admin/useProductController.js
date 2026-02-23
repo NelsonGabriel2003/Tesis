@@ -5,7 +5,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { productService } from '../../services/admin/adminServices'
-import { initialProductState, initialProductForm, adminMessages } from '../../models/admin/adminModel'
+import { initialProductState, initialProductForm, adminMessages, reglasProducto } from '../../models/admin/adminModel'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 export const useProductController = () => {
   const [state, setState] = useState(initialProductState)
@@ -13,6 +14,7 @@ export const useProductController = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [notification, setNotification] = useState(null)
+  const { fieldErrors, tieneErrores, validarCampo, validarFormulario, limpiarErrores } = useFormValidation(reglasProducto)
 
   /**
    * Cargar todos los productos
@@ -62,20 +64,23 @@ export const useProductController = () => {
    */
   const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target
+    const newValue = type === 'checkbox' ? checked : value
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }))
-  }, [])
+    validarCampo(name, newValue)
+  }, [validarCampo])
 
   /**
    * Abrir modal para crear
    */
   const openCreateModal = useCallback(() => {
     setFormData(initialProductForm)
+    limpiarErrores()
     setIsEditing(false)
     setIsModalOpen(true)
-  }, [])
+  }, [limpiarErrores])
 
   /**
    * Abrir modal para editar
@@ -89,10 +94,11 @@ export const useProductController = () => {
       category: product.category || '',
       image_url: product.imageUrl || ''
     })
+    limpiarErrores()
     setState(prev => ({ ...prev, selectedProduct: product }))
     setIsEditing(true)
     setIsModalOpen(true)
-  }, [])
+  }, [limpiarErrores])
 
   /**
    * Cerrar modal
@@ -116,10 +122,9 @@ export const useProductController = () => {
    */
   const saveProduct = useCallback(async (e) => {
     e.preventDefault()
-    
-    // Validar campos requeridos
-    if (!formData.name || !formData.price || !formData.category) {
-      showNotification(adminMessages.REQUIRED_FIELDS, 'error')
+
+    // Validar formulario completo
+    if (!validarFormulario(formData)) {
       return
     }
 
@@ -197,6 +202,8 @@ export const useProductController = () => {
     isModalOpen,
     isEditing,
     notification,
+    fieldErrors,
+    tieneErrores,
 
     // Acciones
     loadProducts,

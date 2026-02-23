@@ -5,6 +5,7 @@
 
 import ProductoModel from '../models/producto.model.js'
 import { asyncHandler } from '../middlewares/index.js'
+import { notificarGlobal } from '../utils/notificacionGlobal.js'
 
 /**
  * Obtener todos los productos
@@ -138,6 +139,8 @@ const createProduct = asyncHandler(async (req, res) => {
     message: 'Producto creado exitosamente',
     data: producto
   })
+
+  notificarGlobal('producto_creado', 'Nuevo producto', `Se agrego "${name}" al menu`)
 })
 
 /**
@@ -175,6 +178,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     message: 'Producto actualizado',
     data: producto
   })
+
+  notificarGlobal('producto_actualizado', 'Producto actualizado', `Se actualizo "${name || producto.nombre}" en el menu`)
 })
 
 /**
@@ -202,6 +207,8 @@ const deleteProduct = asyncHandler(async (req, res) => {
     success: true,
     message: 'Producto eliminado'
   })
+
+  notificarGlobal('producto_eliminado', 'Producto eliminado', 'Se retiro un producto del menu')
 })
 
 export {

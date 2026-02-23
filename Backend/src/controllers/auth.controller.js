@@ -113,8 +113,22 @@ const register = asyncHandler(async (req, res) => {
   if (usuarioExistente) {
     return res.status(409).json({
       success: false,
+      field: 'email',
       message: 'El email ya esta registrado'
     })
+  }
+
+  // Verificar si el telefono ya existe
+  if (phone) {
+    const telefonoExistente = await UsuarioModel.buscarPorTelefono(phone)
+
+    if (telefonoExistente) {
+      return res.status(409).json({
+        success: false,
+        field: 'phone',
+        message: 'Este numero de telefono ya esta registrado'
+      })
+    }
   }
 
   // Hashear contrasena
@@ -201,6 +215,62 @@ const getMe = asyncHandler(async (req, res) => {
  */
 const updateMe = asyncHandler(async (req, res) => {
   const { name, phone } = req.body
+
+  // Validar nombre
+  if (!name || !name.trim()) {
+    return res.status(400).json({
+      success: false,
+      field: 'name',
+      message: 'El nombre es requerido'
+    })
+  }
+
+  const nombreRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/
+  if (!nombreRegex.test(name)) {
+    return res.status(400).json({
+      success: false,
+      field: 'name',
+      message: 'El nombre solo puede contener letras y espacios'
+    })
+  }
+
+  if (name.trim().length < 3) {
+    return res.status(400).json({
+      success: false,
+      field: 'name',
+      message: 'El nombre debe tener al menos 3 caracteres'
+    })
+  }
+
+  if (name.trim().split(/\s+/).length < 2) {
+    return res.status(400).json({
+      success: false,
+      field: 'name',
+      message: 'Ingresa nombre y apellido'
+    })
+  }
+
+  // Validar telefono (si se proporciona)
+  if (phone) {
+    const telefonoRegex = /^09[0-9]{8}$/
+    if (!telefonoRegex.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        field: 'phone',
+        message: 'Numero invalido. Formato: 09XXXXXXXX'
+      })
+    }
+
+    // Verificar que el telefono no pertenezca a otro usuario
+    const telefonoExistente = await UsuarioModel.buscarPorTelefono(phone)
+    if (telefonoExistente && telefonoExistente.id !== req.user.id) {
+      return res.status(409).json({
+        success: false,
+        field: 'phone',
+        message: 'Este numero de telefono ya esta registrado'
+      })
+    }
+  }
 
   // Obtener info de la solicitud para historial
   const infoSolicitud = {

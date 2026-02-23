@@ -1,28 +1,20 @@
-/**
- * ServicioModal Component
- * Modal de detalle con botón de WhatsApp directo
- */
 
 import { X, MessageCircle } from 'lucide-react'
 
-// Número de WhatsApp de FOODIX (formato internacional)
-const WHATSAPP_NUMBER = '593958988509'
+const ServicioModal = ({ service, whatsappNumero, onClose }) => {
 
-const ServicioModal = ({ service, onClose }) => {
-  
-  // Abrir WhatsApp con mensaje prellenado
   const contactarWhatsApp = () => {
+    const numeroInternacional = '593' + whatsappNumero.slice(1)
     const mensaje = encodeURIComponent(
-      `Hola! 👋 Me interesa el servicio: *${service.name}*\n\nQuisiera más información para reservar.`
+      `Hola! Me interesa el servicio: *${service.name}*\n\nQuisiera mas informacion para reservar.`
     )
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`
+    const url = `https://wa.me/${numeroInternacional}?text=${mensaje}`
     window.open(url, '_blank')
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
       <div className="w-full max-w-md rounded-t-3xl bg-white p-6 shadow-xl sm:rounded-3xl">
-        {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             {service.imageUrl ? (
@@ -60,9 +52,13 @@ const ServicioModal = ({ service, onClose }) => {
         {/* Info adicional */}
         <div className="mt-6 rounded-xl bg-amber-50 p-4">
           <p className="text-sm text-amber-800">
-            📞 Para reservar este servicio, contáctanos directamente por WhatsApp. 
-            Te responderemos lo más pronto posible.
+            Para reservar este servicio, contactanos directamente por WhatsApp.
           </p>
+          {whatsappNumero && (
+            <p className="mt-1 text-sm font-semibold text-amber-900">
+              {whatsappNumero}
+            </p>
+          )}
         </div>
 
         {/* Botones */}
@@ -76,9 +72,9 @@ const ServicioModal = ({ service, onClose }) => {
 
           <button
             onClick={contactarWhatsApp}
-            disabled={!service.available}
+            disabled={!service.available || !whatsappNumero}
             className={`flex flex-1 items-center justify-center gap-2 rounded-full py-3 font-semibold text-white transition-colors ${
-              service.available
+              service.available && whatsappNumero
                 ? 'bg-green-500 hover:bg-green-600'
                 : 'cursor-not-allowed bg-gray-300'
             }`}

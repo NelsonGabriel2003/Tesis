@@ -8,6 +8,7 @@ import CanjeModel from '../models/canje.model.js'
 import UsuarioModel from '../models/usuario.model.js'
 import MovimientoModel from '../models/movimiento.model.js'
 import { asyncHandler } from '../middlewares/index.js'
+import { notificarGlobal } from '../utils/notificacionGlobal.js'
 
 /**
  * Genera un codigo unico de canje
@@ -284,6 +285,8 @@ const createReward = asyncHandler(async (req, res) => {
     message: 'Recompensa creada exitosamente',
     data: recompensa
   })
+
+  notificarGlobal('recompensa_creada', 'Nueva recompensa', `Se agrego "${name}" a las recompensas`)
 })
 
 /**
@@ -322,6 +325,8 @@ const updateReward = asyncHandler(async (req, res) => {
     message: 'Recompensa actualizada',
     data: recompensa
   })
+
+  notificarGlobal('recompensa_actualizada', 'Recompensa actualizada', `Se actualizo "${name || recompensa.nombre}" en recompensas`)
 })
 
 /**

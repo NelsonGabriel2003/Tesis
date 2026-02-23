@@ -40,13 +40,41 @@ const obtenerMensaje = (tipo) => {
   return mensajes[indice]
 }
 
+// Helpers localStorage
+const cargarDeStorage = (key, fallback) => {
+  try {
+    const data = localStorage.getItem(key)
+    return data ? JSON.parse(data) : fallback
+  } catch { return fallback }
+}
+
+const guardarEnStorage = (key, value) => {
+  try { localStorage.setItem(key, JSON.stringify(value)) } catch {}
+}
+
 export const NotificacionesProvider = ({ children }) => {
-  const [notificaciones, setNotificaciones] = useState([])
-  const [pedidosNotificados, setPedidosNotificados] = useState(new Set())
+  const [notificaciones, setNotificaciones] = useState(() => cargarDeStorage('notificaciones', []))
+  const [pedidosNotificados, setPedidosNotificados] = useState(() => new Set(cargarDeStorage('pedidosNotificados', [])))
+
+  // Helpers para actualizar estado + localStorage
+  const actualizarNotificaciones = useCallback((updater) => {
+    setNotificaciones(prev => {
+      const nuevas = typeof updater === 'function' ? updater(prev) : updater
+      guardarEnStorage('notificaciones', nuevas)
+      return nuevas
+    })
+  }, [])
+
+  const actualizarPedidosNotificados = useCallback((updater) => {
+    setPedidosNotificados(prev => {
+      const nuevo = typeof updater === 'function' ? updater(prev) : updater
+      guardarEnStorage('pedidosNotificados', [...nuevo])
+      return nuevo
+    })
+  }, [])
 
   // Agregar notificación de pedido completado
   const agregarNotificacionPedido = useCallback((pedido, esPrimeraCompra = false) => {
-    // Evitar duplicados
     if (pedidosNotificados.has(pedido.id)) return
 
     const nuevaNotificacion = {
@@ -61,9 +89,9 @@ export const NotificacionesProvider = ({ children }) => {
       fecha: new Date()
     }
 
-    setNotificaciones(prev => [nuevaNotificacion, ...prev])
-    setPedidosNotificados(prev => new Set([...prev, pedido.id]))
-  }, [pedidosNotificados])
+    actualizarNotificaciones(prev => [nuevaNotificacion, ...prev])
+    actualizarPedidosNotificados(prev => new Set([...prev, pedido.id]))
+  }, [pedidosNotificados, actualizarNotificaciones, actualizarPedidosNotificados])
 
   // Agregar notificación de pedido cancelado
   const agregarNotificacionCancelado = useCallback((pedido) => {
@@ -81,9 +109,9 @@ export const NotificacionesProvider = ({ children }) => {
       fecha: new Date()
     }
 
-    setNotificaciones(prev => [nuevaNotificacion, ...prev])
-    setPedidosNotificados(prev => new Set([...prev, key]))
-  }, [pedidosNotificados])
+    actualizarNotificaciones(prev => [nuevaNotificacion, ...prev])
+    actualizarPedidosNotificados(prev => new Set([...prev, key]))
+  }, [pedidosNotificados, actualizarNotificaciones, actualizarPedidosNotificados])
 
   // Agregar notificación genérica
   const agregarNotificacion = useCallback((notificacion) => {
@@ -92,18 +120,18 @@ export const NotificacionesProvider = ({ children }) => {
       fecha: new Date(),
       ...notificacion
     }
-    setNotificaciones(prev => [nueva, ...prev])
-  }, [])
+    actualizarNotificaciones(prev => [nueva, ...prev])
+  }, [actualizarNotificaciones])
 
   // Eliminar notificación
   const eliminarNotificacion = useCallback((id) => {
-    setNotificaciones(prev => prev.filter(n => n.id !== id))
-  }, [])
+    actualizarNotificaciones(prev => prev.filter(n => n.id !== id))
+  }, [actualizarNotificaciones])
 
   // Limpiar todas las notificaciones
   const limpiarNotificaciones = useCallback(() => {
-    setNotificaciones([])
-  }, [])
+    actualizarNotificaciones([])
+  }, [actualizarNotificaciones])
 
   // Verificar si un pedido ya fue notificado
   const pedidoYaNotificado = useCallback((pedidoId) => {

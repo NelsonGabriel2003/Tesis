@@ -14,7 +14,8 @@ import {
   obtenerCanjesUsuario,
   entregarCanje,
   obtenerTodosCanjes,
-  obtenerCanjesPendientes
+  obtenerCanjesPendientes,
+  getMetricas
 } from '../controllers/stats.controller.js'
 import { verifyToken, requireRole } from '../middlewares/index.js'
 
@@ -27,6 +28,7 @@ router.use(requireRole('admin'))
 // Rutas de estadísticas
 router.get('/dashboard', getDashboardStats)
 router.get('/summary', getSummary)
+router.get('/metricas', getMetricas)
 router.get('/users', getUserStats)
 router.get('/points', getPointsStats)
 router.get('/redemptions', getRedemptionStats)

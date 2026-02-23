@@ -22,14 +22,11 @@ const PerfilHeader = ({ user, membershipInfo, progress, formatDate }) => {
 
         {/* Info */}
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-text-primary">{user.name}</h2>
+          <h2 className="text-xl font-bold text-text-primary capitalize">{user.name}</h2>
           <p className="text-sm text-text-muted">{user.email}</p>
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-1">
             <span className={`rounded-full ${membershipInfo?.color || 'bg-gray-400'} px-2 py-0.5 text-xs font-bold text-white`}>
               {membershipInfo?.name || 'Bronce'}
-            </span>
-            <span className="text-xs text-text-muted">
-              desde {formatDate(user.memberSince)}
             </span>
           </div>
         </div>

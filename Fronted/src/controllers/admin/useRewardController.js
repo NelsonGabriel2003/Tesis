@@ -5,7 +5,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { rewardService } from '../../services/admin/adminServices'
-import { initialRewardState, initialRewardForm, adminMessages } from '../../models/admin/adminModel'
+import { initialRewardState, initialRewardForm, adminMessages, reglasRecompensa } from '../../models/admin/adminModel'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 export const useRewardController = () => {
   const [state, setState] = useState(initialRewardState)
@@ -13,6 +14,7 @@ export const useRewardController = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [notification, setNotification] = useState(null)
+  const { fieldErrors, tieneErrores, validarCampo, validarFormulario, limpiarErrores } = useFormValidation(reglasRecompensa)
 
   /**
    * Cargar todas las recompensas
@@ -61,20 +63,23 @@ export const useRewardController = () => {
    */
   const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target
+    const newValue = type === 'checkbox' ? checked : value
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }))
-  }, [])
+    validarCampo(name, newValue)
+  }, [validarCampo])
 
   /**
    * Abrir modal para crear
    */
   const openCreateModal = useCallback(() => {
     setFormData(initialRewardForm)
+    limpiarErrores()
     setIsEditing(false)
     setIsModalOpen(true)
-  }, [])
+  }, [limpiarErrores])
 
   /**
    * Abrir modal para editar
@@ -89,10 +94,11 @@ export const useRewardController = () => {
       stock: reward.stock?.toString() || '',
       is_popular: reward.isPopular || false
     })
+    limpiarErrores()
     setState(prev => ({ ...prev, selectedReward: reward }))
     setIsEditing(true)
     setIsModalOpen(true)
-  }, [])
+  }, [limpiarErrores])
 
   /**
    * Cerrar modal
@@ -116,10 +122,9 @@ export const useRewardController = () => {
    */
   const saveReward = useCallback(async (e) => {
     e.preventDefault()
-    
-    // Validar campos requeridos
-    if (!formData.name || !formData.points_cost || !formData.category) {
-      showNotification(adminMessages.REQUIRED_FIELDS, 'error')
+
+    // Validar formulario completo
+    if (!validarFormulario(formData)) {
       return
     }
 
@@ -179,6 +184,8 @@ export const useRewardController = () => {
     isModalOpen,
     isEditing,
     notification,
+    fieldErrors,
+    tieneErrores,
 
     // Acciones
     loadRewards,

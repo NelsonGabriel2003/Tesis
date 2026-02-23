@@ -3,6 +3,7 @@ import {
   getAllConfig,
   getPointsConfig,
   getMembershipConfig,
+  getWhatsappConfig,
   getConfigByKey,
   updateConfig,
   updateManyConfig,
@@ -15,6 +16,7 @@ const router = Router()
 // Rutas públicas (para que el frontend pueda leer configuraciones)
 router.get('/points', getPointsConfig)
 router.get('/membership', getMembershipConfig)
+router.get('/whatsapp', getWhatsappConfig)
 
 // Rutas protegidas (solo admin)
 router.get('/', verifyToken, verifyAdmin, getAllConfig)
