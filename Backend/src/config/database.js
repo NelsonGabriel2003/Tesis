@@ -23,6 +23,17 @@ pool.on('connect', () => {
   console.log('📦 Conectado a PostgreSQL')
 })
 
+// Crear tablas faltantes al iniciar
+pool.query(`
+  CREATE TABLE IF NOT EXISTS notificaciones_globales (
+    id SERIAL PRIMARY KEY,
+    tipo VARCHAR(50) NOT NULL,
+    titulo VARCHAR(255) NOT NULL,
+    mensaje TEXT NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).catch(err => console.error('Error creando tabla notificaciones_globales:', err))
+
 pool.on('error', (err) => {
   console.error('❌ Error en PostgreSQL:', err)
   process.exit(-1)
