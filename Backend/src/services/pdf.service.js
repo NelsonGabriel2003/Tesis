@@ -4,6 +4,13 @@
  */
 
 import PDFDocument from 'pdfkit'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const LOGO_PATH = join(__dirname, '..', 'assets', 'Logo.png')
 
 /**
  * Genera un comprobante PDF formal del pedido
@@ -35,7 +42,17 @@ export const generarPDFPedido = async (pedido, items = [], config = {}) => {
       const textMuted = '#6B7280'
       const lineColor = '#E5E7EB'
 
-      // === ENCABEZADO DEL NEGOCIO ===
+      // === LOGO + ENCABEZADO DEL NEGOCIO ===
+      try {
+        const logoBuffer = readFileSync(LOGO_PATH)
+        const logoSize = 70
+        const logoX = (doc.page.width - logoSize) / 2
+        doc.image(logoBuffer, logoX, doc.y, { width: logoSize, height: logoSize })
+        doc.y += logoSize + 10
+      } catch (logoErr) {
+        // Si no se encuentra el logo, continuar sin el
+      }
+
       doc
         .fontSize(22)
         .font('Helvetica-Bold')

@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react'
 import { useNotificaciones } from '../contexts/NotificacionesContext'
 import api from '../services/api'
 
-const INTERVALO_POLLING = 60000 // 60 segundos
+const INTERVALO_POLLING = 30000 // 30 segundos
 const STORAGE_KEY = 'ultimaConsultaGlobal'
 const IDS_KEY = 'notifGlobalIdsProcesados'
 
