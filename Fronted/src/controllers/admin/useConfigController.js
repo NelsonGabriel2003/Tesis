@@ -133,13 +133,17 @@ export const useConfigController = () => {
    */
   const groupedConfigs = useCallback(() => {
     const groups = {}
-    configs.forEach(config => {
-      const category = config.category || 'general'
-      if (!groups[category]) {
-        groups[category] = []
-      }
-      groups[category].push(config)
-    })
+    // Filtrar keys gestionadas en otras secciones (ej: whatsapp_reservas en Servicios)
+    const keysExcluidas = ['whatsapp_reservas']
+    configs
+      .filter(config => !keysExcluidas.includes(config.key))
+      .forEach(config => {
+        const category = config.category || 'general'
+        if (!groups[category]) {
+          groups[category] = []
+        }
+        groups[category].push(config)
+      })
     return groups
   }, [configs])
 

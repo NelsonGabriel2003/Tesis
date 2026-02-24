@@ -67,10 +67,6 @@ const TextInput = ({ value, onChange }) => (
   />
 )
 
-// ============================================
-// CONFIGURACIONES
-// ============================================
-
 const COLOR_OPTIONS = [
   { value: 'bg-amber-600', label: 'Ámbar', preview: 'bg-amber-600' },
   { value: 'bg-gray-400', label: 'Gris', preview: 'bg-gray-400' },
@@ -90,9 +86,8 @@ const CATEGORY_ICONS = {
 
 const MEMBERSHIP_LEVELS = ['bronce', 'plata', 'oro', 'platino']
 
-// ============================================
+
 // COMPONENTE PRINCIPAL
-// ============================================
 
 const ConfigAdmin = () => {
   const {
@@ -154,13 +149,12 @@ const ConfigAdmin = () => {
         onSave={saveChanges}
       />
 
-      {/* Notification */}
+
       {notification && <Notification {...notification} />}
 
-      {/* Error */}
+
       {error && <Notification message={error} type="error" />}
 
-      {/* Loading */}
       {loading && (
         <div className="flex justify-center py-12">
           <Loader className="animate-spin text-purple-600" size={40} />
@@ -193,15 +187,14 @@ const ConfigAdmin = () => {
   )
 }
 
-// ============================================
 // SUBCOMPONENTES
-// ============================================
+
 
 const Header = ({ loading, saving, hasChanges, tieneErrores, onRefresh, onDiscard, onSave }) => (
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 className="text-2xl font-bold text-gray-800">Configuración</h1>
-      <p className="text-gray-500">Gestiona los parámetros del sistema de fidelización</p>
+      <p className="text-gray-500">Gestiona Los Parámetros del Sistema </p>
     </div>
     <div className="flex gap-2">
       <button
