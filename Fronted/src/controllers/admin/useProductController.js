@@ -189,7 +189,7 @@ export const useProductController = () => {
 
     try {
       const products = await productService.search(query)
-      setState(prev => ({ ...prev, products, loading: false }))
+      setState(prev => ({ ...prev, products, loading: false, error: null }))
     } catch (error) {
       setState(prev => ({ ...prev, loading: false, error: error.message }))
     }

@@ -69,10 +69,10 @@ const getProductById = asyncHandler(async (req, res) => {
 const searchProducts = asyncHandler(async (req, res) => {
   const { q } = req.query
 
-  if (!q || q.length < 2) {
+  if (!q || !q.trim()) {
     return res.status(400).json({
       success: false,
-      message: 'El termino de busqueda debe tener al menos 2 caracteres'
+      message: 'Ingresa un término de búsqueda'
     })
   }
 

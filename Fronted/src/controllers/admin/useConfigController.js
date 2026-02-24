@@ -152,9 +152,9 @@ export const useConfigController = () => {
    */
   const getCategoryName = (category) => {
     const names = {
-      'puntos': '💰 Configuración de Puntos',
-      'membresia': '🏆 Niveles de Membresía',
-      'general': '⚙️ General'
+      'puntos': 'Configuración de Puntos',
+      'membresia': 'Niveles de Membresía',
+      'general': 'General'
     }
     return names[category] || category
   }
