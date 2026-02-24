@@ -349,18 +349,18 @@ const UsersAdmin = () => {
             )}
           </div>
 
-          {/* Pie Chart - Usuarios por Nivel */}
+          {/* Pie Chart - Canjes por Estado */}
           <div className="bg-white rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Users size={18} className="text-amber-600" />
-              <h3 className="font-semibold text-gray-800">Distribucion de Usuarios</h3>
+              <Gift size={18} className="text-purple-600" />
+              <h3 className="font-semibold text-gray-800">Canjes por Estado</h3>
             </div>
-            {metricas.usuariosPorNivel?.length > 0 ? (
+            {metricas.canjesPorEstado?.length > 0 ? (
               <ReactECharts
                 option={{
                   tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
                   legend: { bottom: 0, type: 'scroll' },
-                  color: ['#d97706', '#9ca3af', '#eab308', '#8b5cf6'],
+                  color: ['#f59e0b', '#10b981', '#ef4444'],
                   series: [{
                     type: 'pie',
                     radius: ['40%', '70%'],
@@ -368,9 +368,9 @@ const UsersAdmin = () => {
                     itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
                     label: { show: false },
                     emphasis: { label: { show: true, fontWeight: 'bold' } },
-                    data: metricas.usuariosPorNivel.map(n => ({
-                      name: n.nivel_membresia || 'Sin nivel',
-                      value: parseInt(n.total)
+                    data: metricas.canjesPorEstado.map(c => ({
+                      name: c.estado === 'pendiente' ? 'Pendientes' : c.estado === 'usado' ? 'Usados' : c.estado,
+                      value: parseInt(c.total)
                     }))
                   }]
                 }}
@@ -378,7 +378,7 @@ const UsersAdmin = () => {
               />
             ) : (
               <div className="flex items-center justify-center h-[300px] text-gray-400">
-                Sin datos de usuarios
+                Sin datos de canjes
               </div>
             )}
           </div>

@@ -276,11 +276,11 @@ const obtenerCanjesPendientes = asyncHandler(async (req, res) => {
  * GET /api/stats/metricas
  */
 const getMetricas = asyncHandler(async (req, res) => {
-  const [topProductos, ventasPorCategoria, ingresosPorPeriodo, usuariosPorNivel] = await Promise.all([
+  const [topProductos, ventasPorCategoria, ingresosPorPeriodo, canjesPorEstado] = await Promise.all([
     EstadisticasModel.obtenerTopProductos(),
     EstadisticasModel.obtenerVentasPorCategoria(),
     EstadisticasModel.obtenerIngresosPorPeriodo(),
-    EstadisticasModel.obtenerUsuariosPorNivel()
+    EstadisticasModel.obtenerCanjesPorEstado()
   ])
 
   res.json({
@@ -289,7 +289,7 @@ const getMetricas = asyncHandler(async (req, res) => {
       topProductos,
       ventasPorCategoria,
       ingresosPorPeriodo,
-      usuariosPorNivel
+      canjesPorEstado
     }
   })
 })
